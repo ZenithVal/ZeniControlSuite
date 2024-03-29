@@ -5,10 +5,24 @@
 <h1>Binding Unlocks / Progression Tree</h1>
 <MudDivider></MudDivider>
 
-<div></div>
+<div>
+	<TreeGraph Items="@(new List<string>(){"Test"}  )" OnButtonClick=OnButtonClick />
+	
+	
+	
+</div>
+
+@LastClicked
 
 @code {
 	public static bool pageEnabled = true;
+	public string LastClicked = String.Empty;
+
+	public void OnButtonClick(string buttonName)
+	{
+		LastClicked = buttonName;
+	}
+	
 }
 
 

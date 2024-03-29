@@ -1,16 +1,17 @@
 ﻿@page "/Games&Points"
 
-<PageTitle>Games & Points </PageTitle>
 
-<h1>Games & Points</h1>
+<PageTitle>Games & GamePoints </PageTitle>
+
+<h1>Games & GamePoints</h1>
 <MudDivider></MudDivider>
 &nbsp;
 
 <MudGrid Style="width: 1500px; height: 100px">
 
-    @* Points *@
+    @* GamePoints *@
     <MudItem xs="3">
-		<h2>Points</h2>
+		<h2>GamePoints</h2>
 
         <MudGrid Justify="Justify.Center" Style="width: 300px;align-items:center">
             <MudItem xs="4">
@@ -36,7 +37,7 @@
 				    {
                         <MudProgressLinear Class="mt-4" Size="Size.Large" Rounded="true" Variant="Variant.Determinate" Value="@Points.pointsPartialFlipped" Color="Color.Error" Style="offset-rotate: reverse;height: 35px" />
 				    }
-                @* @Points.pointsTotal @Points.pointAddStreak *@
+                @* @GamePoints.pointsTotal @GamePoints.pointAddStreak *@
                 </MudItem>
             </MudItem>
 
@@ -55,7 +56,7 @@
 
     @* Games *@
     <MudItem xs="9">
-            <h2>Game: @Games.gameSelected</h2>
+            <h2>Game: @Points.gameSelected</h2>
 
 @* 				<MudSelect T="string" @bind-Value="Games.gameSelected" Variant="Variant.Text">
 				@foreach (string game in Games.gameList)
@@ -67,39 +68,3 @@
     </MudItem>
 
 </MudGrid>
-
-
-@code {
-    public static bool pageEnabled = true;
-
-    private void btnAddWhole()
-    {
-        Points.UpdatePoints(1.0);
-    }
-
-    private void btnAddThird()
-	{
-		Points.UpdatePoints(1.0 / 3);
-	}
-
-    private void btnAddFourth()
-	{
-		Points.UpdatePoints(1.0 / 4);
-	}
-
-	private void btnSubWhole()
-	{
-		Points.UpdatePoints(-1);
-	}
-
-	private void btnSubThird()
-	{
-		Points.UpdatePoints(-1.0 / 3);
-	}
-
-	private void btnSubFourth()
-	{
-		Points.UpdatePoints(-1.0 / 4);
-	}
-
-}

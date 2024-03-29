@@ -9,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddMudServices();
+builder.Services.AddSingleton<PointsService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<PointsService>());
+
+
+
 
 var app = builder.Build();
 

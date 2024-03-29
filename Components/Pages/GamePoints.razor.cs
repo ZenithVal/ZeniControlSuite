@@ -2,7 +2,7 @@
 
 namespace ZeniControlSuite.Components.Pages;
 
-public partial class Page_Games_Points : IDisposable
+public partial class GamePoints : IDisposable
 {
     
     public static bool pageEnabled = true;
@@ -13,10 +13,8 @@ public partial class Page_Games_Points : IDisposable
     
     protected override void OnInitialized()
     {
- 
+        Points.OnPointsUpdate += OnPointsUpdate;
     }
-    
-    
     
     private void OnPointsUpdate()
     {
@@ -55,6 +53,6 @@ public partial class Page_Games_Points : IDisposable
     
     public void Dispose()
     {
-        // TODO release managed resources here
+        Points.OnPointsUpdate -= OnPointsUpdate;
     }
 }
