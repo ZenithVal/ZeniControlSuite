@@ -7,9 +7,9 @@
     --onSurface: #e3e3e3;
     --onPrimary: #121212;
     --onSecondary: #121212;
-    --good: #4caf50;
+    --good: #00C853;
     --warn: #ffcc00;
-    --bad: #d32f2f;
+    --bad: #f44336;
 }
 
 main {

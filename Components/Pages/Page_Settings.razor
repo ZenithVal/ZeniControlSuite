@@ -1,0 +1,28 @@
+﻿@page "/Settings"
+
+<PageTitle>Settings Panel</PageTitle>
+
+<h1>A settings panel that is not really secret whatsoever</h1>
+<MudDivider></MudDivider>
+Maybe I should add a password.
+
+<br><br/>
+
+<div>
+    <h3>Avatar OSC</h3>
+    <MudSwitch @bind-Value="@Page_AvatarOSC.pageEnabled" Color="Color.Primary" />
+    <br>
+    <h3>Games & Points</h3>
+    <MudSwitch @bind-Value="@Page_Games_Points.pageEnabled" Color="Color.Primary" />
+    <br>
+    <h3>Bindings</h3>
+    <MudSwitch @bind-Value="@Page_Bindings.pageEnabled" Color="Color.Primary" />
+    <br>
+    <h3>Device Controls</h3>
+    <MudSwitch @bind-Value="@Page_DeviceControls.pageEnabled" Color="Color.Primary" />
+    <br>
+</div>
+
+
+@code {
+}

@@ -4,42 +4,102 @@
 
 <h1>Games & Points</h1>
 <MudDivider></MudDivider>
+&nbsp;
 
-<MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">
-    <MudGrid>
+<MudGrid Style="width: 1500px; height: 100px">
 
-        <MudItem xs="12" sm="4" md="4">
-			<h2>Points: @Points.ZeniPoints</h2>
-        </MudItem>
+    @* Points *@
+    <MudItem xs="3">
+		<h2>Points</h2>
 
+        <MudGrid Justify="Justify.Center" Style="width: 300px;align-items:center">
+            <MudItem xs="4">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="btnAddWhole" Style="background-color: #00C853; color: white; width: 88px; height: 62px; font-size: 18pt;">+1</MudButton>
+            </MudItem>
+            <MudItem xs="4">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="btnAddThird" Style="background-color: #00C853; color: white; width: 88px; height: 62px; font-size: 18pt;">+1/3</MudButton>
+            </MudItem>
+            <MudItem xs="4">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="btnAddFourth" Style="background-color: #00C853; color: white; width: 88px; height: 62px; font-size: 18pt;">+1/4</MudButton>
+            </MudItem>
+                
+            <MudItem xs="12">
+                <MudItem>
+                    <MudText Typo="Typo.h6" Align="Align.Center">Total: @Points.pointsWhole</MudText>
+                </MudItem>
+                <MudItem>
+                    @if (Points.pointsTotal >= 0)
+				    {
+                        <MudProgressLinear Class="mt-4" Size="Size.Large" Rounded="true" Variant="Variant.Determinate" Value="@Points.pointsPartial" Color="Color.Success" Style="height: 35px;width: 288px"/>
+				    }
+				    else
+				    {
+                        <MudProgressLinear Class="mt-4" Size="Size.Large" Rounded="true" Variant="Variant.Determinate" Value="@Points.pointsPartialFlipped" Color="Color.Error" Style="offset-rotate: reverse;height: 35px" />
+				    }
+                @* @Points.pointsTotal @Points.pointAddStreak *@
+                </MudItem>
+            </MudItem>
 
-        <MudItem xs="12" sm="6" md="4">
-                <h2>Game: @Games.gameSelected</h2>
+            <MudItem xs="4">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="btnSubWhole" Style="background-color: #F44336; color: white; width: 88px; height: 62px; font-size: 18pt;">-1</MudButton>
+            </MudItem>
+            <MudItem xs="4">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="btnSubThird" Style="background-color: #F44336; color: white; width: 88px; height: 62px; font-size: 18pt;">-1/3</MudButton>
+            </MudItem>
+            <MudItem xs="4">
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="btnSubFourth" Style="background-color: #F44336; color: white; width: 88px; height: 62px; font-size: 18pt;">-1/4</MudButton>
+            </MudItem>
 
-				<MudSelect T="string" @bind-Value="Games.gameSelected" Variant="Variant.Text">
-					@foreach (string game in Games.gameList)
-					{
-						<MudSelectItem Value="@game" />
-					}
-				</MudSelect>
+            </MudGrid>
+    </MudItem>
 
-        </MudItem>
+    @* Games *@
+    <MudItem xs="9">
+            <h2>Game: @Games.gameSelected</h2>
 
-    </MudGrid>
-</MudContainer>
+@* 				<MudSelect T="string" @bind-Value="Games.gameSelected" Variant="Variant.Text">
+				@foreach (string game in Games.gameList)
+				{
+					<MudSelectItem Value="@game" />
+				}
+			</MudSelect> *@
+
+    </MudItem>
+
+</MudGrid>
 
 
 @code {
-	public static bool pageEnabled = true;
+    public static bool pageEnabled = true;
 
-	private void AddPoints()
+    private void btnAddWhole()
+    {
+        Points.UpdatePoints(1.0);
+    }
+
+    private void btnAddThird()
 	{
-		Points.ZeniPoints += 10;
+		Points.UpdatePoints(1.0 / 3);
 	}
 
-	private void SubtractPoints()
+    private void btnAddFourth()
 	{
-		Points.ZeniPoints -= 10;
+		Points.UpdatePoints(1.0 / 4);
+	}
+
+	private void btnSubWhole()
+	{
+		Points.UpdatePoints(-1);
+	}
+
+	private void btnSubThird()
+	{
+		Points.UpdatePoints(-1.0 / 3);
+	}
+
+	private void btnSubFourth()
+	{
+		Points.UpdatePoints(-1.0 / 4);
 	}
 
 }
