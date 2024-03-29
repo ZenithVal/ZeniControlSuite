@@ -1,0 +1,62 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Zeni Control Suite</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+
+        @* 
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div> 
+        *@
+
+        @if (Pages.Page_AvatarOSC.pageEnabled)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="AvatarOSC">
+                    <MudIcon Icon="@Icons.Material.Filled.WifiTethering"></MudIcon>
+                    &nbsp; Avatar Controls
+                </NavLink>
+            </div>
+        }
+
+        @if (Pages.Page_Games_Points.pageEnabled)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="Games&Points">
+                    <MudIcon Icon="@Icons.Material.Filled.Games"></MudIcon> 
+                    &nbsp; Games & Points
+                </NavLink>
+            </div>
+        }
+
+        @if (Pages.Page_Bindings.pageEnabled)
+		{
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="Bindings">
+					<MudIcon Icon="@Icons.Material.Filled.Lock"></MudIcon> 
+					&nbsp; Binding Unlocks
+				</NavLink>
+			</div>
+		}
+
+        @if (Pages.Page_DeviceControls.pageEnabled)
+        {
+            <div class="nav-item px-3">
+				<NavLink class="nav-link" href="DeviceControls">
+					<MudIcon Icon="@Icons.Material.Filled.SettingsRemote"></MudIcon> 
+					&nbsp; Device Controls
+				</NavLink>
+			</div>
+        }
+
+    </nav>
+</div>
+

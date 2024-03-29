@@ -1,0 +1,45 @@
+﻿@page "/Games&Points"
+
+<PageTitle>Games & Points </PageTitle>
+
+<h1>Games & Points</h1>
+<MudDivider></MudDivider>
+
+<MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">
+    <MudGrid>
+
+        <MudItem xs="12" sm="4" md="4">
+			<h2>Points: @Points.ZeniPoints</h2>
+        </MudItem>
+
+
+        <MudItem xs="12" sm="6" md="4">
+                <h2>Game: @Games.gameSelected</h2>
+
+				<MudSelect T="string" @bind-Value="Games.gameSelected" Variant="Variant.Text">
+					@foreach (string game in Games.gameList)
+					{
+						<MudSelectItem Value="@game" />
+					}
+				</MudSelect>
+
+        </MudItem>
+
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+	public static bool pageEnabled = true;
+
+	private void AddPoints()
+	{
+		Points.ZeniPoints += 10;
+	}
+
+	private void SubtractPoints()
+	{
+		Points.ZeniPoints -= 10;
+	}
+
+}

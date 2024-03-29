@@ -1,0 +1,26 @@
+﻿@page "/Admin"
+
+<PageTitle>Admin pad</PageTitle>
+
+<h1>The admin page that is not hidden whatsoever</h1>
+
+<div>
+	Avatar OSC 
+	<MudSwitch @bind-Value="@Page_AvatarOSC.pageEnabled" Color="Color.Primary" />
+	<br>
+	Games & Points 
+	<MudSwitch @bind-Value="@Page_Games_Points.pageEnabled" Color="Color.Primary" />
+	<br>
+	Bindings 
+	<MudSwitch @bind-Value="@Page_Bindings.pageEnabled" Color="Color.Primary" />
+	<br>
+	Device Controls 
+	<MudSwitch @bind-Value="@Page_DeviceControls.pageEnabled" Color="Color.Primary" />
+	<br>
+</div>
+
+
+@code {
+}
+
+
