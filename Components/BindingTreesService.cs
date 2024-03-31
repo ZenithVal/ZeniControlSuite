@@ -102,9 +102,9 @@ public class BindingTreesService : IHostedService
         public int Used { get; set; } = 0;
     }
 
-    public static List<BindingTree> bindingTrees;
-    public static List<Binding> bindingsList;
-    public static Padlocks padlocks;
+    public List<BindingTree> bindingTrees = new();
+    public List<Binding> bindingsList = new();
+    public Padlocks padlocks = new();
     #endregion
 
 
