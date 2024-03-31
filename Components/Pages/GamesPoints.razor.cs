@@ -8,12 +8,12 @@ public partial class GamePoints : IDisposable
 
     [Inject] 
     private GamesPointsService Points { get; set; } = default!;
-    
+
     protected override void OnInitialized()
     {
         Points.OnPointsUpdate += OnPointsUpdate;
     }
-    
+
     private void OnPointsUpdate()
     {
         InvokeAsync(StateHasChanged);

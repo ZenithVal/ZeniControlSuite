@@ -1,15 +1,14 @@
 ﻿using Microsoft.AspNetCore.Components;
-using static ZeniControlSuite.Components.Pages.Bindings;
+using Newtonsoft.Json;
+using static ZeniControlSuite.Components.Pages.BindingManager;
 
 namespace ZeniControlSuite.Components.Pages;
-public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed since Json also chased ComponentBase
+public partial class BindingManager : ComponentBase 
 {
     public static bool pageEnabled = true;
 
     [Inject]
     private GamesPointsService Points { get; set; } = default!;
-
-    private static string currentItemInfo = "";
 
     public class BindingTree
     {
@@ -74,6 +73,7 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
         public int Used = 0;
     }
 
+    private List <Binding> bindingsList = new List<Binding>();
     private static List<BindingTree> bindingTrees;
     private static Padlocks padlocks;
 
@@ -84,10 +84,22 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
     #region Initialization & Binding Tree Managmenet
     protected override async Task OnInitializedAsync()
     {
-        // Initialize TechTreeBindings from JSON
+        try
+        {
+            string json = File.ReadAllText("BindingTrees.json");
+            bindingTrees = JsonConvert.DeserializeObject<List<BindingTree>>(json);
+
+            bindingsList = bindingTrees.SelectMany(tree => tree.Bindings).ToList();
+            padlocks = bindingTrees.FirstOrDefault().Padlocks;
+        }
+        catch (Exception e)
+        {
+            //formMain.writeConsoleUI($"Error loading Binding Trees, see console for error.", formMain.CC.Failure);
+            Console.WriteLine($"Error loading Binding Trees:\n{e.Message}");
+        }
     }
 
-    public static void ValidateBindingTreesJson()
+    public void ValidateBindingTreesJson()
     {
         //Check all the binding jsons for errors that'll crash the app
         foreach (BindingTree tree in bindingTrees)
@@ -134,12 +146,12 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
         }
     }
 
-    public static void BindingTreeGenerate()
+    public void BindingTreeGenerate()
     {
         //TODO
     }
 
-    public static void BindingTreeUpdate()
+    public void BindingTreeUpdate()
     {
         //TODO
     }
@@ -150,22 +162,22 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
     //==============================
     // Info Functions
 
-    public static List<BindingTree> GetBindingTrees()
+    public List<BindingTree> GetBindingTrees()
     {
         return bindingTrees;
     }
 
-    private static List<Binding> GetBindingsByTree(string treeName)
+/*    private List<Binding> GetBindingsByTree(string treeName)
     {
-        return bindingTrees.FirstOrDefault(tree => tree.Name == treeName)?.Bindings ?? new List<Binding>();
-    }
+        //return bindingTrees.FirstOrDefault(tree => tree.Name == treeName)?.Bindings ?? new List<Binding>();
+    }*/
 
-    private static Binding GetBindingByName(string bindingName)
+    private Binding GetBindingByName(string bindingName)
     {
         return bindingTrees.SelectMany(tree => tree.Bindings).FirstOrDefault(binding => binding.Name == bindingName);
     }
 
-    public static string GetOwnedBindings()
+    public string GetOwnedBindings()
     {
         string ownedBindings = "";
 
@@ -190,12 +202,12 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
     #region Binding Functions
     //==============================
     // Binding Actions
-    public static void ShowBindingInfo(Binding binding)
+    public void ShowBindingInfo(Binding binding)
     {
         //formMain.writeConsoleUI($"{binding.Name} ~ {binding.Description}", formMain.CC.Info);
     }
 
-    public static void BuyBinding(Binding binding)
+    public void BuyBinding(Binding binding)
     {
         if (binding.isBuyable)
         {
@@ -418,7 +430,7 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
     }
 */
 
-    public static void SellBinding(Binding binding)
+    public void SellBinding(Binding binding)
     {
         if (binding.CanBeSold)
         {
@@ -498,7 +510,8 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
         }
     }
 
-    public static void LockBinding(Binding binding)
+    /* Locks
+    public void LockBinding(Binding binding)
     {
         if (binding.CanBeLocked)
         {
@@ -537,7 +550,7 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
         }
     }
 
-    public static void BuyLock()
+    public void BuyLock()
     {
         //If total locks less than limit, has enough points, and not already owned, buy it.
         if ((padlocks.Owned + padlocks.Used) < padlocks.Limit)
@@ -560,17 +573,13 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
         }
 
         //formMain.bindingTreeUIUpdatesNeeded = true;
-    }
+    }*/
     #endregion
 
 
     #region Misc Functions
-    private void OnPointsUpdate()
-    {
-        InvokeAsync(StateHasChanged);
-    }
 
-    public static string StringFormatCommaList(string input)
+    public string StringFormatCommaList(string input)
     {
         //Cleanup the string, remove the last comma and space
         input = input.Remove(input.Length - 2);
@@ -598,15 +607,11 @@ public partial class Bindings : MudBlazor.CategoryTypes.ComponentBase //Needed s
         return input;
     }
 
-    public static int RandomInt(int min, int max)
+    public int RandomInt(int min, int max)
     {
         Random random = new Random();
         return random.Next(min, max);
     }
 
-    public void Dispose()
-    {
-        Points.OnPointsUpdate -= OnPointsUpdate;
-    }
     #endregion
 }

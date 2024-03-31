@@ -12,17 +12,17 @@
 
 <CascadingValue Value="this">
     <div style="position: relative;">
-        @foreach (var Binding in BindingTree.Bindings)
+        @foreach (Binding binding in bindingsList)
         {
-            <MudPaper Style="@($"position: absolute; left: {item.Position.X * 100}px; top: {item.Position.Y * 100}px;")" Class="p-2">
-                <div @onmouseover="() => ShowBindingInfo(item)">
-                    <MudText Typo="Typo.h6">@item.Name</MudText>
-                    @if (item.isOwned)
+            <MudPaper Style="@($"position: absolute; left: {binding.Position.X * 100}px; top: {binding.Position.Y * 100}px;")" Class="p-2">
+                <div @onmouseover="() => ShowBindingInfo(binding)">
+                    <MudText Typo="Typo.h6">@binding.Name</MudText>
+                    @if (binding.isOwned)
                     {
                         <MudIcon Icon="@Icons.Filled.Lock" Color="Color.Primary" />
                     }
                     <MudButton OnClick="@(() => BuyBinding(binding))" Color="Color.Primary">Buy</MudButton>
-                    <MudButton OnClick="@(() => SellBinding(item))" Color="Color.Secondary">Sell</MudButton>
+                    <MudButton OnClick="@(() => SellBinding(binding))" Color="Color.Secondary">Sell</MudButton>
                 </div>
             </MudPaper>
         }
