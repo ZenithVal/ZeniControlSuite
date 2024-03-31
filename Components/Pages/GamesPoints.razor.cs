@@ -2,7 +2,7 @@
 
 namespace ZeniControlSuite.Components.Pages;
 
-public partial class GamePoints : IDisposable
+public partial class GamesPoints : IDisposable
 {
     public static bool pageEnabled = true;
 
