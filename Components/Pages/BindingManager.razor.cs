@@ -6,12 +6,12 @@ namespace ZeniControlSuite.Components.Pages;
 public partial class BindingManager : IDisposable
 {
     public static bool pageEnabled = true;
-
     [Inject] private GamesPointsService Points { get; set; } = default!;
     [Inject] private BindingTreesService BindingTreesService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
     private static Dictionary<string, System.Timers.Timer> temporaryTimers = new Dictionary<string, System.Timers.Timer>();
+    private static string hoverBindingDescription = "";
 
     protected override void OnInitialized()
     {
@@ -31,6 +31,22 @@ public partial class BindingManager : IDisposable
 
     private void btnHoverShowInfo(Binding binding)
     {
+        hoverBindingDescription = binding.Description;
+    }
+
+    private void Log(string message, Severity severity)
+    {
+        Console.WriteLine(message);
+        Snackbar.Add(message, severity);
+        BindingTreesService.lastLog = message;
+        BindingTreesService.lastLogSeverity = severity;
+        BindingTreesService.lastLogColor = severity switch {
+            Severity.Error => Color.Error,
+            Severity.Info => Color.Info,
+            Severity.Success => Color.Success,
+            Severity.Warning => Color.Warning,
+            _ => Color.Default,
+        };
     }
 
     public void BuyBinding(Binding binding)
@@ -55,7 +71,7 @@ public partial class BindingManager : IDisposable
                 if (preReqsNeeded != "")
                 {
                     preReqsNeeded = BindingTreesService.StringFormatCommaList(preReqsNeeded);
-                    Snackbar.Add($"Can't add ({binding.Name}) ~ {preReqsNeeded} needed.", Severity.Warning);
+                    Log($"Can't add ({binding.Name}) ~ {preReqsNeeded} needed.", Severity.Warning);
                     return;
                 }
             }
@@ -77,7 +93,7 @@ public partial class BindingManager : IDisposable
                 if (conflicts != "")
                 {
                     conflicts = BindingTreesService.StringFormatCommaList(conflicts);
-                    Snackbar.Add($"Can't add ({binding.Name}) ~ {conflicts} is already owned.", Severity.Warning); 
+                    Log($"Can't add ({binding.Name}) ~ {conflicts} is already owned.", Severity.Warning); 
                     return;
                 }
             }
@@ -99,20 +115,20 @@ public partial class BindingManager : IDisposable
                 if (replacesLocked != "")
                 {
                     replacesLocked = BindingTreesService.StringFormatCommaList(replacesLocked);
-                    Snackbar.Add($"Can't add ({binding.Name}) ~ {replacesLocked} locked.", Severity.Warning);
+                    Log($"Can't add ({binding.Name}) ~ {replacesLocked} locked.", Severity.Warning);
                     return;
                 }
             }
 
             if (Points.pointsTotal < binding.PointValue)
             {
-                Snackbar.Add($"Can't add ({binding.Name}) ~ Need {binding.PointValue}p", Severity.Warning);
+                Log($"Can't add ({binding.Name}) ~ Need {binding.PointValue}p", Severity.Warning);
                 return;
             }
 
             if (binding.GameEnder)
             {
-                Snackbar.Add($"({binding.Name}) is probably a final purchase. Click again to confirm.", Severity.Warning);
+                Log($"({binding.Name}) is probably a final purchase. Click again to confirm.", Severity.Warning);
                 binding.GameEnder = false;
                 return;
             }
@@ -121,7 +137,7 @@ public partial class BindingManager : IDisposable
             binding.isOwned = true;
             binding.isBuyable = false;
             Points.UpdatePoints(-binding.PointValue);
-            Snackbar.Add($"Added ({binding.Name}) for {binding.PointValue}p", Severity.Success);
+            Log($"Added ({binding.Name}) for {binding.PointValue}p", Severity.Success);
 
             //Check if it's a consumable item and there's one available
             if (binding.ConsumableCount != -1)
@@ -174,14 +190,14 @@ public partial class BindingManager : IDisposable
             //If it's a temporary item, start a timer for it.
             if (binding.TempDuration > 0)
             {
-                Snackbar.Add($" for {binding.TempDuration} Minutes", Severity.Success);
+                Log($"({binding.Name}) activated for {binding.TempDuration} Minutes", Severity.Info);
 
                 System.Timers.Timer timer = new System.Timers.Timer();
 
                 timer.Interval = (int)(binding.TempDuration * 60 * 1000);
                 timer.Elapsed += (sender, e) =>
                 {
-                    Snackbar.Add($"({binding.Name}) expired.", Severity.Info);
+                    Log($"({binding.Name}) expired.", Severity.Info);
                     timer.Stop();
                     timer.Dispose();
                     //formMain.playSound("Ping");
@@ -202,7 +218,7 @@ public partial class BindingManager : IDisposable
         }
         else
         {
-            Snackbar.Add($"Cannot buy ({binding.Name}).", Severity.Error);
+            Log($"Cannot buy ({binding.Name}).", Severity.Error);
             BindingTreesService.InvokeBindingTreeUpdate();
             return;
         }
@@ -215,7 +231,7 @@ public partial class BindingManager : IDisposable
             //Make sure it's sellable
             if (binding.isLocked)
             {
-                Snackbar.Add($"Cannot Remove {binding.Name}. It's locked", Severity.Warning);
+                Log($"Cannot Remove {binding.Name}. It's locked", Severity.Warning);
                 BindingTreesService.InvokeBindingTreeUpdate();
                 return;
             }
@@ -234,7 +250,7 @@ public partial class BindingManager : IDisposable
 
                 prereqOfOwned = BindingTreesService.StringFormatCommaList(prereqOfOwned);
                 BindingTreesService.InvokeBindingTreeUpdate();
-                Snackbar.Add($"Cannot Remove {binding.Name}. It's a prerequisite of ({prereqOfOwned}).", Severity.Warning);
+                Log($"Cannot Remove {binding.Name}. It's a prerequisite of ({prereqOfOwned}).", Severity.Warning);
                 return;
             }
 
@@ -294,13 +310,13 @@ public partial class BindingManager : IDisposable
         {
             if (!binding.isOwned)
             {
-                Snackbar.Add($"Cannot Lock {binding.Name}. It's not owned.", Severity.Error);
+                Log($"Cannot Lock {binding.Name}. It's not owned.", Severity.Error);
                 BindingTreesService.InvokeBindingTreeUpdate();
                 return;
             }
             if (binding.isLocked)
             {
-                Snackbar.Add($"{binding.Name}. Is already locked.", Severity.Error);
+                Log($"{binding.Name}. Is already locked.", Severity.Error);
                 BindingTreesService.InvokeBindingTreeUpdate();
                 return;
             }
@@ -316,13 +332,13 @@ public partial class BindingManager : IDisposable
             binding.isSellable = false;
             BindingTreesService.padlocks.Owned--;
             BindingTreesService.padlocks.Used++;
-            Snackbar.Add($"Locked {binding.Name}.", Severity.Success);
+            Log($"Locked {binding.Name}.", Severity.Success);
             BindingTreesService.InvokeBindingTreeUpdate();
             return;
         }
         else
         {
-            Snackbar.Add($"Cannot Lock {binding}. Why did it have a lock option?", Severity.Error);
+            Log($"Cannot Lock {binding}. Why did it have a lock option?", Severity.Error);
             return;
         }
     }
@@ -336,17 +352,17 @@ public partial class BindingManager : IDisposable
             {
                 Points.UpdatePoints(-BindingTreesService.padlocks.Cost);
                 BindingTreesService.padlocks.Owned++;
-                Snackbar.Add($"Bought Lock ({BindingTreesService.padlocks.Owned + BindingTreesService.padlocks.Used} of {BindingTreesService.padlocks.Limit}) for {BindingTreesService.padlocks.Cost}", Severity.Success);
+                Log($"Bought Lock ({BindingTreesService.padlocks.Owned + BindingTreesService.padlocks.Used} of {BindingTreesService.padlocks.Limit}) for {BindingTreesService.padlocks.Cost}", Severity.Success);
                 BindingTreesService.padlocks.Cost += BindingTreesService.padlocks.CostIncrease;
             }
             else
             {
-                Snackbar.Add($"Cannot buy lock. Not enough points.", Severity.Warning);
+                Log($"Cannot buy lock. Not enough points.", Severity.Warning);
             }
         }
         else
         {
-            Snackbar.Add($"Cannot buy lock. Limit reached.", Severity.Error);
+            Log($"Cannot buy lock. Limit reached.", Severity.Error);
         }
 
         BindingTreesService.InvokeBindingTreeUpdate();

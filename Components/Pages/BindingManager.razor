@@ -7,10 +7,13 @@
 &nbsp;
 
 @* Information *@
-<MudPaper Class="p-4">
-    <MudText Typo="Typo.h6">Points: @Points.pointsDisplay | Last Modified Item: @Binding </MudText>
+<MudPaper Class="bg-transparent" Style="display: flex; flex-direction: row; align-items: center;">
+    <MudAlert Dense="true" Variant="Variant.Outlined" Severity="Severity.Success">Points: @Points.pointsDisplay</MudAlert>
+    <MudAlert Dense="true" Severity="@BindingTreesService.lastLogSeverity">Last Event: @BindingTreesService.lastLog </MudAlert>
+    <MudAlert Dense="true" Severity="Severity.Info">@hoverBindingDescription </MudAlert>
 </MudPaper>
 
+&nbsp;
 <MudDivider></MudDivider>
 &nbsp;
 
@@ -20,14 +23,14 @@
     <div style="position: relative;">
         @foreach (Binding binding in BindingTreesService.bindingsList)
         {
-            <MudPaper Style="@($"position: absolute; left: {binding.Position.X * 100}px; top: {binding.Position.Y * 100}px; width: 150px; height: 80px;")" Class="p-2">
+            <MudPaper Style="@($"position: absolute; left: {binding.Position.X * 100}px; top: {binding.Position.Y * 100}px; width: 150px; height: 80px; display: flex; flex-direction: row; align-items: center;")"
+                      Class="p-2">
                 <div @onmouseover="() => btnHoverShowInfo(binding)">
-                    <MudText Align="Align.Center" Typo="Typo.h6">@binding.Name</MudText>
-
+                    <MudText Align="Align.Center" Typo="Typo.h6">@binding.Name @binding.PointValue</MudText>
                     @if (binding.isLocked)
                     {
                         <MudIcon Style="position: center" 
-                        Icon="@Icons.Filled.Lock" 
+                        Icon="@Icons.Material.Filled.Lock" 
                         Color="Color.Success" />
                     }
                     else
@@ -44,9 +47,17 @@
 
                         @if (binding.isOwned)
                         {
-                            <MudButton Style="position: center"
-                            OnClick="@(() => SellBinding(binding))"
-                            Color =" Color.Error">Sell</MudButton>
+                            if (binding.isPrereqLocked)
+        					{
+                                <MudButton Disabled="true" Style="position: center"
+                                Color=" Color.Error">Prerequisite</MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Style="position: center"
+                                OnClick="@(() => SellBinding(binding))"
+                                Color=" Color.Error">Sell</MudButton>
+                            }
                         }
                         else
                         {

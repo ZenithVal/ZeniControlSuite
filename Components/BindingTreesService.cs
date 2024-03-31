@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Components.Snackbar.InternalComponents;
 using Newtonsoft.Json;
 namespace ZeniControlSuite.Components;
 
@@ -40,7 +41,11 @@ public class BindingTreesService : IHostedService
     public List<BindingTree> bindingTrees = new();
     public List<Binding> bindingsList = new();
     public Padlocks padlocks = new();
+
+
     public string lastLog = "";
+    public Color lastLogColor = Color.Default;
+    public Severity lastLogSeverity = Severity.Normal;
 
     //===========================================//
     #region Initialization & Binding Tree Managmenet

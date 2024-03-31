@@ -78,3 +78,8 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.cdk-global-overlay-wrapper {
+    align-items: flex-start !important;
+    justify-content: flex-start !important
+}
