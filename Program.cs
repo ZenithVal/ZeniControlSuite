@@ -9,8 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddMudServices();
+
 builder.Services.AddSingleton<GamesPointsService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<GamesPointsService>());
+
+builder.Services.AddSingleton<BindingTreesService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<BindingTreesService>());
 
 
 var app = builder.Build();

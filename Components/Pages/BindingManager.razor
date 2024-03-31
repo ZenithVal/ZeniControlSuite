@@ -8,21 +8,19 @@
 
 @inject IDialogService DialogService
 
-<PageTitle>Bindings Tech Tree</PageTitle>
-
 <CascadingValue Value="this">
     <div style="position: relative;">
-        @foreach (Binding binding in bindingsList)
+        @foreach (BindingTreesService.Binding binding in BindingTreesService.bindingsList)
         {
             <MudPaper Style="@($"position: absolute; left: {binding.Position.X * 100}px; top: {binding.Position.Y * 100}px;")" Class="p-2">
-                <div @onmouseover="() => ShowBindingInfo(binding)">
+                <div @onmouseover="() => btnHoverShowInfo(binding)">
                     <MudText Typo="Typo.h6">@binding.Name</MudText>
                     @if (binding.isOwned)
                     {
                         <MudIcon Icon="@Icons.Filled.Lock" Color="Color.Primary" />
                     }
-                    <MudButton OnClick="@(() => BuyBinding(binding))" Color="Color.Primary">Buy</MudButton>
-                    <MudButton OnClick="@(() => SellBinding(binding))" Color="Color.Secondary">Sell</MudButton>
+                    <MudButton OnClick="@(() => btnBuyBinding(binding))" Color="Color.Primary">Buy</MudButton>
+                    <MudButton OnClick="@(() => btnSellBinding(binding))" Color="Color.Secondary">Sell</MudButton>
                 </div>
             </MudPaper>
         }
