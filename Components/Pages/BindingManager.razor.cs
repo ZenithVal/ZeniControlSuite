@@ -1,19 +1,22 @@
 ﻿using Microsoft.AspNetCore.Components;
-using static ZeniControlSuite.Components.BindingTreesService;
+using MudBlazor;
+using System;
 
 namespace ZeniControlSuite.Components.Pages;
 public partial class BindingManager : IDisposable
 {
     public static bool pageEnabled = true;
 
-    [Inject]
-    private GamesPointsService Points { get; set; } = default!;
-    private BindingTreesService BindingTreesService { get; set; } = default!;
+    [Inject] private GamesPointsService Points { get; set; } = default!;
+    [Inject] private BindingTreesService BindingTreesService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+
+    private static Dictionary<string, System.Timers.Timer> temporaryTimers = new Dictionary<string, System.Timers.Timer>();
 
     protected override void OnInitialized()
     {
         Points.OnPointsUpdate += OnPointsUpdate;
-        //BindingTreesService.OnBindingTreeUpdate += OnBindingTreeUpdate;
+        BindingTreesService.OnBindingTreeUpdate += OnBindingTreeUpdate;
     }
 
     private void OnPointsUpdate()
@@ -28,28 +31,331 @@ public partial class BindingManager : IDisposable
 
     private void btnHoverShowInfo(Binding binding)
     {
-        //
     }
 
-    private void btnBuyBinding(Binding binding)
+    public void BuyBinding(Binding binding)
     {
-        //
+        if (binding.isBuyable)
+        {
+            //Confirm if it's buyable
+            if (binding.Prerequisites.Count > 0)
+            {
+                string preReqsNeeded = "";
+
+                foreach (string prerequisite in binding.Prerequisites)
+                {
+                    Binding prerequisiteBinding = BindingTreesService.GetBindingByName(prerequisite);
+
+                    if (!prerequisiteBinding.isOwned)
+                    {
+                        preReqsNeeded += $"({prerequisite}), ";
+                    }
+                }
+
+                if (preReqsNeeded != "")
+                {
+                    preReqsNeeded = BindingTreesService.StringFormatCommaList(preReqsNeeded);
+                    Snackbar.Add($"Can't add ({binding.Name}) ~ {preReqsNeeded} needed.", Severity.Warning);
+                    return;
+                }
+            }
+
+            if (binding.Conflicts.Count > 0)
+            {
+                string conflicts = "";
+
+                foreach (string conflict in binding.Conflicts)
+                {
+                    Binding conflictBinding = BindingTreesService.GetBindingByName(conflict);
+
+                    if (conflictBinding.isOwned)
+                    {
+                        conflicts += $"({conflict}), ";
+                    }
+                }
+
+                if (conflicts != "")
+                {
+                    conflicts = BindingTreesService.StringFormatCommaList(conflicts);
+                    Snackbar.Add($"Can't add ({binding.Name}) ~ {conflicts} is already owned.", Severity.Warning); 
+                    return;
+                }
+            }
+
+            if (binding.Replaces.Count > 0)
+            {
+                string replacesLocked = "";
+
+                foreach (string replace in binding.Replaces)
+                {
+                    Binding replaceBinding = BindingTreesService.GetBindingByName(replace);
+
+                    if (replaceBinding.isLocked)
+                    {
+                        replacesLocked += $"({replace}), ";
+                    }
+                }
+
+                if (replacesLocked != "")
+                {
+                    replacesLocked = BindingTreesService.StringFormatCommaList(replacesLocked);
+                    Snackbar.Add($"Can't add ({binding.Name}) ~ {replacesLocked} locked.", Severity.Warning);
+                    return;
+                }
+            }
+
+            if (Points.pointsTotal < binding.PointValue)
+            {
+                Snackbar.Add($"Can't add ({binding.Name}) ~ Need {binding.PointValue}p", Severity.Warning);
+                return;
+            }
+
+            if (binding.GameEnder)
+            {
+                Snackbar.Add($"({binding.Name}) is probably a final purchase. Click again to confirm.", Severity.Warning);
+                binding.GameEnder = false;
+                return;
+            }
+
+            //Successfully Bought
+            binding.isOwned = true;
+            binding.isBuyable = false;
+            Points.UpdatePoints(-binding.PointValue);
+            Snackbar.Add($"Added ({binding.Name}) for {binding.PointValue}p", Severity.Success);
+
+            //Check if it's a consumable item and there's one available
+            if (binding.ConsumableCount != -1)
+            {
+                if (binding.ConsumableCount > 0)
+                {
+                    binding.ConsumableCount--;
+
+                    if (binding.ConsumableCount >= 1)
+                    {
+                        binding.isOwned = false;
+                        binding.isBuyable = true;
+                    }
+                    BindingTreesService.InvokeBindingTreeUpdate();
+                    return;
+                }
+                else
+                {
+                    binding.ConsumableCount = 0;
+                    //formMain.writeConsoleUI($"Can't add ({binding.Name}) ~ No more available", formMain.CC.Warning);
+                    BindingTreesService.InvokeBindingTreeUpdate();
+                    return;
+                }
+            }
+
+            if (binding.CanBeSold)
+            {
+                binding.isSellable = true;
+            }
+
+            //If its got Prereqs, set isPrereqLocked to true for those items
+            if (binding.Prerequisites.Count > 0)
+            {
+                foreach (string prerequisite in binding.Prerequisites)
+                {
+                    Binding prerequisiteBinding = BindingTreesService.GetBindingByName(prerequisite);
+                    prerequisiteBinding.isPrereqLocked = true;
+                }
+            }
+
+            if (binding.Replaces.Count > 0)
+            {
+                foreach (string replace in binding.Replaces)
+                {
+                    Binding replaceBinding = BindingTreesService.GetBindingByName(replace);
+                    replaceBinding.isReplaceLocked = true;
+                }
+            }
+
+            //If it's a temporary item, start a timer for it.
+            if (binding.TempDuration > 0)
+            {
+                Snackbar.Add($" for {binding.TempDuration} Minutes", Severity.Success);
+
+                System.Timers.Timer timer = new System.Timers.Timer();
+
+                timer.Interval = (int)(binding.TempDuration * 60 * 1000);
+                timer.Elapsed += (sender, e) =>
+                {
+                    Snackbar.Add($"({binding.Name}) expired.", Severity.Info);
+                    timer.Stop();
+                    timer.Dispose();
+                    //formMain.playSound("Ping");
+                    binding.isOwned = false;
+                    if (binding.CanBeSold)
+                    {
+                        binding.isSellable = false;
+                    }
+                    binding.isBuyable = true;
+                    BindingTreesService.InvokeBindingTreeUpdate();
+                };
+                timer.Start();
+                temporaryTimers[binding.Name] = timer;
+            }
+
+            BindingTreesService.InvokeBindingTreeUpdate();
+            return;
+        }
+        else
+        {
+            Snackbar.Add($"Cannot buy ({binding.Name}).", Severity.Error);
+            BindingTreesService.InvokeBindingTreeUpdate();
+            return;
+        }
     }
 
-    private void btnSellBinding(Binding binding)
+    public void SellBinding(Binding binding)
     {
-        //
+        if (binding.CanBeSold)
+        {
+            //Make sure it's sellable
+            if (binding.isLocked)
+            {
+                Snackbar.Add($"Cannot Remove {binding.Name}. It's locked", Severity.Warning);
+                BindingTreesService.InvokeBindingTreeUpdate();
+                return;
+            }
+
+            if (binding.isPrereqLocked)
+            {
+                string prereqOfOwned = "";
+                //Look through all the bindings for anything that has this binding as a prereq
+                foreach (Binding otherBinding in BindingTreesService.bindingTrees.SelectMany(tree => tree.Bindings))
+                {
+                    if (otherBinding.Prerequisites.Contains(binding.Name) && otherBinding.isOwned)
+                    {
+                        prereqOfOwned += $"({otherBinding.Name}), ";
+                    }
+                }
+
+                prereqOfOwned = BindingTreesService.StringFormatCommaList(prereqOfOwned);
+                BindingTreesService.InvokeBindingTreeUpdate();
+                Snackbar.Add($"Cannot Remove {binding.Name}. It's a prerequisite of ({prereqOfOwned}).", Severity.Warning);
+                return;
+            }
+
+            //Successfully Sold
+            binding.isOwned = false;
+            binding.isSellable = false;
+            binding.isBuyable = true;
+            Points.UpdatePoints(binding.PointValue);
+            //formMain.writeConsoleUI($"Removed {binding.Name} ~ Refunded {binding.PointValue}p", formMain.CC.Success);
+
+            //if it's got prereqs and this is the only item that has it as a prereq, set isPrereqLocked to false for those items
+            if (binding.Prerequisites.Count > 0)
+            {
+                bool isOnlyPrereq = true;
+                foreach (Binding otherBinding in BindingTreesService.bindingTrees.SelectMany(tree => tree.Bindings))
+                {
+                    if (otherBinding.Prerequisites.Contains(binding.Name) && otherBinding.isOwned)
+                    {
+                        isOnlyPrereq = false;
+                    }
+                }
+
+                if (isOnlyPrereq)
+                {
+                    foreach (string prerequisite in binding.Prerequisites)
+                    {
+                        Binding prerequisiteBinding = BindingTreesService.GetBindingByName(prerequisite);
+                        prerequisiteBinding.isPrereqLocked = false;
+                    }
+                }
+            }
+
+            //If it's got replaces, set isReplaceLocked to false for those items
+            if (binding.Replaces.Count > 0)
+            {
+                foreach (string replace in binding.Replaces)
+                {
+                    Binding replaceBinding = BindingTreesService.GetBindingByName(replace);
+                    replaceBinding.isReplaceLocked = false;
+                }
+            }
+
+            BindingTreesService.InvokeBindingTreeUpdate();
+            return;
+        }
+        else
+        {
+            //formMain.writeConsoleUI($"Cannot Remove {binding}. The button should've been disabled?", formMain.CC.Failure);
+            BindingTreesService.InvokeBindingTreeUpdate();
+            return;
+        }
     }
 
-    private void btnLockBinding(Binding binding)
+    public void LockBinding(Binding binding)
     {
-        //
+        if (binding.CanBeLocked)
+        {
+            if (!binding.isOwned)
+            {
+                Snackbar.Add($"Cannot Lock {binding.Name}. It's not owned.", Severity.Error);
+                BindingTreesService.InvokeBindingTreeUpdate();
+                return;
+            }
+            if (binding.isLocked)
+            {
+                Snackbar.Add($"{binding.Name}. Is already locked.", Severity.Error);
+                BindingTreesService.InvokeBindingTreeUpdate();
+                return;
+            }
+            //If it's a temporary item, stop the timer
+            if (binding.TempDuration > 0)
+            {
+                System.Timers.Timer timer = temporaryTimers[binding.Name];
+                timer.Stop();
+                timer.Dispose();
+            }
+            //Lock the item
+            binding.isLocked = true;
+            binding.isSellable = false;
+            BindingTreesService.padlocks.Owned--;
+            BindingTreesService.padlocks.Used++;
+            Snackbar.Add($"Locked {binding.Name}.", Severity.Success);
+            BindingTreesService.InvokeBindingTreeUpdate();
+            return;
+        }
+        else
+        {
+            Snackbar.Add($"Cannot Lock {binding}. Why did it have a lock option?", Severity.Error);
+            return;
+        }
+    }
+
+    public void BuyPadlock()
+    {
+        //If total locks less than limit, has enough points, and not already owned, buy it.
+        if ((BindingTreesService.padlocks.Owned + BindingTreesService.padlocks.Used) < BindingTreesService.padlocks.Limit)
+        {
+            if (BindingTreesService.padlocks.Cost <= Points.pointsTotal)
+            {
+                Points.UpdatePoints(-BindingTreesService.padlocks.Cost);
+                BindingTreesService.padlocks.Owned++;
+                Snackbar.Add($"Bought Lock ({BindingTreesService.padlocks.Owned + BindingTreesService.padlocks.Used} of {BindingTreesService.padlocks.Limit}) for {BindingTreesService.padlocks.Cost}", Severity.Success);
+                BindingTreesService.padlocks.Cost += BindingTreesService.padlocks.CostIncrease;
+            }
+            else
+            {
+                Snackbar.Add($"Cannot buy lock. Not enough points.", Severity.Warning);
+            }
+        }
+        else
+        {
+            Snackbar.Add($"Cannot buy lock. Limit reached.", Severity.Error);
+        }
+
+        BindingTreesService.InvokeBindingTreeUpdate();
     }
 
     public void Dispose()
     {
         Points.OnPointsUpdate -= OnPointsUpdate;
-        //BindingTreesService.OnBindingTreeUpdate -= OnBindingTreeUpdate;
+        BindingTreesService.OnBindingTreeUpdate -= OnBindingTreeUpdate;
     }
 
 

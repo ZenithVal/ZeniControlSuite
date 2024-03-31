@@ -2,6 +2,8 @@ using Microsoft.AspNetCore;
 using ZeniControlSuite.Components;
 
 using MudBlazor.Services;
+using MudBlazor;
+using ZeniControlSuite.Components.Pages;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddMudServices();
+
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomLeft;
+
+    config.SnackbarConfiguration.PreventDuplicates = true;
+    config.SnackbarConfiguration.NewestOnTop = false;
+    config.SnackbarConfiguration.ShowCloseIcon = true;
+    config.SnackbarConfiguration.ClearAfterNavigation = true;
+    config.SnackbarConfiguration.VisibleStateDuration = 7000;
+    config.SnackbarConfiguration.HideTransitionDuration = 500;
+    config.SnackbarConfiguration.ShowTransitionDuration = 500;
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Outlined;
+});
 
 builder.Services.AddSingleton<GamesPointsService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<GamesPointsService>());

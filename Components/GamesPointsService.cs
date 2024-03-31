@@ -5,6 +5,7 @@ public class GamesPointsService : IHostedService
     public delegate void PointsUpdate();
     public event PointsUpdate? OnPointsUpdate;
 
+    public string pointsDisplay { get; private set; } = "0";
     public double pointsTotal { get; private set; } = 0;
     public double pointsWhole { get; private set; } = 0;
     public double pointAddStreak { get; private set; } = 0;
@@ -18,7 +19,6 @@ public class GamesPointsService : IHostedService
         "Placeholder B",
         "Placeholder C"
     ];
-
 
     public void UpdatePoints(double points)
     {
@@ -53,10 +53,50 @@ public class GamesPointsService : IHostedService
             pointsPartialFlipped = 100 - pointsPartial;
         }
 
+        FractionalScore(pointsTotal);
+
         if (OnPointsUpdate != null)
             OnPointsUpdate();
     }
 
+    public void FractionalScore(double value)
+    {
+        //cut off everything after the hundreths place, do not round.
+        value = Math.Truncate(value * 100) / 100;
+        
+        int wholeNumber = 0;
+        int denominator = 1;
+        double rounded = 0.0;
+
+        wholeNumber = (int)Math.Floor(value);
+        value -= wholeNumber;
+
+        if (value == 0.0)
+        {
+            denominator = 1;
+        }
+        else if (value % 0.25 < 0.01)
+        {
+            value = (int)(1 * Math.Floor(value / 0.25));
+            denominator = 4;
+        }
+        else if (value % 0.33 < 0.01)
+        {
+            value = (int)(1 * Math.Floor(value / 0.33));
+            denominator = 3;
+        }
+
+        if (denominator == 1)
+        {
+            pointsDisplay = $"{wholeNumber}";
+        }
+        else
+        {
+            pointsDisplay = $"{wholeNumber} & {value}/{denominator}";
+        }
+
+
+    }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
