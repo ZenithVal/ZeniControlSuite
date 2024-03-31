@@ -73,9 +73,9 @@ public partial class BindingManager : ComponentBase
         public int Used = 0;
     }
 
-    private List <Binding> bindingsList = new List<Binding>();
-    private static List<BindingTree> bindingTrees;
-    private static Padlocks padlocks;
+    private List<BindingTree> bindingTrees = new List<BindingTree>();
+    private List<Binding> bindingsList = new List<Binding>();
+    private Padlocks padlocks;
 
     // Old code for winforms, replace.
     //private static Dictionary<string, Button> buttonBindings = new Dictionary<string, Button>();
@@ -84,9 +84,18 @@ public partial class BindingManager : ComponentBase
     #region Initialization & Binding Tree Managmenet
     protected override async Task OnInitializedAsync()
     {
+        if (bindingTrees.Count == 0)
+        {
+            InitializeBindingTrees();
+            ValidateBindingTreesJson();
+        }
+    }
+
+    public void InitializeBindingTrees()
+    {
         try
         {
-            string json = File.ReadAllText("BindingTrees.json");
+            string json = File.ReadAllText("Configs/BindingTrees.json");
             bindingTrees = JsonConvert.DeserializeObject<List<BindingTree>>(json);
 
             bindingsList = bindingTrees.SelectMany(tree => tree.Bindings).ToList();
@@ -106,6 +115,7 @@ public partial class BindingManager : ComponentBase
         {
             foreach (Binding binding in tree.Bindings)
             {
+                Console.WriteLine($"Validating {binding.Name}");
                 if (binding.Prerequisites.Count > 0)
                 {
                     foreach (string prerequisite in binding.Prerequisites)
