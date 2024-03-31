@@ -4,12 +4,10 @@ namespace ZeniControlSuite.Components.Pages;
 
 public partial class GamePoints : IDisposable
 {
-    
     public static bool pageEnabled = true;
 
     [Inject] 
-    private PointsService Points { get; set; } = default!;
-    
+    private GamesPointsService Points { get; set; } = default!;
     
     protected override void OnInitialized()
     {

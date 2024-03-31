@@ -9,10 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddMudServices();
-builder.Services.AddSingleton<PointsService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<PointsService>());
-
-
+builder.Services.AddSingleton<GamesPointsService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<GamesPointsService>());
 
 
 var app = builder.Build();

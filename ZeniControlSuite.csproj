@@ -10,6 +10,7 @@
     <PackageReference Include="Buttplug" Version="3.0.1" />
     <PackageReference Include="Buttplug.Client.Connectors.WebsocketConnector" Version="3.0.1" />
     <PackageReference Include="MudBlazor" Version="6.19.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
