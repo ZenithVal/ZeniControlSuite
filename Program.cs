@@ -23,7 +23,7 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.VisibleStateDuration = 5000;
     config.SnackbarConfiguration.HideTransitionDuration = 500;
     config.SnackbarConfiguration.ShowTransitionDuration = 500;
-    config.SnackbarConfiguration.SnackbarVariant = Variant.Outlined;
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
 });
 
 builder.Services.AddSingleton<GamesPointsService>();

@@ -7,6 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Configs\BindingTrees.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Configs\BindingTrees.json.safe" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Configs\BindingTrees.json.safe" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Buttplug" Version="3.0.1" />
     <PackageReference Include="Buttplug.Client.Connectors.WebsocketConnector" Version="3.0.1" />
     <PackageReference Include="MudBlazor" Version="6.19.1" />
@@ -21,6 +33,10 @@
 
   <ItemGroup>
     <Folder Include="Services\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Configs\BindingTrees.json" />
   </ItemGroup>
 
 </Project>

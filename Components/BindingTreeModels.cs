@@ -42,8 +42,8 @@
         //Used for determining what should be displayed on the item label and button.
         public bool isBuyable { get; set; } //Can the item be bought?
         public bool isSellable { get; set; } //Can the item be sold?
-
         public bool isPrereqMet { get; set; } = false; //Is the item's prereq met?
+        public bool isSubPrereqMet { get; set; } = true; //Are the prereq's prereqs met?
         public bool isPrereqLocked { get; set; } //Is it disabled because it's a prereq of a owned item?
         public bool isConflictLocked { get; set; } //Is it disabled because it's a conflict of a owned item?
         public bool isReplaceLocked { get; set; } //Mainly used for blocking locking an item if its been replaced.
@@ -61,5 +61,6 @@
         public int Limit { get; set; }
         public int Owned { get; set; } = 0;
         public int Used { get; set; } = 0;
+        public int OwnedUsed => Owned + Used;
     }
 }

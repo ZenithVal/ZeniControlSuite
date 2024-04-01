@@ -26,6 +26,7 @@ public class BindingTreesService : IHostedService
         else
         {
             ValidateBindingTreesJson();
+            CheckBindingRelations();
             Console.WriteLine("BindingTreesService Started");
         }
         
@@ -76,6 +77,7 @@ public class BindingTreesService : IHostedService
                 Console.WriteLine($"Validating {binding.Name}");
                 if (binding.Prerequisites.Count > 0)
                 {
+                    Console.WriteLine($"Validating Prereqs of {binding.Name}");
                     foreach (string prerequisite in binding.Prerequisites)
                     {
                         if (bindingTrees.SelectMany(tree => tree.Bindings).FirstOrDefault(b => b.Name == prerequisite) == null)
@@ -118,8 +120,49 @@ public class BindingTreesService : IHostedService
 
     //===========================================//
     #region Binding Functions
-    //==============================
-    // Binding Actions
+    public void CheckBindingRelations()
+    {
+        foreach (Binding binding in bindingsList)
+        {
+            if (!binding.Conflicts.Any(conflict => GetBindingByName(conflict).isOwned))
+            {
+                binding.isConflictLocked = false;
+            }
+            else
+            {
+                binding.isConflictLocked = true;
+            }
+
+            if (binding.Prerequisites.Count == 0)
+            {
+                binding.isPrereqMet = true;
+                binding.isSubPrereqMet = true;
+            }
+
+            else
+            {
+                if (binding.Prerequisites.All(prereq => GetBindingByName(prereq).isOwned))
+                {
+                    binding.isPrereqMet = true;
+                    binding.isSubPrereqMet = true;
+                }
+                else
+                {
+                    binding.isPrereqMet = false;
+                    if (binding.Prerequisites.Any(prereq => !GetBindingByName(prereq).isPrereqMet))
+                    {
+                        binding.isSubPrereqMet = false;
+                    }
+                    else
+                    {
+                        binding.isSubPrereqMet = true;
+                    }
+                }
+            }
+        }
+        InvokeBindingTreeUpdate();
+    }
+
     public void ShowBindingInfo(Binding binding)
     {
         //formMain.writeConsoleUI($"{binding.Name} ~ {binding.Description}", formMain.CC.Info);

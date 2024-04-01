@@ -138,10 +138,12 @@ public partial class BindingManager : IDisposable
             binding.isBuyable = false;
             Points.UpdatePoints(-binding.PointValue);
             Log($"Added ({binding.Name}) for {binding.PointValue}p", Severity.Success);
+            BindingTreesService.CheckBindingRelations();
 
             //Check if it's a consumable item and there's one available
             if (binding.ConsumableCount != -1)
             {
+                binding.isOwned = false;
                 if (binding.ConsumableCount > 0)
                 {
                     binding.ConsumableCount--;
@@ -157,7 +159,7 @@ public partial class BindingManager : IDisposable
                 else
                 {
                     binding.ConsumableCount = 0;
-                    //formMain.writeConsoleUI($"Can't add ({binding.Name}) ~ No more available", formMain.CC.Warning);
+                    Log($"Can't add ({binding.Name}) ~ No more available", Severity.Warning);
                     BindingTreesService.InvokeBindingTreeUpdate();
                     return;
                 }
@@ -259,7 +261,8 @@ public partial class BindingManager : IDisposable
             binding.isSellable = false;
             binding.isBuyable = true;
             Points.UpdatePoints(binding.PointValue);
-            //formMain.writeConsoleUI($"Removed {binding.Name} ~ Refunded {binding.PointValue}p", formMain.CC.Success);
+            Log($"Removed {binding.Name} ~ Refunded {binding.PointValue}p", Severity.Normal);
+            BindingTreesService.CheckBindingRelations();
 
             //if it's got prereqs and this is the only item that has it as a prereq, set isPrereqLocked to false for those items
             if (binding.Prerequisites.Count > 0)
@@ -298,7 +301,7 @@ public partial class BindingManager : IDisposable
         }
         else
         {
-            //formMain.writeConsoleUI($"Cannot Remove {binding}. The button should've been disabled?", formMain.CC.Failure);
+            Log($"Cannot Remove {binding}. The button should've been disabled?", Severity.Error);
             BindingTreesService.InvokeBindingTreeUpdate();
             return;
         }
@@ -346,7 +349,7 @@ public partial class BindingManager : IDisposable
     public void BuyPadlock()
     {
         //If total locks less than limit, has enough points, and not already owned, buy it.
-        if ((BindingTreesService.padlocks.Owned + BindingTreesService.padlocks.Used) < BindingTreesService.padlocks.Limit)
+        if ((BindingTreesService.padlocks.OwnedUsed) < BindingTreesService.padlocks.Limit)
         {
             if (BindingTreesService.padlocks.Cost <= Points.pointsTotal)
             {

@@ -23,62 +23,103 @@
     <div style="position: relative;">
         @foreach (Binding binding in BindingTreesService.bindingsList)
         {
-            <MudPaper Style="@($"position: absolute; left: {binding.Position.X * 100}px; top: {binding.Position.Y * 100}px; width: 150px; height: 80px; display: flex; flex-direction: row; align-items: center;")"
-                      Class="p-2">
+            string classString = "p-2; border-1";
+            @if (binding.isReplaceLocked)
+            {
+                classString = "p-2; border-1; opacity-50";
+			}
+            else if (!binding.isSubPrereqMet)
+            {
+                classString = "p-2; border-1; opacity-25";
+            }
+
+
+            <MudPaper Style="@($"position: absolute; left: {binding.Position.X * 110}px; top: {binding.Position.Y * 110}px; width: 180px; height: 90px; display: flex; flex-direction: row; align-items: center;")" Class="@classString">
                 <div @onmouseover="() => btnHoverShowInfo(binding)">
-                    <MudText Align="Align.Center" Typo="Typo.h6">@binding.Name @binding.PointValue</MudText>
+                    <MudText Align="Align.Left" Typo="Typo.body1">&nbsp;&nbsp;@binding.Name</MudText>
                     @if (binding.isLocked)
                     {
                         <MudIcon Style="position: center" 
                         Icon="@Icons.Material.Filled.Lock" 
                         Color="Color.Success" />
+
+                        <MudButton Disabled="true" Style="position: center" Color=" Color.Error">Locked</MudButton>
                     }
                     else
                     {
-                        @if (binding.isOwned && binding.CanBeLocked)
+                        @if (binding.isOwned && binding.CanBeLocked && BindingTreesService.padlocks.Enabled && !binding.isReplaceLocked)
                         {
                             <MudButton 
                             Disabled="@(BindingTreesService.padlocks.Owned < 1)"
                             Style="position: center" 
-                            OnClick="@(() => LockBinding(binding))" 
-                            Color=" Color.Success">Lock
-                            </MudButton>
+                            OnClick="@(() => LockBinding(binding))" Color=" Color.Success">Lock</MudButton>
                         }
 
                         @if (binding.isOwned)
                         {
                             if (binding.isPrereqLocked)
-        					{
-                                <MudButton Disabled="true" Style="position: center"
-                                Color=" Color.Error">Prerequisite</MudButton>
-                            }
-                            else
                             {
-                                <MudButton Style="position: center"
-                                OnClick="@(() => SellBinding(binding))"
-                                Color=" Color.Error">Sell</MudButton>
+                                if (!binding.CanBeLocked)
+                                {
+                                    <MudButton Disabled="true" Style="position: center" Color=" Color.Error">Prerequisite</MudButton>
+                                }
+                            }
+                            else if (binding.CanBeSold)
+                            {
+                                <MudButton Style="position: center" OnClick="@(() => SellBinding(binding))" Color=" Color.Error">Sell</MudButton>
                             }
                         }
                         else
                         {
-                            <MudButton Style="position: center"
-                                OnClick="@(() => BuyBinding(binding))" 
-                                Color=" Color.Success">Buy</MudButton>
+                            if (binding.ConsumableCount != -1)
+                            {
+                                <MudButton Disabled="(binding.ConsumableCount < 1)" Style="position: center" OnClick="@(() => BuyBinding(binding))" Color=" Color.Success">Add $@binding.PointValue (@binding.ConsumableCount left)</MudButton>
+                            }
+                            else if (!binding.isPrereqMet)
+                            {
+                                if (!binding.isSubPrereqMet)
+                                {
+                                    <MudButton Disabled="true" Style="position: center" Color=" Color.Error">Buy - $@binding.PointValue</MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Style="position: center" OnClick="@(() => BuyBinding(binding))" Color=" Color.Warning">Buy - $@binding.PointValue</MudButton>
+                                }
+							}
+
+							else
+							{
+                                <MudButton Style="position: center" OnClick="@(() => BuyBinding(binding))" Color=" Color.Success">Buy - $@binding.PointValue</MudButton>
+							}
                         }
                     }
                 </div>
             </MudPaper>
+            @foreach (string prereq in binding.Prerequisites)
+            {
+                Binding _prereq = BindingTreesService.GetBindingByName(prereq);
+
+                if (_prereq != null)
+                {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+                        <line x1="@binding.Position.X * 100" y1="@binding.Position.Y * 100" x2="@_prereq.Position.X * 100" y2="@_prereq.Position.Y * 100" stroke="black" />
+                    </svg>
+                }
+            }
         }
         @if (BindingTreesService.padlocks.Enabled)
         {
-            <MudPaper Style="@($"position: absolute; left: {BindingTreesService.padlocks.Position.X * 100}px; top: {BindingTreesService.padlocks.Position.Y * 100}px;")" Class="p-2">
-				<MudText Typo="Typo.h6">Padlock</MudText>
-				<MudButton 
-                    Disabled="@(BindingTreesService.padlocks.Owned >= BindingTreesService.padlocks.Limit)"
-                    OnClick="@(() => BuyPadlock())" 
-                    Color="Color.Primary" >Buy
-                </MudButton>
-			</MudPaper>
+            <MudPaper Style="@($"position: absolute; left: {BindingTreesService.padlocks.Position.X * 110}px; top: {BindingTreesService.padlocks.Position.Y * 110}px;")" Class="p-2">
+                <MudText Typo="Typo.body1">Locks: (@BindingTreesService.padlocks.OwnedUsed) out of @BindingTreesService.padlocks.Limit</MudText>
+                @if (BindingTreesService.padlocks.OwnedUsed < @BindingTreesService.padlocks.Limit)
+                {
+                    <MudButton OnClick="@(() => BuyPadlock())" Color="Color.Primary">Buy - $@BindingTreesService.padlocks.Cost</MudButton>
+                }
+                else
+                {
+                    <MudButton Disabled="true" OnClick="@(() => BuyPadlock())" Color="Color.Error">Max Reached</MudButton>
+                }
+            </MudPaper>
 		}
     </div>
 </CascadingValue>
