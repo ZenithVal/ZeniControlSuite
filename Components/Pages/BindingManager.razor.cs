@@ -35,7 +35,7 @@ public partial class BindingManager : IDisposable
 
     private void Log(string message, Severity severity)
     {
-        Console.WriteLine(message);
+        Console.WriteLine(DateTime.Now + " | " + message);
         Snackbar.Add(message, severity);
         BindingTreesService.lastLog = message;
         BindingTreesService.lastLogSeverity = severity;
