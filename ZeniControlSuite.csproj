@@ -7,14 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Configs\BindingTrees Safe.json" />
     <Content Remove="Configs\BindingTrees.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Configs\BindingTrees - Copy.json.safe" />
     <None Remove="Configs\BindingTrees.json.safe" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Configs\BindingTrees Safe.json.safe" />
     <Content Include="Configs\BindingTrees.json.safe" />
   </ItemGroup>
 
@@ -36,6 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Configs\BindingTrees Safe.json" />
     <None Include="Configs\BindingTrees.json" />
   </ItemGroup>
 
