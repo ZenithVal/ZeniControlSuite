@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using Newtonsoft.Json;
+using ZeniControlSuite.Components.Pages;
 namespace ZeniControlSuite.Components;
 
 public class BindingTreesService : IHostedService
@@ -62,6 +63,7 @@ public class BindingTreesService : IHostedService
         catch (Exception e)
         {
             Console.WriteLine($"Error loading Binding Trees:\n{e.Message}");
+            BindingManager.pageEnabled = false;
         }
     }
 
