@@ -1,9 +1,6 @@
-using Microsoft.AspNetCore;
-using ZeniControlSuite.Components;
-
-using MudBlazor.Services;
 using MudBlazor;
-using ZeniControlSuite.Components.Pages;
+using MudBlazor.Services;
+using ZeniControlSuite.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 

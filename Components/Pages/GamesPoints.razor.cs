@@ -6,7 +6,7 @@ public partial class GamesPoints : IDisposable
 {
     public static bool pageEnabled = true;
 
-    [Inject] 
+    [Inject]
     private GamesPointsService Points { get; set; } = default!;
 
     protected override void OnInitialized()
@@ -48,7 +48,7 @@ public partial class GamesPoints : IDisposable
     {
         Points.UpdatePoints(-1.0 / 4);
     }
-    
+
     public void Dispose()
     {
         Points.OnPointsUpdate -= OnPointsUpdate;

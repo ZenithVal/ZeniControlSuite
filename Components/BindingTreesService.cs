@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using MudBlazor.Components.Snackbar.InternalComponents;
 using Newtonsoft.Json;
 namespace ZeniControlSuite.Components;
 
@@ -29,7 +28,7 @@ public class BindingTreesService : IHostedService
             CheckBindingRelations();
             Console.WriteLine("BindingTreesService Started");
         }
-        
+
         return Task.CompletedTask;
     }
 
@@ -171,7 +170,7 @@ public class BindingTreesService : IHostedService
     //snackbar
     public void Notify(string message, Color color)
     {
-        
+
     }
 
     public void InvokeBindingTreeUpdate()

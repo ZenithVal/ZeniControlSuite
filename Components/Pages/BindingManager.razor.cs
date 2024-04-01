@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using System;
 
 namespace ZeniControlSuite.Components.Pages;
 public partial class BindingManager : IDisposable
@@ -93,7 +92,7 @@ public partial class BindingManager : IDisposable
                 if (conflicts != "")
                 {
                     conflicts = BindingTreesService.StringFormatCommaList(conflicts);
-                    Log($"Can't add ({binding.Name}) ~ {conflicts} is already owned.", Severity.Warning); 
+                    Log($"Can't add ({binding.Name}) ~ {conflicts} is already owned.", Severity.Warning);
                     return;
                 }
             }

@@ -63,7 +63,7 @@ public class GamesPointsService : IHostedService
     {
         //cut off everything after the hundreths place, do not round.
         value = Math.Truncate(value * 100) / 100;
-        
+
         int wholeNumber = 0;
         int denominator = 1;
         double rounded = 0.0;
