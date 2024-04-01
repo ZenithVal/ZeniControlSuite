@@ -1,4 +1,5 @@
 ﻿@page "/Bindings"
+@inject IDialogService DialogService
 
 <PageTitle>Bindings</PageTitle>
 
@@ -16,8 +17,6 @@
 &nbsp;
 <MudDivider></MudDivider>
 &nbsp;
-
-@inject IDialogService DialogService
 
 <CascadingValue Value="this">
     <div style="position: relative;">
@@ -38,7 +37,7 @@
             }
 
 
-            <MudPaper Style="@($"position: absolute; left: {binding.Position.X * 110}px; top: {binding.Position.Y * 110}px; width: 180px; height: 90px; display: flex; flex-direction: row; align-items: center;")" Class="@classString">
+            <MudPaper Style="@($"position: absolute; left: {binding.Position.X * 110}px; top: {binding.Position.Y * 110}px; width: 180px; height: 90px; display: flex; flex-direction: row; align-items: center; z-index:5")" Class="@classString">
                 <div @onmouseover="() => btnHoverShowInfo(binding)">
                     <MudText Align="Align.Left" Typo="Typo.body1">&nbsp;&nbsp;@binding.Name</MudText>
                     @if (binding.isLocked)
@@ -127,3 +126,5 @@
 		}
     </div>
 </CascadingValue>
+
+<MudImage Src="images/Bindings.png" Class="opacity-50" Style="position: absolute; right: 5%; bottom: 0%; height: 70%; z-index:0;" />
