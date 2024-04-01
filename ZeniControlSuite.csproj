@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Resources\Gag.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,9 +20,12 @@
   <ItemGroup>
     <Content Include="Configs\BindingTrees Safe.json.safe" />
     <Content Include="Configs\BindingTrees.json.safe" />
+    <Content Include="Resources\Collar.ico" />
+    <Content Include="Resources\Gag.ico" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BlazorAnimate" Version="3.0.0" />
     <PackageReference Include="Buttplug" Version="3.0.1" />
     <PackageReference Include="Buttplug.Client.Connectors.WebsocketConnector" Version="3.0.1" />
     <PackageReference Include="MudBlazor" Version="6.19.1" />
@@ -41,6 +45,9 @@
   <ItemGroup>
     <None Include="Configs\BindingTrees Safe.json" />
     <None Include="Configs\BindingTrees.json" />
+    <None Include="wwwroot\images\Bindings.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
