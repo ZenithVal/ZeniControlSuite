@@ -4,7 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>Resources\Gag.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\Collar.ico</ApplicationIcon>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +22,6 @@
     <Content Include="Configs\BindingTrees Safe.json.safe" />
     <Content Include="Configs\BindingTrees.json.safe" />
     <Content Include="Resources\Collar.ico" />
-    <Content Include="Resources\Gag.ico" />
   </ItemGroup>
 
   <ItemGroup>
