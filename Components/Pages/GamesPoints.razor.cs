@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using static ZeniControlSuite.Components.GamesPointsService;
 
 namespace ZeniControlSuite.Components.Pages;
 
@@ -18,7 +19,12 @@ public partial class GamesPoints : IDisposable
     {
         InvokeAsync(StateHasChanged);
     }
+    public void Dispose()
+    {
+        Points.OnPointsUpdate -= OnPointsUpdate;
+    }
 
+    #region Manual Buttons
     private void btnAddWhole()
     {
         Points.UpdatePoints(1.0);
@@ -48,9 +54,11 @@ public partial class GamesPoints : IDisposable
     {
         Points.UpdatePoints(-1.0 / 4);
     }
+    #endregion
 
-    public void Dispose()
-    {
-        Points.OnPointsUpdate -= OnPointsUpdate;
-    }
+
+    #region Games
+
+    #endregion
+
 }

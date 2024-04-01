@@ -44,9 +44,10 @@
         public bool isSellable { get; set; } //Can the item be sold?
         public bool isPrereqMet { get; set; } = false; //Is the item's prereq met?
         public bool isSubPrereqMet { get; set; } = true; //Are the prereq's prereqs met?
-        public bool isPrereqLocked { get; set; } //Is it disabled because it's a prereq of a owned item?
-        public bool isConflictLocked { get; set; } //Is it disabled because it's a conflict of a owned item?
-        public bool isReplaceLocked { get; set; } //Mainly used for blocking locking an item if its been replaced.
+        public bool isReplaceLocked { get; set; } = false; //Is the item this replaces locked?
+        public bool isParentOwned { get; set; } //Is it disabled because it's a prereq of a owned item?
+        public bool isConflictOwned { get; set; } //Is it disabled because it's a conflict of a owned item?
+        public bool isReplacerOwned { get; set; } //Mainly used for blocking locking an item if its been replaced.
         public bool isOwned { get; set; } //Is the item owned?
         public bool isLocked { get; set; } //Is the item locked?
 

@@ -56,14 +56,15 @@
     @* Games *@
     <MudItem xs="9">
             <h2>Game: @Points.gameSelected</h2>
-
-@* 				<MudSelect T="string" @bind-Value="Games.gameSelected" Variant="Variant.Text">
-				@foreach (string game in Games.gameList)
-				{
-					<MudSelectItem Value="@game" />
-				}
-			</MudSelect> *@
-
+            @* Select Field *@
+            <MudItem>
+				<MudSelect Label="Select Game" @bind-Value="Points.gameSelected" Variant="Variant.Filled" Color="Color.Success" Style="width: 300px">
+                @foreach (var game in Points.gamesList)
+					{
+						<MudSelectItem Value="@game" Style="width: 300px">@game</MudSelectItem>
+					}
+				</MudSelect>
+            </MudItem>
     </MudItem>
 
 </MudGrid>

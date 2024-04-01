@@ -24,11 +24,15 @@
         @foreach (Binding binding in BindingTreesService.bindingsList)
         {
             string classString = "p-2; border-1";
-            @if (binding.isReplaceLocked)
+            @if (binding.isReplacerOwned)
             {
                 classString = "p-2; border-1; opacity-50";
 			}
             else if (!binding.isSubPrereqMet)
+            {
+                classString = "p-2; border-1; opacity-25";
+            }
+            else if (binding.isReplaceLocked)
             {
                 classString = "p-2; border-1; opacity-25";
             }
@@ -47,7 +51,7 @@
                     }
                     else
                     {
-                        @if (binding.isOwned && binding.CanBeLocked && BindingTreesService.padlocks.Enabled && !binding.isReplaceLocked)
+                        @if (binding.isOwned && binding.CanBeLocked && BindingTreesService.padlocks.Enabled && !binding.isReplacerOwned)
                         {
                             <MudButton 
                             Disabled="@(BindingTreesService.padlocks.Owned < 1)"
@@ -57,7 +61,7 @@
 
                         @if (binding.isOwned)
                         {
-                            if (binding.isPrereqLocked)
+                            if (binding.isParentOwned)
                             {
                                 if (!binding.CanBeLocked)
                                 {
@@ -95,16 +99,16 @@
                     }
                 </div>
             </MudPaper>
+
             @foreach (string prereq in binding.Prerequisites)
             {
-                Binding _prereq = BindingTreesService.GetBindingByName(prereq);
-
-                if (_prereq != null)
-                {
-                    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
-                        <line x1="@binding.Position.X * 100" y1="@binding.Position.Y * 100" x2="@_prereq.Position.X * 100" y2="@_prereq.Position.Y * 100" stroke="black" />
-                    </svg>
-                }
+                //draw lines between the binding and prereqs, behind the mudpaper
+                Binding prereqBinding = BindingTreesService.bindingsList.Find(x => x.Name == prereq);
+                if (prereqBinding != null)
+				{
+					string lineStyle = $"position: absolute; left: {binding.Position.X * 110 + 90}px; top: {binding.Position.Y * 110 + 45}px; width: {prereqBinding.Position.X * 110 + 90 - (binding.Position.X * 110 + 90)}px; height: {prereqBinding.Position.Y * 110 + 45 - (binding.Position.Y * 110 + 45)}px; border: 1px solid black; z-index: -1;";
+					<div style="@lineStyle"></div>
+				}
             }
         }
         @if (BindingTreesService.padlocks.Enabled)

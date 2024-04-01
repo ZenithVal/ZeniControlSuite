@@ -2,6 +2,17 @@ namespace ZeniControlSuite.Components;
 
 public class GamesPointsService : IHostedService
 {
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    #region Points
     public delegate void PointsUpdate();
     public event PointsUpdate? OnPointsUpdate;
 
@@ -11,14 +22,6 @@ public class GamesPointsService : IHostedService
     public double pointAddStreak { get; private set; } = 0;
     public double pointsPartial { get; private set; } = 0;
     public double pointsPartialFlipped { get; private set; } = 100;
-
-    public string gameSelected = "None";
-    public string[] gameList = [
-        "None",
-        "Placeholder A",
-        "Placeholder B",
-        "Placeholder C"
-    ];
 
     public void UpdatePoints(double points)
     {
@@ -97,14 +100,27 @@ public class GamesPointsService : IHostedService
 
 
     }
+    #endregion
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    #region Games
+    public delegate void GameUpdate();
+    public event GameUpdate? OnGameUpdate;
+
+    public string gameSelected = "None";
+    public string[] gamesList = [
+        "None",
+        "Placeholder A",
+        "Placeholder B",
+        "Placeholder C"
+    ];
+
+    public void UpdateGame(string game)
     {
-        return Task.CompletedTask;
+        gameSelected = game;
+
+        if (OnGameUpdate != null)
+            OnGameUpdate();
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
+    #endregion
 }

@@ -114,7 +114,7 @@ public partial class BindingManager : IDisposable
                 if (replacesLocked != "")
                 {
                     replacesLocked = BindingTreesService.StringFormatCommaList(replacesLocked);
-                    Log($"Can't add ({binding.Name}) ~ {replacesLocked} locked.", Severity.Warning);
+                    Log($"Can't add ({binding.Name}) ~ pre-requisite {replacesLocked} is locked.", Severity.Warning);
                     return;
                 }
             }
@@ -175,7 +175,7 @@ public partial class BindingManager : IDisposable
                 foreach (string prerequisite in binding.Prerequisites)
                 {
                     Binding prerequisiteBinding = BindingTreesService.GetBindingByName(prerequisite);
-                    prerequisiteBinding.isPrereqLocked = true;
+                    prerequisiteBinding.isParentOwned = true;
                 }
             }
 
@@ -184,7 +184,7 @@ public partial class BindingManager : IDisposable
                 foreach (string replace in binding.Replaces)
                 {
                     Binding replaceBinding = BindingTreesService.GetBindingByName(replace);
-                    replaceBinding.isReplaceLocked = true;
+                    replaceBinding.isReplacerOwned = true;
                 }
             }
 
@@ -237,7 +237,7 @@ public partial class BindingManager : IDisposable
                 return;
             }
 
-            if (binding.isPrereqLocked)
+            if (binding.isParentOwned)
             {
                 string prereqOfOwned = "";
                 //Look through all the bindings for anything that has this binding as a prereq
@@ -280,7 +280,7 @@ public partial class BindingManager : IDisposable
                     foreach (string prerequisite in binding.Prerequisites)
                     {
                         Binding prerequisiteBinding = BindingTreesService.GetBindingByName(prerequisite);
-                        prerequisiteBinding.isPrereqLocked = false;
+                        prerequisiteBinding.isParentOwned = false;
                     }
                 }
             }
@@ -291,7 +291,7 @@ public partial class BindingManager : IDisposable
                 foreach (string replace in binding.Replaces)
                 {
                     Binding replaceBinding = BindingTreesService.GetBindingByName(replace);
-                    replaceBinding.isReplaceLocked = false;
+                    replaceBinding.isReplacerOwned = false;
                 }
             }
 
@@ -335,6 +335,7 @@ public partial class BindingManager : IDisposable
             BindingTreesService.padlocks.Owned--;
             BindingTreesService.padlocks.Used++;
             Log($"Locked {binding.Name}.", Severity.Success);
+            BindingTreesService.CheckBindingRelations();
             BindingTreesService.InvokeBindingTreeUpdate();
             return;
         }

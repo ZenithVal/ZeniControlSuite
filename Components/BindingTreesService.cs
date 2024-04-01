@@ -125,11 +125,11 @@ public class BindingTreesService : IHostedService
         {
             if (!binding.Conflicts.Any(conflict => GetBindingByName(conflict).isOwned))
             {
-                binding.isConflictLocked = false;
+                binding.isConflictOwned = false;
             }
             else
             {
-                binding.isConflictLocked = true;
+                binding.isConflictOwned = true;
             }
 
             if (binding.Prerequisites.Count == 0)
@@ -137,7 +137,6 @@ public class BindingTreesService : IHostedService
                 binding.isPrereqMet = true;
                 binding.isSubPrereqMet = true;
             }
-
             else
             {
                 if (binding.Prerequisites.All(prereq => GetBindingByName(prereq).isOwned))
@@ -156,6 +155,18 @@ public class BindingTreesService : IHostedService
                     {
                         binding.isSubPrereqMet = true;
                     }
+                }
+            }
+
+            if (binding.Replaces.Count > 0)
+            {
+                if (binding.Replaces.Any(replace => GetBindingByName(replace).isLocked) || binding.Replaces.Any(replace => GetBindingByName(replace).isReplaceLocked))
+                {
+                    binding.isReplaceLocked = true;
+                }
+                else
+                {
+                    binding.isReplaceLocked = false;
                 }
             }
         }
