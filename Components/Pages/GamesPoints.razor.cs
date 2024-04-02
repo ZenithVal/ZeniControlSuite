@@ -1,64 +1,66 @@
 ﻿using Microsoft.AspNetCore.Components;
-using static ZeniControlSuite.Components.GamesPointsService;
-
+using static ZeniControlSuite.Components.BindingTreesService;
 namespace ZeniControlSuite.Components.Pages;
 
 public partial class GamesPoints : IDisposable
 {
     public static bool pageEnabled = true;
 
-    [Inject]
-    private GamesPointsService Points { get; set; } = default!;
+    [Inject] 
+    private GamesPointsService GPS { get; set; } = default!;
 
     protected override void OnInitialized()
     {
-        Points.OnPointsUpdate += OnPointsUpdate;
+        GPS.OnGamesPointsUpdate += OnGamesPointsUpdate;
     }
-
-    private void OnPointsUpdate()
+    private void OnGamesPointsUpdate()
     {
         InvokeAsync(StateHasChanged);
     }
+
     public void Dispose()
     {
-        Points.OnPointsUpdate -= OnPointsUpdate;
+        GPS.OnGamesPointsUpdate -= OnGamesPointsUpdate;
+    }
+
+    public void btnUpdate()
+    {
+        GPS.Update();
     }
 
     #region Manual Buttons
     private void btnAddWhole()
     {
-        Points.UpdatePoints(1.0);
+        GPS.UpdatePoints(1.0);
     }
 
     private void btnAddThird()
     {
-        Points.UpdatePoints(1.0 / 3);
+        GPS.UpdatePoints(1.0 / 3);
     }
 
     private void btnAddFourth()
     {
-        Points.UpdatePoints(1.0 / 4);
+        GPS.UpdatePoints(1.0 / 4);
     }
 
     private void btnSubWhole()
     {
-        Points.UpdatePoints(-1);
+        GPS.UpdatePoints(-1);
     }
 
     private void btnSubThird()
     {
-        Points.UpdatePoints(-1.0 / 3);
+        GPS.UpdatePoints(-1.0 / 3);
     }
 
     private void btnSubFourth()
     {
-        Points.UpdatePoints(-1.0 / 4);
+        GPS.UpdatePoints(-1.0 / 4);
     }
     #endregion
 
-
     #region Games
-
     #endregion
 
 }

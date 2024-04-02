@@ -4,6 +4,15 @@ public class GamesPointsService : IHostedService
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        try
+        {
+            ParseGames();
+        }
+        catch (Exception e)
+        {
+            gamesList.Add(new Game { Name = "None", Description = new List<string> { "No games found." } });
+            Console.WriteLine(e.Message);
+        }
         return Task.CompletedTask;
     }
 
@@ -13,15 +22,21 @@ public class GamesPointsService : IHostedService
     }
 
     #region Points
-    public delegate void PointsUpdate();
-    public event PointsUpdate? OnPointsUpdate;
 
+    public delegate void GamesPointsUpdate();
+    public event GamesPointsUpdate? OnGamesPointsUpdate;
     public string pointsDisplay { get; private set; } = "0";
     public double pointsTotal { get; private set; } = 0;
     public double pointsWhole { get; private set; } = 0;
     public double pointAddStreak { get; private set; } = 0;
     public double pointsPartial { get; private set; } = 0;
     public double pointsPartialFlipped { get; private set; } = 100;
+
+    public void Update()
+    {
+        if (OnGamesPointsUpdate != null)
+            OnGamesPointsUpdate();
+    }
 
     public void UpdatePoints(double points)
     {
@@ -58,8 +73,7 @@ public class GamesPointsService : IHostedService
 
         FractionalScore(pointsTotal);
 
-        if (OnPointsUpdate != null)
-            OnPointsUpdate();
+        Update();
     }
 
     public void FractionalScore(double value)
@@ -100,26 +114,47 @@ public class GamesPointsService : IHostedService
 
 
     }
+
     #endregion
 
     #region Games
-    public delegate void GameUpdate();
-    public event GameUpdate? OnGameUpdate;
+    public Game gameSelected { get; set; }
+    public List<Game> gamesList = new List<Game>();
+    public bool AutoGame { get; set; } = true;
 
-    public string gameSelected = "None";
-    public string[] gamesList = [
-        "None",
-        "Placeholder A",
-        "Placeholder B",
-        "Placeholder C"
-    ];
-
-    public void UpdateGame(string game)
+    public void UpdateGame(Game game)
     {
         gameSelected = game;
 
-        if (OnGameUpdate != null)
-            OnGameUpdate();
+        Update();
+    }
+
+    //Parse Games.ini file for games
+    public void ParseGames()
+    {
+        string ini = "Configs/Games.ini";
+
+        if (!File.Exists(ini))
+        {
+            gamesList.Add(new Game { Name = "None", Description = new List<string> { "No games found." } });
+            return;
+        }
+        string[] lines = File.ReadAllLines(ini);
+        
+        foreach (string line in lines)
+        {
+            //if the line starts with [ then it's a new game
+            if (line.StartsWith("["))
+            {
+                gamesList.Add(new Game { Name = line.Replace("[", "").Replace("]", ""), Description = new List<string>() });
+            }
+            else
+            {
+                gamesList.Last().Description.Add(line);
+            }
+        }
+
+        gameSelected = gamesList.First();
     }
 
     #endregion

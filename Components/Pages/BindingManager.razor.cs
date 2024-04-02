@@ -14,7 +14,7 @@ public partial class BindingManager : IDisposable
 
     protected override void OnInitialized()
     {
-        Points.OnPointsUpdate += OnPointsUpdate;
+        Points.OnGamesPointsUpdate += OnPointsUpdate;
         BindingTreesService.OnBindingTreeUpdate += OnBindingTreeUpdate;
     }
 
@@ -373,7 +373,7 @@ public partial class BindingManager : IDisposable
 
     public void Dispose()
     {
-        Points.OnPointsUpdate -= OnPointsUpdate;
+        Points.OnGamesPointsUpdate -= OnPointsUpdate;
         BindingTreesService.OnBindingTreeUpdate -= OnBindingTreeUpdate;
     }
 
