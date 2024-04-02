@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using MudBlazor;
 
 namespace ZeniControlSuite.Components.Pages;
 public partial class BindingManager : IDisposable
 {
     public static bool pageEnabled = true;
-    [Inject] private GamesPointsService Points { get; set; } = default!;
+    [Inject] private GamesPointsService GPService { get; set; } = default!;
     [Inject] private BindingTreesService BindingTreesService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private LogService LogService { get; set; } = default!;
@@ -19,7 +18,7 @@ public partial class BindingManager : IDisposable
 
     protected override void OnInitialized()
     {
-        Points.OnGamesPointsUpdate += OnPointsUpdate;
+        GPService.OnGamesPointsUpdate += OnPointsUpdate;
         BindingTreesService.OnBindingTreeUpdate += OnBindingTreeUpdate;
         LogService.AddLog(pageName, user, "PageLoad: Binding Manager", Severity.Normal);
     }
@@ -127,7 +126,7 @@ public partial class BindingManager : IDisposable
                 }
             }
 
-            if (Points.pointsTotal < binding.PointValue)
+            if (GPService.pointsTotal < binding.PointValue)
             {
                 Log($"Can't add ({binding.Name}) ~ Need {binding.PointValue}p", Severity.Warning);
                 return;
@@ -143,7 +142,7 @@ public partial class BindingManager : IDisposable
             //Successfully Bought
             binding.isOwned = true;
             binding.isBuyable = false;
-            Points.UpdatePoints(-binding.PointValue);
+            GPService.UpdatePoints(-binding.PointValue);
             Log($"Added ({binding.Name}) for {binding.PointValue}p", Severity.Success);
             BindingTreesService.CheckBindingRelations();
 
@@ -267,7 +266,7 @@ public partial class BindingManager : IDisposable
             binding.isOwned = false;
             binding.isSellable = false;
             binding.isBuyable = true;
-            Points.UpdatePoints(binding.PointValue);
+            GPService.UpdatePoints(binding.PointValue);
             Log($"Removed {binding.Name} ~ Refunded {binding.PointValue}p", Severity.Normal);
             BindingTreesService.CheckBindingRelations();
 
@@ -359,9 +358,9 @@ public partial class BindingManager : IDisposable
         //If total locks less than limit, has enough points, and not already owned, buy it.
         if ((BindingTreesService.padlocks.OwnedUsed) < BindingTreesService.padlocks.Limit)
         {
-            if (BindingTreesService.padlocks.Cost <= Points.pointsTotal)
+            if (BindingTreesService.padlocks.Cost <= GPService.pointsTotal)
             {
-                Points.UpdatePoints(-BindingTreesService.padlocks.Cost);
+                GPService.UpdatePoints(-BindingTreesService.padlocks.Cost);
                 BindingTreesService.padlocks.Owned++;
                 Log($"Bought Lock ({BindingTreesService.padlocks.Owned + BindingTreesService.padlocks.Used} of {BindingTreesService.padlocks.Limit}) for {BindingTreesService.padlocks.Cost}", Severity.Success);
                 BindingTreesService.padlocks.Cost += BindingTreesService.padlocks.CostIncrease;
@@ -381,7 +380,7 @@ public partial class BindingManager : IDisposable
 
     public void Dispose()
     {
-        Points.OnGamesPointsUpdate -= OnPointsUpdate;
+        GPService.OnGamesPointsUpdate -= OnPointsUpdate;
         BindingTreesService.OnBindingTreeUpdate -= OnBindingTreeUpdate;
     }
 

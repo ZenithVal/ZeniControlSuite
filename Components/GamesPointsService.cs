@@ -1,9 +1,11 @@
-﻿using MudBlazor;
+﻿using System.Diagnostics;
+using MudBlazor;
 namespace ZeniControlSuite.Components;
 
 public class GamesPointsService : IHostedService
 {
-    
+    public List<EventLog> eventLogs = new List<EventLog>();
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
         try

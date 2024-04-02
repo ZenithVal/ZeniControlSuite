@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
-namespace ZeniControlSuite.Components.Pages;
-
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using MudBlazor;
+
+namespace ZeniControlSuite.Components.Pages;
 
 public partial class GamesPoints : IDisposable
 {
@@ -13,12 +12,12 @@ public partial class GamesPoints : IDisposable
     double third = 0.33333333; 
     double fourth = 0.25;
 
-    [Inject] private GamesPointsService GPS { get; set; } = default!;
+    [Inject] private GamesPointsService GPService { get; set; } = default!;
     [Inject] private LogService LogService { get; set; } = default!;
 
     protected override void OnInitialized()
     {
-        GPS.OnGamesPointsUpdate += OnGamesPointsUpdate;
+        GPService.OnGamesPointsUpdate += OnGamesPointsUpdate;
         LogService.AddLog(pageName, user, "PageLoad: Games & Points", Severity.Normal);
     }
 
@@ -29,17 +28,17 @@ public partial class GamesPoints : IDisposable
 
     public void Dispose()
     {
-        GPS.OnGamesPointsUpdate -= OnGamesPointsUpdate;
+        GPService.OnGamesPointsUpdate -= OnGamesPointsUpdate;
     }
 
     public void btnUpdate()
     {
-        GPS.Update();
+        GPService.Update();
     }
 
     private void btnPoints(double points)
     {
-        GPS.UpdatePoints(points);
+        GPService.UpdatePoints(points);
         string sign = points > 0 ? "+" : "";
         LogService.AddLog("PointsManual", "System", $"{sign}{points}p", Severity.Normal, Variant.Outlined);
     }
