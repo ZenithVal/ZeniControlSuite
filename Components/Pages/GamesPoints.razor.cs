@@ -1,18 +1,27 @@
 ﻿using Microsoft.AspNetCore.Components;
-using static ZeniControlSuite.Components.BindingTreesService;
 namespace ZeniControlSuite.Components.Pages;
+
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using MudBlazor;
 
 public partial class GamesPoints : IDisposable
 {
     public static bool pageEnabled = true;
+    private string user = "Undefined"; //Will later be replaced with the user's name via discord Auth
+    private string pageName = "Games & Points";
 
-    [Inject] 
-    private GamesPointsService GPS { get; set; } = default!;
+    double third = 0.33333333; 
+    double fourth = 0.25;
+
+    [Inject] private GamesPointsService GPS { get; set; } = default!;
+    [Inject] private LogService LogService { get; set; } = default!;
 
     protected override void OnInitialized()
     {
         GPS.OnGamesPointsUpdate += OnGamesPointsUpdate;
+        LogService.AddLog(pageName, user, "PageLoad: Games & Points", Severity.Normal);
     }
+
     private void OnGamesPointsUpdate()
     {
         InvokeAsync(StateHasChanged);
@@ -28,35 +37,42 @@ public partial class GamesPoints : IDisposable
         GPS.Update();
     }
 
+    private void btnPoints(double points)
+    {
+        GPS.UpdatePoints(points);
+        string sign = points > 0 ? "+" : "";
+        LogService.AddLog("PointsManual", "System", $"{sign}{points}p", Severity.Normal, Variant.Outlined);
+    }
+
     #region Manual Buttons
     private void btnAddWhole()
     {
-        GPS.UpdatePoints(1.0);
+        btnPoints(1.0);
     }
 
     private void btnAddThird()
     {
-        GPS.UpdatePoints(1.0 / 3);
+        btnPoints(third);
     }
 
     private void btnAddFourth()
     {
-        GPS.UpdatePoints(1.0 / 4);
+        btnPoints(fourth);
     }
 
     private void btnSubWhole()
     {
-        GPS.UpdatePoints(-1);
+        btnPoints(-1.0);
     }
 
     private void btnSubThird()
     {
-        GPS.UpdatePoints(-1.0 / 3);
+        btnPoints(-third);
     }
 
     private void btnSubFourth()
     {
-        GPS.UpdatePoints(-1.0 / 4);
+        btnPoints(-fourth);
     }
     #endregion
 

@@ -1,9 +1,9 @@
 ﻿using MudBlazor;
-
 namespace ZeniControlSuite.Components;
 
 public class GamesPointsService : IHostedService
 {
+    
     public Task StartAsync(CancellationToken cancellationToken)
     {
         try
@@ -42,6 +42,12 @@ public class GamesPointsService : IHostedService
 
     public void UpdatePoints(double points)
     {
+        if (points == 0)
+        {
+            Update();
+            return;
+        }
+        
         pointsTotal += points;
         pointAddStreak = Math.Clamp(pointAddStreak + points, -1, 1);
         pointsWhole = Math.Truncate(pointsTotal);
@@ -122,8 +128,8 @@ public class GamesPointsService : IHostedService
     #region Games
     public Game gameSelected { get; set; }
     public List<Game> gamesList = new List<Game>();
-    
-    public bool AutoGameRunning { get; set; } = true;
+
+    public bool AutoGameRunning { get; set; } = false;
     public string localPlayerName { get; set; } = "localPlayer";
     public string remotePlayerName { get; set; } = "remotePlayer";
 

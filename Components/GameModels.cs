@@ -13,4 +13,3 @@ public class Game
 
     public bool AutoGameCapable { get; set; }
 }
-

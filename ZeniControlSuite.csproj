@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Components\Panel_Logs.razor.cs" />
     <Content Include="Resources\Collar.ico" />
   </ItemGroup>
 

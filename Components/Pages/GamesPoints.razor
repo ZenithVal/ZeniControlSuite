@@ -1,6 +1,6 @@
 ﻿@page "/Points&Games"
 
-<PageTitle>Games & Points </PageTitle>
+<PageTitle>Points & Games</PageTitle>
 
 <h1>Games & Points</h1>
 <MudDivider></MudDivider>
@@ -10,7 +10,7 @@
 
     @* Points *@
     <MudItem xs="3">
-	    <h2>Points</h2>
+	    @* <h2>Points</h2> *@
         <MudGrid Justify="Justify.Center" Style="width: 380px;align-items:center">
             <MudItem xs="4">
                 <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="btnAddWhole" Style="background-color: #00C853; color: white; width: 88px; height: 62px; font-size: 18pt;">+1</MudButton>
@@ -24,7 +24,7 @@
                 
             <MudItem xs="12">
                 <MudItem>
-                    <MudText Typo="Typo.h6" Align="Align.Center">Total: @GPS.pointsWhole</MudText>
+                    <MudText Typo="Typo.h6" Align="Align.Center">Points: @(Math.Truncate(GPS.pointsTotal * 100)/100)</MudText>
                 </MudItem>
                 <MudItem>
                     @if (GPS.pointsTotal >= 0)
@@ -48,12 +48,22 @@
                 <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="btnSubFourth" Style="background-color: #F44336; color: white; width: 88px; height: 62px; font-size: 18pt;">-1/4</MudButton>
             </MudItem>
 
+
+            <MudItem xs="12">
+                <MudPaper>
+                    <MudText Typo="Typo.h6" Align="Align.Center">Game Controls</MudText>
+                    <MudDivider></MudDivider>
+                    <MudText Typo="Typo.body1" Align="Align.Center"></MudText>
+                </MudPaper>
+            </MudItem>
+
             <MudItem xs="6">
                     <MudTextField Label="Local User" @bind-Value="GPS.localPlayerName" Variant="Variant.Text" Style="height: 35px" /> 
             </MudItem>
             <MudItem xs="6">
 					<MudTextField Label="Remote User" @bind-Value="GPS.remotePlayerName" Variant="Variant.Text" Style="height: 35px" />
             </MudItem>
+
 
         </MudGrid>
     </MudItem>
@@ -89,6 +99,20 @@
                 }
             }
         </MudItem> 
+
+    </MudItem>
+
+    @* AutoGame Logs *@
+    <MudItem>
+
+        <MudItem>
+			<MudText Typo="Typo.h6">AutoGame Logs</MudText>
+		</MudItem>
+
+        @foreach (LogEvent logevent in LogService.logEvents.OrderByDescending(e => e.time))
+        {
+            <MudAlert Dense="true" Severity="@logevent.severity">@logevent.time | @logevent.message</MudAlert>
+        }
 
     </MudItem>
 

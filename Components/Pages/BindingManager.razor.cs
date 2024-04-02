@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using MudBlazor;
 
 namespace ZeniControlSuite.Components.Pages;
@@ -8,14 +9,19 @@ public partial class BindingManager : IDisposable
     [Inject] private GamesPointsService Points { get; set; } = default!;
     [Inject] private BindingTreesService BindingTreesService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private LogService LogService { get; set; } = default!;
 
     private static Dictionary<string, System.Timers.Timer> temporaryTimers = new Dictionary<string, System.Timers.Timer>();
     private static string hoverBindingDescription = "";
+
+    private string user = "Undefined"; //Will later be replaced with the user's name via discord Auth
+    private string pageName = "Binding Manager";
 
     protected override void OnInitialized()
     {
         Points.OnGamesPointsUpdate += OnPointsUpdate;
         BindingTreesService.OnBindingTreeUpdate += OnBindingTreeUpdate;
+        LogService.AddLog(pageName, user, "PageLoad: Binding Manager", Severity.Normal);
     }
 
     private void OnPointsUpdate()
@@ -35,6 +41,8 @@ public partial class BindingManager : IDisposable
 
     private void Log(string message, Severity severity)
     {
+        LogService.AddLog(pageName, user, message, severity);
+
         Console.WriteLine(DateTime.Now + " | " + message);
         Snackbar.Add(message, severity);
         BindingTreesService.lastLog = message;
