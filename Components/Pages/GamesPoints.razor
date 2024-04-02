@@ -11,7 +11,7 @@
     @* Points *@
     <MudItem xs="3">
 	    <h2>Points</h2>
-        <MudGrid Justify="Justify.Center" Style="width: 300px;align-items:center">
+        <MudGrid Justify="Justify.Center" Style="width: 380px;align-items:center">
             <MudItem xs="4">
                 <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="btnAddWhole" Style="background-color: #00C853; color: white; width: 88px; height: 62px; font-size: 18pt;">+1</MudButton>
             </MudItem>
@@ -29,11 +29,11 @@
                 <MudItem>
                     @if (GPS.pointsTotal >= 0)
 			        {
-                        <MudProgressLinear Class="mt-4" Size="Size.Large" Rounded="true" Variant="Variant.Determinate" Value="@GPS.pointsPartial" Color="Color.Success" Style="height: 35px;width: 288px"/>
+                        <MudProgressLinear Class="mt-4" Size="Size.Large" Rounded="true" Variant="Variant.Determinate" Value="@GPS.pointsPartial" Color="Color.Success" Style="height: 35px;width: 345px;"/>
 			        }
 			        else
 			        {
-                        <MudProgressLinear Class="mt-4" Size="Size.Large" Rounded="true" Variant="Variant.Determinate" Value="@GPS.pointsPartialFlipped" Color="Color.Error" Style="offset-rotate: reverse;height: 35px" />
+                        <MudProgressLinear Class="mt-4" Size="Size.Large" Rounded="true" Variant="Variant.Determinate" Value="@GPS.pointsPartialFlipped" Color="Color.Error" Style="height: 35px;width: 345px;offset-rotate: reverse;"/>
 			        }
                 </MudItem>
             </MudItem>
@@ -59,7 +59,7 @@
     </MudItem>
 
     @* Games *@
-    <MudItem xs="4">
+    <MudItem xs="5">
         <MudItem>
             <MudSelect OnClose="btnUpdate" Label="Select a game" @bind-Value="GPS.gameSelected" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px">
 				@foreach (Game game in GPS.gamesList)
@@ -69,7 +69,9 @@
             </MudSelect>
         </MudItem>
 
-        <MudItem>
+        <br />
+
+        <MudItem Class="ma-0" Style="height:700px;overflow: auto;">
             @foreach (Game.Line line in GPS.gameSelected.Description)
             {
                 if (line.text == "")
