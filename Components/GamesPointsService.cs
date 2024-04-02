@@ -1,3 +1,5 @@
+﻿using MudBlazor;
+
 namespace ZeniControlSuite.Components;
 
 public class GamesPointsService : IHostedService
@@ -10,8 +12,8 @@ public class GamesPointsService : IHostedService
         }
         catch (Exception e)
         {
-            gamesList.Add(new Game { Name = "None", Description = new List<string> { "No games found." } });
-            Console.WriteLine(e.Message);
+            gamesList.Add(new Game { Name = "Error", Description = new List<Game.Line> { new Game.Line { typo = Typo.body1, text = "Games.ini parsing failed: " + e.Message } } });
+            Console.WriteLine("Games.ini parsing failed: " + e.Message);
         }
         return Task.CompletedTask;
     }
@@ -120,14 +122,10 @@ public class GamesPointsService : IHostedService
     #region Games
     public Game gameSelected { get; set; }
     public List<Game> gamesList = new List<Game>();
-    public bool AutoGame { get; set; } = true;
-
-    public void UpdateGame(Game game)
-    {
-        gameSelected = game;
-
-        Update();
-    }
+    
+    public bool AutoGameRunning { get; set; } = true;
+    public string localPlayerName { get; set; } = "localPlayer";
+    public string remotePlayerName { get; set; } = "remotePlayer";
 
     //Parse Games.ini file for games
     public void ParseGames()
@@ -136,25 +134,53 @@ public class GamesPointsService : IHostedService
 
         if (!File.Exists(ini))
         {
-            gamesList.Add(new Game { Name = "None", Description = new List<string> { "No games found." } });
             return;
         }
         string[] lines = File.ReadAllLines(ini);
         
         foreach (string line in lines)
         {
-            //if the line starts with [ then it's a new game
             if (line.StartsWith("["))
             {
-                gamesList.Add(new Game { Name = line.Replace("[", "").Replace("]", ""), Description = new List<string>() });
+                gamesList.Add(new Game { Name = line.Replace("[", "").Replace("]", ""), Description = new List<Game.Line>() });
             }
             else
             {
-                gamesList.Last().Description.Add(line);
+                string editedLine = line;
+                Typo level = Typo.body1;
+
+                if (editedLine.StartsWith("\t"))
+                {
+                    editedLine = editedLine.Substring(1);
+                }
+
+                if (editedLine.Contains("H= "))
+                {
+                    editedLine = editedLine.Replace("H= ", "");
+                    level = Typo.h5;
+                }
+                else if (editedLine.Contains("H== "))
+                {
+                    editedLine = editedLine.Replace("H== ", "");
+                    level = Typo.h6;
+                }
+
+                editedLine = editedLine.Replace("\t", " ");
+                editedLine = editedLine.Replace("*", " •");
+
+                gamesList.Last().Description.Add(new Game.Line { typo = level, text = editedLine });
             }
         }
 
         gameSelected = gamesList.First();
+
+        Game firstGame = gamesList.First();
+        gamesList = gamesList.OrderBy(x => x.Name).ToList();
+
+        gamesList.Remove(firstGame);
+        gamesList.Insert(0, firstGame);
+
+        Update();
     }
 
     #endregion
