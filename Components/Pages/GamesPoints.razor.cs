@@ -78,6 +78,12 @@ public partial class GamesPoints : IDisposable
 
     private void ChangeGame()
     {
+        if (GPService.AutoGameRunning)
+        {
+            LogService.AddLog(pageName, user, "Cannot Change Game While AutoGame is Running", Severity.Error, Variant.Outlined);
+            return;
+        }
+
         GPService.ChangeGame(localGame); 
         LogService.AddLog(pageName, user, $"Synced Game Changed to {localGame.Name}", Severity.Info, Variant.Outlined);
     }
