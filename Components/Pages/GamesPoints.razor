@@ -64,14 +64,15 @@
 					<MudTextField Label="Remote User" @bind-Value="GPService.remotePlayerName" Variant="Variant.Text" Style="height: 35px" />
             </MudItem>
 
-
         </MudGrid>
     </MudItem>
 
     @* Games *@
     <MudItem xs="5">
         <MudItem>
-            <MudSelect OnClose="btnUpdate" Label="Select a game" @bind-Value="GPService.gameSelected" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px">
+            <MudSelect 
+                Label="Select a game" @bind-Value="localGame" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px"
+                       ReadOnly="@GPService.AutoGameRunning" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CloudUpload" OnAdornmentClick="ChangeGame">
 				@foreach (Game game in GPService.gamesList)
                 {
                     <MudSelectItem Value="@game">@game.Name</MudSelectItem>
@@ -103,15 +104,18 @@
     </MudItem>
 
     @* AutoGame Logs *@
-    <MudItem>
+    <MudItem Class="ma-0" Style="height:700px;overflow: auto;">
 
         <MudItem>
-			<MudText Typo="Typo.h6">AutoGame Logs</MudText>
+			<MudText Typo="Typo.h6">Point Logs</MudText>
 		</MudItem>
 
         @foreach (LogEvent logevent in LogService.logEvents.OrderByDescending(e => e.time))
         {
-            <MudAlert Dense="true" Severity="@logevent.severity">@logevent.time | @logevent.message</MudAlert>
+            if (logevent.source == "Games & Points" && logevent.severity == Severity.Info)
+			{
+				<MudAlert Dense="true" Severity="Severity.Normal">@logevent.message</MudAlert>
+			}
         }
 
     </MudItem>

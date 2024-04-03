@@ -17,12 +17,14 @@ public partial class GamesPoints : IDisposable
 
     protected override void OnInitialized()
     {
+        localGame = GPService.gameSelected;
         GPService.OnGamesPointsUpdate += OnGamesPointsUpdate;
         LogService.AddLog(pageName, user, "PageLoad: Games & Points", Severity.Normal);
     }
 
     private void OnGamesPointsUpdate()
     {
+        localGame = GPService.gameSelected;
         InvokeAsync(StateHasChanged);
     }
 
@@ -31,51 +33,56 @@ public partial class GamesPoints : IDisposable
         GPService.OnGamesPointsUpdate -= OnGamesPointsUpdate;
     }
 
-    public void btnUpdate()
-    {
-        GPService.Update();
-    }
-
-    private void btnPoints(double points)
+    #region Manual Buttons
+    private void BtnModPoints(double points)
     {
         GPService.UpdatePoints(points);
         string sign = points > 0 ? "+" : "";
-        LogService.AddLog("PointsManual", "System", $"{sign}{points}p", Severity.Normal, Variant.Outlined);
+        LogService.AddLog(pageName, user, $"{sign}{points}p", Severity.Info, Variant.Outlined);
     }
 
-    #region Manual Buttons
     private void btnAddWhole()
     {
-        btnPoints(1.0);
+        BtnModPoints(1.0);
     }
 
     private void btnAddThird()
     {
-        btnPoints(third);
+        BtnModPoints(third);
     }
 
     private void btnAddFourth()
     {
-        btnPoints(fourth);
+        BtnModPoints(fourth);
     }
 
     private void btnSubWhole()
     {
-        btnPoints(-1.0);
+        BtnModPoints(-1.0);
     }
 
     private void btnSubThird()
     {
-        btnPoints(-third);
+        BtnModPoints(-third);
     }
 
     private void btnSubFourth()
     {
-        btnPoints(-fourth);
+        BtnModPoints(-fourth);
     }
     #endregion
 
     #region Games
+
+    private Game localGame = new Game();
+
+    private void ChangeGame()
+    {
+        GPService.ChangeGame(localGame); 
+        LogService.AddLog(pageName, user, $"Synced Game Changed to {localGame.Name}", Severity.Info, Variant.Outlined);
+    }
+
+
     #endregion
 
 }

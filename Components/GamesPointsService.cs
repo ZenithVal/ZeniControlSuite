@@ -191,5 +191,11 @@ public class GamesPointsService : IHostedService
         Update();
     }
 
+    public void ChangeGame(Game game)
+    {
+        gameSelected = game;
+        Update();
+    }
+
     #endregion
 }
