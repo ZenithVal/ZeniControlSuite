@@ -9,7 +9,7 @@
 
 @* Information *@
 <MudPaper Class="bg-transparent" Style="display: flex; flex-direction: row; align-items: center;">
-    <MudAlert Dense="true" Variant="Variant.Outlined" Severity="Severity.Success">Points: @PointsService.pointsDisplay</MudAlert>
+    <MudAlert Dense="true" Variant="Variant.Outlined" Severity="Severity.Success">Points: @PointsService.pointsTruncated</MudAlert>
     <MudAlert Dense="true" Severity="@BindingTreesService.lastLogSeverity">Last Event: @BindingTreesService.lastLog </MudAlert>
     <MudAlert Dense="true" Severity="Severity.Info">@hoverBindingDescription </MudAlert>
 </MudPaper>

@@ -12,7 +12,7 @@
 
     <MudItem xs="12">
         <MudItem>
-            <MudText Typo="Typo.h6" Align="Align.Center">Points: @(Math.Truncate(PointsService.pointsTotal * 100) / 100)</MudText>
+            <MudText Typo="Typo.h6" Align="Align.Center">Points: @PointsService.pointsTruncated</MudText>
         </MudItem>
         <MudItem>
             @if (PointsService.pointsTotal >= 0)

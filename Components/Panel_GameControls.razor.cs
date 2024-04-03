@@ -41,7 +41,7 @@ public partial class Panel_GameControls : IDisposable
 		}
 
 		GamesService.ChangeNames(localPlayerName, remotePlayerName);
-		LogService.AddLog(pageName, user, "Usernames changed", Severity.Info, Variant.Outlined);
+		LogService.AddLog(pageName, user, $"Usernames changed: {localPlayerName} & {remotePlayerName} ", Severity.Info, Variant.Outlined);
 	}
 
     private void AutoGameStart()

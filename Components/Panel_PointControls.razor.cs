@@ -9,7 +9,7 @@ public partial class Panel_PointControls : IDisposable
     private string user = "Undefined"; //Will later be replaced with the user's name via discord Auth
     private string pageName = "GamesPoints-PointControls";
 
-    double third = 0.33333333;
+    double third = 0.333;
     double fourth = 0.25;
 
     [Inject] private LogService LogService { get; set; } = default!;
@@ -18,7 +18,6 @@ public partial class Panel_PointControls : IDisposable
     protected override void OnInitialized()
     {
         PointsService.OnPointsUpdate += OnPointsUpdate;
-        LogService.AddLog(pageName, user, "PageLoad: Games & Points", Severity.Normal);
     }
 
     private void OnPointsUpdate()
@@ -35,8 +34,8 @@ public partial class Panel_PointControls : IDisposable
     private void BtnModPoints(double points)
     {
         PointsService.UpdatePoints(points);
-        string sign = points > 0 ? "+" : "";
-        LogService.AddLog(pageName, user, $"{sign}{points}p", Severity.Info, Variant.Outlined);
+        string sign = points > 0 ? "Added +" : "Removed ";
+        LogService.AddLog(pageName, user, $"{sign}{points}p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
     }
 
     private void btnAddWhole()

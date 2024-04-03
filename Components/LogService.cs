@@ -24,6 +24,12 @@ public class LogService : IHostedService
         logEvents.Add(new LogEvent {source = source, user = user, message = message, severity = severity, variant = variant });
         if (OnLogsUpdate != null)
             OnLogsUpdate();
+
+        if (logEvents.Count > 100)
+        {
+			logEvents.RemoveAt(0);
+		}
+        //Dont think this matters, but just in case...
     }
 }
 

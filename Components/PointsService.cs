@@ -22,6 +22,8 @@ public class PointsService : IHostedService
     }
 
     public string pointsDisplay { get; private set; } = "0";
+
+    public double pointsTruncated { get; private set; } = 0;
     public double pointsTotal { get; private set; } = 0;
     public double pointsWhole { get; private set; } = 0;
     public double pointAddStreak { get; private set; } = 0;
@@ -67,9 +69,10 @@ public class PointsService : IHostedService
             pointsPartialFlipped = 100 - pointsPartial;
         }
 
-        FractionalScore(pointsTotal);
+        //FractionalScore(pointsTotal);
+        pointsTruncated = (Math.Truncate(pointsTotal * 100) / 100);
 
-        Update();
+		Update();
     }
 
     public void FractionalScore(double value)
