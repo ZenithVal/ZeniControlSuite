@@ -1,16 +1,12 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider IsDarkMode=true/>
-<MudDialogProvider/>
-<MudSnackbarProvider/>
+<MudThemeProvider IsDarkMode=true />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <div class="page">
 
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main style="overflow: scroll;">
+    <main style="overflow: scroll; display: flex; justify-content: center; align-items: center;">
         <article class="content px-4;">
             @Body
         </article>
