@@ -26,8 +26,11 @@ builder.Services.AddMudServices(config =>
 builder.Services.AddSingleton<LogService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<LogService>());
 
-builder.Services.AddSingleton<GamesPointsService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<GamesPointsService>());
+builder.Services.AddSingleton<GamesService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<GamesService>());
+
+builder.Services.AddSingleton<PointsService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<PointsService>());
 
 builder.Services.AddSingleton<BindingTreesService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<BindingTreesService>());

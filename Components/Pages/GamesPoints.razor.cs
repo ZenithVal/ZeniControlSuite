@@ -12,31 +12,39 @@ public partial class GamesPoints : IDisposable
     double third = 0.33333333; 
     double fourth = 0.25;
 
-    [Inject] private GamesPointsService GPService { get; set; } = default!;
     [Inject] private LogService LogService { get; set; } = default!;
+    [Inject] private PointsService PointsService { get; set; } = default!;
+    [Inject] private GamesService GamesService { get; set; } = default!;
 
     protected override void OnInitialized()
     {
-        localGame = GPService.gameSelected;
-        GPService.OnGamesPointsUpdate += OnGamesPointsUpdate;
+        localGame = GamesService.gameSelected;
+        PointsService.OnPointsUpdate += OnPointsUpdate;
+        GamesService.OnGamesUpdate += OnGamesUpdate;
         LogService.AddLog(pageName, user, "PageLoad: Games & Points", Severity.Normal);
     }
 
-    private void OnGamesPointsUpdate()
+    private void OnPointsUpdate()
     {
-        localGame = GPService.gameSelected;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnGamesUpdate()
+    {
+        localGame = GamesService.gameSelected;
         InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
     {
-        GPService.OnGamesPointsUpdate -= OnGamesPointsUpdate;
+        PointsService.OnPointsUpdate -= OnPointsUpdate;
+        GamesService.OnGamesUpdate -= OnGamesUpdate;
     }
 
     #region Manual Buttons
     private void BtnModPoints(double points)
     {
-        GPService.UpdatePoints(points);
+        PointsService.UpdatePoints(points);
         string sign = points > 0 ? "+" : "";
         LogService.AddLog(pageName, user, $"{sign}{points}p", Severity.Info, Variant.Outlined);
     }
@@ -78,13 +86,13 @@ public partial class GamesPoints : IDisposable
 
     private void ChangeGame()
     {
-        if (GPService.AutoGameRunning)
+        if (GamesService.AutoGameRunning)
         {
             LogService.AddLog(pageName, user, "Cannot Change Game While AutoGame is Running", Severity.Error, Variant.Outlined);
             return;
         }
 
-        GPService.ChangeGame(localGame); 
+        GamesService.ChangeGame(localGame); 
         LogService.AddLog(pageName, user, $"Synced Game Changed to {localGame.Name}", Severity.Info, Variant.Outlined);
     }
 

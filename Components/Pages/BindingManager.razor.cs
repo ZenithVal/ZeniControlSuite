@@ -5,10 +5,11 @@ namespace ZeniControlSuite.Components.Pages;
 public partial class BindingManager : IDisposable
 {
     public static bool pageEnabled = true;
-    [Inject] private GamesPointsService GPService { get; set; } = default!;
+
+    [Inject] private LogService LogsService { get; set; } = default!;
+    [Inject] private PointsService PointsService { get; set; } = default!;
     [Inject] private BindingTreesService BindingTreesService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
-    [Inject] private LogService LogService { get; set; } = default!;
 
     private static Dictionary<string, System.Timers.Timer> temporaryTimers = new Dictionary<string, System.Timers.Timer>();
     private static string hoverBindingDescription = "";
@@ -18,9 +19,9 @@ public partial class BindingManager : IDisposable
 
     protected override void OnInitialized()
     {
-        GPService.OnGamesPointsUpdate += OnPointsUpdate;
+        PointsService.OnPointsUpdate += OnPointsUpdate;
         BindingTreesService.OnBindingTreeUpdate += OnBindingTreeUpdate;
-        LogService.AddLog(pageName, user, "PageLoad: Binding Manager", Severity.Normal);
+        LogsService.AddLog(pageName, user, "PageLoad: Binding Manager", Severity.Normal);
     }
 
     private void OnPointsUpdate()
@@ -40,7 +41,7 @@ public partial class BindingManager : IDisposable
 
     private void Log(string message, Severity severity)
     {
-        LogService.AddLog(pageName, user, message, severity);
+        LogsService.AddLog(pageName, user, message, severity);
 
         Console.WriteLine(DateTime.Now + " | " + message);
         Snackbar.Add(message, severity);
@@ -126,7 +127,7 @@ public partial class BindingManager : IDisposable
                 }
             }
 
-            if (GPService.pointsTotal < binding.PointValue)
+            if (PointsService.pointsTotal < binding.PointValue)
             {
                 Log($"Can't add ({binding.Name}) ~ Need {binding.PointValue}p", Severity.Warning);
                 return;
@@ -142,7 +143,7 @@ public partial class BindingManager : IDisposable
             //Successfully Bought
             binding.isOwned = true;
             binding.isBuyable = false;
-            GPService.UpdatePoints(-binding.PointValue);
+            PointsService.UpdatePoints(-binding.PointValue);
             Log($"Added ({binding.Name}) for {binding.PointValue}p", Severity.Success);
             BindingTreesService.CheckBindingRelations();
 
@@ -266,7 +267,7 @@ public partial class BindingManager : IDisposable
             binding.isOwned = false;
             binding.isSellable = false;
             binding.isBuyable = true;
-            GPService.UpdatePoints(binding.PointValue);
+            PointsService.UpdatePoints(binding.PointValue);
             Log($"Removed {binding.Name} ~ Refunded {binding.PointValue}p", Severity.Normal);
             BindingTreesService.CheckBindingRelations();
 
@@ -358,9 +359,9 @@ public partial class BindingManager : IDisposable
         //If total locks less than limit, has enough points, and not already owned, buy it.
         if ((BindingTreesService.padlocks.OwnedUsed) < BindingTreesService.padlocks.Limit)
         {
-            if (BindingTreesService.padlocks.Cost <= GPService.pointsTotal)
+            if (BindingTreesService.padlocks.Cost <= PointsService.pointsTotal)
             {
-                GPService.UpdatePoints(-BindingTreesService.padlocks.Cost);
+                PointsService.UpdatePoints(-BindingTreesService.padlocks.Cost);
                 BindingTreesService.padlocks.Owned++;
                 Log($"Bought Lock ({BindingTreesService.padlocks.Owned + BindingTreesService.padlocks.Used} of {BindingTreesService.padlocks.Limit}) for {BindingTreesService.padlocks.Cost}", Severity.Success);
                 BindingTreesService.padlocks.Cost += BindingTreesService.padlocks.CostIncrease;
@@ -380,7 +381,7 @@ public partial class BindingManager : IDisposable
 
     public void Dispose()
     {
-        GPService.OnGamesPointsUpdate -= OnPointsUpdate;
+        PointsService.OnPointsUpdate -= OnPointsUpdate;
         BindingTreesService.OnBindingTreeUpdate -= OnBindingTreeUpdate;
     }
 

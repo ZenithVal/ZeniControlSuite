@@ -7,7 +7,7 @@ namespace ZeniControlSuite.Components;
 public class BindingTreesService : IHostedService
 {
     [Inject]
-    private GamesPointsService Points { get; set; } = default!;
+    private PointsService Points { get; set; } = default!;
 
 
     //===========================================//
