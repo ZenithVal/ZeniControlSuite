@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 
 namespace ZeniControlSuite.Components;
-public partial class Panel_Logs : IDisposable
+public partial class Panel_LogsGamesPoints : IDisposable
 {
     [Inject] private LogService LogService { get; set; } = default!;
 

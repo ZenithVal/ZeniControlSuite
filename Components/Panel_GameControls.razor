@@ -1,1 +1,30 @@
-﻿
+﻿<MudItem Style="width: 365px;align-items:start">
+    <MudText Typo="Typo.h6" Align="Align.Center">Game Controls</MudText>
+    <MudDivider/>
+</MudItem>
+
+<br />
+
+<MudItem  Style="height:500px;overflow-y: auto; overflow-x: clip;">
+    <MudGrid Justify="Justify.Center" Style="width: 372px;align-items:center">
+        <MudItem xs="5">
+            <MudTextField Label="Local User" @bind-Value="localPlayerName" Variant="Variant.Text" Style="height: 35px"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CloudUpload" OnAdornmentClick="ChangeNames" />
+        </MudItem>
+        <MudItem xs="5">
+            <MudTextField Label="Remote User" @bind-Value="remotePlayerName" Variant="Variant.Text" Style="height: 35px"
+                          Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CloudUpload" OnAdornmentClick="ChangeNames" />
+        </MudItem>
+
+        @* AutoGame *@
+        <MudItem xs="3">
+            <MudButton Disabled="GamesService.AutoGameRunning" OnClick="AutoGameStart" Variant=" Variant.Filled" Size="Size.Medium" Color="Color.Tertiary">Start</MudButton>
+        </MudItem>
+        <MudItem xs="5">
+            <MudText Typo="Typo.h6" Align="Align.Center">Log Reading</MudText>
+        </MudItem>
+        <MudItem xs="3">
+            <MudButton Disabled="!GamesService.AutoGameRunning" OnClick="AutoGameStop" Variant=" Variant.Filled" Size="Size.Medium" Color="Color.Secondary">Stop</MudButton>
+         </MudItem>
+    </MudGrid>
+</MudItem>

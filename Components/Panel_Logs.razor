@@ -1,12 +1,8 @@
 ﻿<MudItem>
-
-    <MudItem>
-        <MudText Typo="Typo.h6">Event Logs</MudText>
-    </MudItem>
-
-    @foreach (LogEvent logevent in LogService.logEvents.OrderByDescending(e => e.time))
-    {
-        <MudAlert Dense="true" Severity="@logevent.severity">@logevent.source | @logevent.time | @logevent.message</MudAlert>
-    }
-
+    <MudText Typo="Typo.h6">Event Logs</MudText>
 </MudItem>
+
+@foreach (LogEvent logevent in LogService.logEvents.OrderByDescending(e => e.time))
+{
+    <MudAlert Dense="true" Severity="@logevent.severity">@logevent.source | @logevent.time | @logevent.message</MudAlert>
+}

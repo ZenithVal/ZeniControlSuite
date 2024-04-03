@@ -1,0 +1,13 @@
+﻿@* Logs, but just limited to game & point events *@
+
+<MudItem>
+	<MudText Typo="Typo.h6">Logs</MudText>
+</MudItem>
+
+@foreach (LogEvent logevent in LogService.logEvents.OrderByDescending(e => e.time))
+{
+	if (logevent.source.StartsWith("GamesPoints") && logevent.severity == Severity.Info)
+	{
+		<MudAlert Dense="true" Severity="Severity.Normal">@logevent.message</MudAlert>
+	}
+}

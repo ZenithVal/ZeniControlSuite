@@ -97,5 +97,23 @@ public class GamesService : IHostedService
         gameSelected = game;
         Update();
     }
+    public void ChangeNames(string local, string remote)
+    {
+		localPlayerName = local;
+		remotePlayerName = remote;
+		Update();
+	}
+
+    public void AG_Start()
+    {
+        AutoGameRunning = true;
+        Update();
+    }
+
+    public void AG_Stop()
+    {
+        AutoGameRunning = false;
+        Update();
+    }
 
 }

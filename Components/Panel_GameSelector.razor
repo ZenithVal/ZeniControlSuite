@@ -1,1 +1,37 @@
-﻿
+﻿<MudItem>
+    @if (!GamesService.AutoGameRunning)
+    {
+        <MudSelect Label="Select a game" @bind-Value="localGame" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px"
+                   ReadOnly="@GamesService.AutoGameRunning" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CloudUpload" OnAdornmentClick="ChangeGame">
+            @foreach (Game game in GamesService.gamesList)
+            {
+                <MudSelectItem Value="@game">@game.Name</MudSelectItem>
+            }
+        </MudSelect>
+    }
+    else
+    {
+        <MudText Typo="Typo.h6">Game: @GamesService.gameSelected.Name</MudText>
+    }
+</MudItem>
+
+<br />
+
+<MudItem Class="ma-0" Style="height:700px;overflow: auto;">
+    @foreach (Game.Line line in localGame.Description)
+    {
+        if (line.text == "")
+        {
+            <br />
+        }
+        else if (line.text.Contains("localPlayer") || line.text.Contains("remotePlayer"))
+        {
+            string editedline = line.text.Replace("localPlayer", GamesService.localPlayerName).Replace("remotePlayer", GamesService.remotePlayerName);
+            <MudText Typo="line.typo">@editedline</MudText>
+        }
+        else
+        {
+            <MudText Typo="line.typo">@line.text</MudText>
+        }
+    }
+</MudItem> 

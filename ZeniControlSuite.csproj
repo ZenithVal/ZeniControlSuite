@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Components\Panel_Logs - Copy.razor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="Configs\BindingTrees Safe.json" />
     <Content Remove="Configs\BindingTrees.json" />
   </ItemGroup>
@@ -19,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Components\Panel_LogsGamesPoints.razor.cs" />
     <Content Include="Components\Panel_Logs.razor.cs" />
     <Content Include="Resources\Collar.ico" />
   </ItemGroup>
