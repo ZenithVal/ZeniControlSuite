@@ -1,7 +1,7 @@
 ﻿using MudBlazor;
 
 namespace ZeniControlSuite.Components;
-public class LogService : IHostedService
+public class Service_Logs : IHostedService
 {
     public delegate void LogsUpdate();
     public event LogsUpdate? OnLogsUpdate;

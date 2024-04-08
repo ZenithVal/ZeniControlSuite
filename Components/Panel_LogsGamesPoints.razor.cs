@@ -3,7 +3,7 @@
 namespace ZeniControlSuite.Components;
 public partial class Panel_LogsGamesPoints : IDisposable
 {
-    [Inject] private LogService LogService { get; set; } = default!;
+    [Inject] private Service_Logs LogService { get; set; } = default!;
 
     protected override void OnInitialized()
     {

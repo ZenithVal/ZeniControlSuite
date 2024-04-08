@@ -2,7 +2,7 @@
 using MudBlazor;
 namespace ZeniControlSuite.Components;
 
-public class PointsService : IHostedService
+public class Service_Points : IHostedService
 {
     public delegate void GamesPointsUpdate();
     public event GamesPointsUpdate? OnPointsUpdate;

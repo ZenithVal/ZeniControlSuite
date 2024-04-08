@@ -12,8 +12,8 @@ public partial class Panel_PointControls : IDisposable
     double third = 0.333;
     double fourth = 0.25;
 
-    [Inject] private LogService LogService { get; set; } = default!;
-    [Inject] private PointsService PointsService { get; set; } = default!;
+    [Inject] private Service_Logs LogService { get; set; } = default!;
+    [Inject] private Service_Points PointsService { get; set; } = default!;
 
     protected override void OnInitialized()
     {

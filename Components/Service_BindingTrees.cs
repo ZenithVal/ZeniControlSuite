@@ -4,10 +4,10 @@ using Newtonsoft.Json;
 using ZeniControlSuite.Components.Pages;
 namespace ZeniControlSuite.Components;
 
-public class BindingTreesService : IHostedService
+public class Service_BindingTrees : IHostedService
 {
     [Inject]
-    private PointsService Points { get; set; } = default!;
+    private Service_Points Points { get; set; } = default!;
 
 
     //===========================================//

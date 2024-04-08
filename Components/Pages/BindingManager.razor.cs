@@ -6,9 +6,9 @@ public partial class BindingManager : IDisposable
 {
     public static bool pageEnabled = true;
 
-    [Inject] private LogService LogsService { get; set; } = default!;
-    [Inject] private PointsService PointsService { get; set; } = default!;
-    [Inject] private BindingTreesService BindingTreesService { get; set; } = default!;
+    [Inject] private Service_Logs LogsService { get; set; } = default!;
+    [Inject] private Service_Points PointsService { get; set; } = default!;
+    [Inject] private Service_BindingTrees BindingTreesService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
     private static Dictionary<string, System.Timers.Timer> temporaryTimers = new Dictionary<string, System.Timers.Timer>();

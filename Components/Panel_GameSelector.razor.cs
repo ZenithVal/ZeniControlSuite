@@ -11,8 +11,8 @@ public partial class Panel_GameSelector : IDisposable
 
     private Game localGame = new Game();
 
-    [Inject] private LogService LogService { get; set; } = default!;
-    [Inject] private GamesService GamesService { get; set; } = default!;
+    [Inject] private Service_Logs LogService { get; set; } = default!;
+    [Inject] private Service_Games GamesService { get; set; } = default!;
 
     protected override void OnInitialized()
     {

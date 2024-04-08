@@ -23,17 +23,17 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.SnackbarVariant = Variant.Outlined;
 });
 
-builder.Services.AddSingleton<LogService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<LogService>());
+builder.Services.AddSingleton<Service_Logs>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Logs>());
 
-builder.Services.AddSingleton<GamesService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<GamesService>());
+builder.Services.AddSingleton<Service_Games>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Games>());
 
-builder.Services.AddSingleton<PointsService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<PointsService>());
+builder.Services.AddSingleton<Service_Points>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Points>());
 
-builder.Services.AddSingleton<BindingTreesService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<BindingTreesService>());
+builder.Services.AddSingleton<Service_BindingTrees>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_BindingTrees>());
 
 
 var app = builder.Build();

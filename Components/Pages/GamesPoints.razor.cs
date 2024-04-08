@@ -9,9 +9,9 @@ public partial class GamesPoints : IDisposable
     private string user = "Undefined"; //Will later be replaced with the user's name via discord Auth
     private string pageName = "GamesPoints";
 
-    [Inject] private LogService LogService { get; set; } = default!;
-    [Inject] private PointsService PointsService { get; set; } = default!;
-    [Inject] private GamesService GamesService { get; set; } = default!;
+    [Inject] private Service_Logs LogService { get; set; } = default!;
+    [Inject] private Service_Points PointsService { get; set; } = default!;
+    [Inject] private Service_Games GamesService { get; set; } = default!;
 
     protected override void OnInitialized()
     {

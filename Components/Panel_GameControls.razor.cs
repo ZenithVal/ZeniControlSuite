@@ -12,9 +12,9 @@ public partial class Panel_GameControls : IDisposable
     private string localPlayerName = "";
     private string remotePlayerName = "";
 
-    [Inject] private LogService LogService { get; set; } = default!;
-    [Inject] private PointsService PointsService { get; set; } = default!;
-    [Inject] private GamesService GamesService { get; set; } = default!;
+    [Inject] private Service_Logs LogService { get; set; } = default!;
+    [Inject] private Service_Points PointsService { get; set; } = default!;
+    [Inject] private Service_Games GamesService { get; set; } = default!;
 
     protected override void OnInitialized()
     {
