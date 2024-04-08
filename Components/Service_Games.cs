@@ -14,7 +14,7 @@ public class Service_Games : IHostedService
         }
         catch (Exception e)
         {
-            gamesList.Add(new Game { Name = "Error", Description = new List<Game.Line> { new Game.Line { typo = Typo.body1, text = "Games.ini parsing failed: " + e.Message } } });
+            gamesList.Add(new Game { Name = "Error", Description = new List<Game.DescriptionLine> { new Game.DescriptionLine { typo = Typo.body1, text = "Games.ini parsing failed: " + e.Message } } });
             Console.WriteLine("Games.ini parsing failed: " + e.Message);
         }
         return Task.CompletedTask;
@@ -52,7 +52,7 @@ public class Service_Games : IHostedService
         {
             if (line.StartsWith("["))
             {
-                gamesList.Add(new Game { Name = line.Replace("[", "").Replace("]", ""), Description = new List<Game.Line>() });
+                gamesList.Add(new Game { Name = line.Replace("[", "").Replace("]", ""), Description = new List<Game.DescriptionLine>() });
             }
             else
             {
@@ -78,7 +78,7 @@ public class Service_Games : IHostedService
                 editedLine = editedLine.Replace("\t", " ");
                 editedLine = editedLine.Replace("*", " •");
 
-                gamesList.Last().Description.Add(new Game.Line { typo = level, text = editedLine });
+                gamesList.Last().Description.Add(new Game.DescriptionLine { typo = level, text = editedLine });
             }
         }
 
