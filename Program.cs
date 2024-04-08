@@ -1,6 +1,10 @@
 using MudBlazor;
 using MudBlazor.Services;
 using ZeniControlSuite.Components;
+using Newtonsoft.Json;
+
+using Discord.OAuth2;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +26,25 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.ShowTransitionDuration = 500;
     config.SnackbarConfiguration.SnackbarVariant = Variant.Outlined;
 });
+
+builder.Services.AddAuthentication(opt =>
+{
+    opt.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    opt.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    opt.DefaultChallengeScheme = DiscordDefaults.AuthenticationScheme;
+})
+            .AddCookie()
+            .AddDiscord(x =>
+            {
+                string DiscordConfig = File.ReadAllText("Configs/Discord.json");
+                dynamic DiscordConfigJson = JsonConvert.DeserializeObject(DiscordConfig);
+
+                x.AppId = DiscordConfigJson.AppId;
+                x.AppSecret = DiscordConfigJson.AppSecret;
+                x.Scope.Add("guilds");
+
+                x.SaveTokens = true;
+            });
 
 builder.Services.AddSingleton<Service_Logs>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Logs>());
