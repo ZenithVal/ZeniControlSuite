@@ -48,9 +48,17 @@
 
   <ItemGroup>
     <None Include="Configs\BindingTrees Safe.json" />
-    <None Include="Configs\BindingTrees.json" />
+    <None Include="Configs\BindingTrees.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="wwwroot\images\Bindings.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Configs\Games.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
