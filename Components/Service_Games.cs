@@ -1,11 +1,19 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
+
+using System.Reflection;
+
+
 namespace ZeniControlSuite.Components;
 
 public class Service_Games : IHostedService
 {
     public delegate void GamesUpdate();
     public event GamesUpdate? OnGamesUpdate;
+
+    [Inject] private Service_Logs LogService { get; set; } = default!;
+    [Inject] private Service_Points Points { get; set; } = default!;
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
         try
@@ -75,6 +83,11 @@ public class Service_Games : IHostedService
                     level = Typo.h6;
                 }
 
+                if  (editedLine.Contains("AutoGame"))
+                {
+                    gamesList.Last().AutoGameCapable = true;
+                }
+
                 editedLine = editedLine.Replace("\t", " ");
                 editedLine = editedLine.Replace("*", " •");
 
@@ -115,5 +128,141 @@ public class Service_Games : IHostedService
         AutoGameRunning = false;
         Update();
     }
+
+
+    #region Game Automation
+    Thread logWatcherThread = null;
+    public static bool isAutoGameEnabled = false;
+    public static string logFilePath = "";
+
+    private static MethodInfo methodAutoGameStartup = null;
+    private static MethodInfo methodAutoGameHandleLogs = null;
+
+    List<string> logIgnoreList = new List<string>() {
+            "[Behaviour]",
+            "Found SDK2",
+            "Found SDK3",
+            "[Network Processing]",
+            "[ITEM ASSIGNMENT POOL]",
+            "[GC]",
+            "[EOSManager]",
+            "[Always]",
+            "[UdonBehaviour]",
+            "Detection :",
+            "Updating avatar",
+            "Measure Human",
+            "[AssetBundleDownloadManager]",
+            "Removing animation",
+            "BoxColliders",
+            "[API]",
+            "Saving Avatar",
+            "Avatar Asset",
+            "avatar cloning",
+
+            //TON Stuff to ignore
+            "Loaded the mysterious triangle",
+            "OBJECT POOL PlayerHead",
+            "Clearing Items",
+            "Enrage State",
+            "[START]",
+            "stuck! help!",
+            "Hit -"
+        };
+
+    private static void FindMostRecentLogFilePath()
+    {
+        try
+        {
+            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "..", "LocalLow", "VRChat", "VRChat");
+
+            string[] files = Directory.GetFiles(path, "output_log*.txt");
+
+            string mostRecentFile = "";
+            foreach (string file in files)
+            {
+                if (file.CompareTo(mostRecentFile) > 0)
+                {
+                    mostRecentFile = file;
+                }
+            }
+
+            //Write the most recent file name to the console
+            string justFileName = Path.GetFileName(mostRecentFile);
+
+            //LogService.AddLog("Found (" + justFileName + ")", CC.Info);
+
+            logFilePath = mostRecentFile;
+        }
+        catch (Exception e)
+        {
+            //writeConsoleUI(e.Message, CC.Failure);
+            logFilePath = "";
+        }
+    }
+
+    private async void StartLogWatcher()
+    {
+        //UpdateAutoGameMethods();
+        FindMostRecentLogFilePath();
+
+        await Task.Delay(500);
+        try
+        {
+            logWatcherThread = new Thread(async () => await WatchLogFileAsync(logFilePath));
+            logWatcherThread.Start();
+            isAutoGameEnabled = true;
+        }
+        catch (Exception ex)
+        {
+            isAutoGameEnabled = false;
+        }
+    }
+
+    private async Task WatchLogFileAsync(string logFilePath)
+    {
+        using (FileStream fs = new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (BufferedStream bs = new BufferedStream(fs))
+        using (StreamReader reader = new StreamReader(bs))
+        {
+            // Catch up to the most recent line in the log file
+            while (!reader.EndOfStream)
+            {
+                await reader.ReadLineAsync();
+                // No need to process this line; just skip to the end
+            }
+
+            //writeConsoleUI($"Reading log files for {selectedGame}", CC.Success);
+
+            while (isAutoGameEnabled)
+            {
+                string line = await reader.ReadLineAsync();
+
+                if (line == null || line.Length < 34 || !line.Substring(20, 3).Contains("Log") || logIgnoreList.Any(line.Contains))
+                {
+                    await Task.Delay(10);
+                    continue;
+                }
+
+                string logEntry = line.Substring(34);
+                Console.WriteLine(logEntry);
+
+                await Task.Delay(50);
+
+                methodAutoGameHandleLogs.Invoke(null, new object[] { logEntry });
+
+            }
+        }
+    }
+
+    private void StopLogWatcher()
+    {
+        logWatcherThread = null;
+        isAutoGameEnabled = false;
+        //writeConsoleUI("Stopped reading log files.", CC.Warning);
+
+        //groupBoxAutoGames.Controls.Clear();
+    }
+    #endregion
+
 
 }

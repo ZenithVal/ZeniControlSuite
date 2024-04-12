@@ -6,9 +6,8 @@ namespace ZeniControlSuite.Components;
 
 public class Service_BindingTrees : IHostedService
 {
-    [Inject]
-    private Service_Points Points { get; set; } = default!;
-
+    [Inject] private Service_Points PointsService { get; set; } = default!;
+    [Inject] private Service_Logs LogService { get; set; } = default!;
 
     //===========================================//
     #region HostedService Stuff
