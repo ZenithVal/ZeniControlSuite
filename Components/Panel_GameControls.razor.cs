@@ -18,6 +18,9 @@ public partial class Panel_GameControls : IDisposable
 
     protected override void OnInitialized()
     {
+        localPlayerName = GamesService.localPlayerName;
+        remotePlayerName = GamesService.remotePlayerName;
+
         PointsService.OnPointsUpdate += OnPointsUpdate;
         GamesService.OnGamesUpdate += OnGamesUpdate;
     }

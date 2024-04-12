@@ -88,6 +88,12 @@ public class Service_Games : IHostedService
                     gamesList.Last().AutoGameCapable = true;
                 }
 
+                if (editedLine.Contains("=ReadsLogs"))
+                {
+                    gamesList.Last().AutoGameReadsLogs = true;
+                    continue;
+                }
+
                 editedLine = editedLine.Replace("\t", " ");
                 editedLine = editedLine.Replace("*", " •");
 
@@ -130,6 +136,7 @@ public class Service_Games : IHostedService
     }
 
 
+/*
     #region Game Automation
     Thread logWatcherThread = null;
     public static bool isAutoGameEnabled = false;
@@ -264,5 +271,5 @@ public class Service_Games : IHostedService
     }
     #endregion
 
-
+*/
 }

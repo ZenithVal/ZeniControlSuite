@@ -11,7 +11,8 @@ public class Game
         public string text { get; set; } = "";
     }
 
-    public bool AutoGameCapable { get; set; }
+    public bool AutoGameCapable { get; set; } = false;
+    public bool AutoGameReadsLogs { get; set; } = false;
 }
 
 public class GameType_TerrorsOfNowhere
