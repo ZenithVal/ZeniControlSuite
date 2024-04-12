@@ -7,7 +7,7 @@ public partial class GamesPoints : IDisposable
 {
     public static bool pageEnabled = true;
     private string user = "Undefined"; //Will later be replaced with the user's name via discord Auth
-    private string pageName = "GamesPoints";
+    private readonly string pageName = "GamesPoints";
 
     [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private Service_Points PointsService { get; set; } = default!;

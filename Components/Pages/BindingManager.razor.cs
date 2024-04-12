@@ -15,7 +15,7 @@ public partial class BindingManager : IDisposable
     private static string hoverBindingDescription = "";
 
     private string user = "Undefined"; //Will later be replaced with the user's name via discord Auth
-    private string pageName = "Binding Manager";
+    private readonly string pageName = "Binding Manager";
 
     protected override void OnInitialized()
     {

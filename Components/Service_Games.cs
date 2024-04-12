@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Components;
-using MudBlazor;
+﻿using MudBlazor;
+using Microsoft.AspNetCore.Components;
 
-using System.Reflection;
-
+using System.Reflection; //oh no
 
 namespace ZeniControlSuite.Components;
 
@@ -39,7 +38,8 @@ public class Service_Games : IHostedService
             OnGamesUpdate();
     }
 
-    public Game gameSelected { get; set; }
+    public Game gameSelected { get; set; } = new Game();
+
     public List<Game> gamesList = new List<Game>();
     public bool AutoGameRunning { get; set; } = false;
     public string localPlayerName { get; set; } = "localPlayer";

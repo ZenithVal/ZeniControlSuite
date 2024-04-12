@@ -54,11 +54,11 @@ public class Service_Points : IHostedService
             pointsPartial = 0;
             if (pointsTotal > 0)
             {
-                pointsWhole = pointsWhole + 1;
+                pointsWhole += 1;
             }
             else
             {
-                pointsWhole = pointsWhole - 1;
+                pointsWhole -= 1;
             }
             pointsTotal = pointsWhole;
         }
