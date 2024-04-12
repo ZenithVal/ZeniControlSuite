@@ -82,7 +82,7 @@ public class Service_Points : IHostedService
 
         int wholeNumber = 0;
         int denominator = 1;
-        double rounded = 0.0;
+        //double rounded = 0.0;
 
         wholeNumber = (int)Math.Floor(value);
         value -= wholeNumber;

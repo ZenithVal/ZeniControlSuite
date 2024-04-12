@@ -98,6 +98,7 @@
                 </div>
             </MudPaper>
 
+            @*          
             @foreach (string prereq in binding.Prerequisites)
             {
                 //draw lines between the binding and prereqs, behind the mudpaper
@@ -107,7 +108,8 @@
 					string lineStyle = $"position: absolute; left: {binding.Position.X * 110 + 90}px; top: {binding.Position.Y * 110 + 45}px; width: {prereqBinding.Position.X * 110 + 90 - (binding.Position.X * 110 + 90)}px; height: {prereqBinding.Position.Y * 110 + 45 - (binding.Position.Y * 110 + 45)}px; border: 1px solid black; z-index: -1;";
 					<div style="@lineStyle"></div>
 				}
-            }
+            } 
+            *@
         }
         @if (BindingTreesService.padlocks.Enabled)
         {
