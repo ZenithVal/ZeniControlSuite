@@ -47,7 +47,7 @@
 			</div>
 		}
 
-        @if (Pages.Devices.pageEnabled)
+        @if (Pages.Devices.pageEnabled && !Pages.Devices.pageHidden)
         {
             <div class="nav-item px-3">
 				<NavLink class="nav-link" href="DeviceControls">
