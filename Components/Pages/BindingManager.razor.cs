@@ -314,6 +314,30 @@ public partial class BindingManager : IDisposable
         }
     }
 
+    public void BuyRandomBinding()
+    {
+        List<Binding> buyableBindings = new List<Binding>();
+
+        foreach (Binding binding in BindingTreesService.bindingTrees.SelectMany(tree => tree.Bindings))
+        {
+            if (binding.isBuyable && binding.ConsumableCount == 0 && binding.GameEnder == false)
+            {
+                buyableBindings.Add(binding);
+            }
+        }
+
+        if (buyableBindings.Count > 0)
+        {
+            Random random = new Random();
+            int randomIndex = random.Next(0, buyableBindings.Count);
+            BuyBinding(buyableBindings[randomIndex]);
+        }
+        else
+        {
+            Log("No buyable items found.", Severity.Warning);
+        }
+    }
+
     public void LockBinding(Binding binding)
     {
         if (binding.CanBeLocked)
