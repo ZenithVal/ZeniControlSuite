@@ -11,7 +11,7 @@ public partial class Panel_Intiface : IDisposable
     private string pageName = "Panel_Intiface";
 
     [Inject] private Service_Logs LogService { get; set; } = default!;
-    [Inject] private IntifaceService IntifaceService { get; set; } = default!;
+    [Inject] private Service_Intiface IntifaceService { get; set; } = default!;
 
     protected override void OnInitialized()
     {

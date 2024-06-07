@@ -15,7 +15,7 @@
 	<MudItem xs="6">
 		@if (IntifaceService.FullStop)
 		{
-			<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="PowerFullStop">Resume</MudButton>
+			<MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="PowerFullStop">STOPPED</MudButton>
 		}
 		else
 		{
@@ -25,7 +25,7 @@
 
     <MudGrid Justify="Justify.Center">
         <MudItem xs="11">
-            <MudGrid>
+            <MudGrid >
                 <MudItem xs="12">
                     <MudSelect Label="Pattern" @bind-Value="@IntifaceService.PatternType" Variant="Variant.Filled" Color="Color.Primary">
 						@foreach (var pattern in Enum.GetValues<PatternType>().ToList())
@@ -64,31 +64,27 @@
                     <MudCheckBox @bind-Value="IntifaceService.patUseRandomPowerOutput" Label="Use Random PowerOutput" />
                 </MudItem> *@
 
-                <MudItem xs="6">
+                <MudItem xs="5">
                     <MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMin" Label="Min Strength" Variant="Variant.Outlined" Min="0" Max="1" Step="0.1" Format="N1" />
                 </MudItem>
 
-                <MudItem xs="6">
+                <MudItem xs="2">
+                    <MudSwitch @bind-Value="@IntifaceService.PatUseRandomPower" Size="Size.Large" Color="Color.Primary" UnCheckedColor="Color.Secondary" />
+                </MudItem>
+
+                <MudItem xs="5">
                     <MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMax" Label="Max Strength" Variant="Variant.Outlined" Min="0" Max="1" Step="0.1" Format="N1" />
                 </MudItem>
 
-
                 <MudItem xs="12">
-                    
+                    <MudSlider Vertical="false" Color="Color.Success" Variant="Variant.Filled" Size="Size.Large" Min="0.0" Max="1.0" Step="0.05" @bind-Value="@IntifaceService.PowerInput">Multiplier</MudSlider>
                 </MudItem>
 
-                <MudItem xs="12">
-                    
-                </MudItem>
-
-                <MudItem xs="12">
-                    
-                </MudItem>
             </MudGrid>
         </MudItem>
 
         <MudItem xs="1">
-            <MudProgressLinear Vertical="true" Color="Color.Primary" Striped="true" Size="Size.Large" @bind-Value="@IntifaceService.DisplayPowerOutput"/>
+            <MudProgressLinear Vertical="true" Color="Color.Primary" Striped="true" Size="Size.Large" Min="0.0" Max="1.0" @bind-Value="@IntifaceService.PowerOutput"/>
         </MudItem>
 
     </MudGrid>
