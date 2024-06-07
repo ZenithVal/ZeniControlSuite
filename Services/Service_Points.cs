@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using MudBlazor;
-namespace ZeniControlSuite.Components;
+namespace ZeniControlSuite.Services;
 
 public class Service_Points : IHostedService
 {
@@ -37,7 +37,7 @@ public class Service_Points : IHostedService
             Update();
             return;
         }
-        
+
         pointsTotal += points;
         pointAddStreak = Math.Clamp(pointAddStreak + points, -1, 1);
         pointsWhole = Math.Truncate(pointsTotal);
@@ -70,9 +70,9 @@ public class Service_Points : IHostedService
         }
 
         //FractionalScore(pointsTotal);
-        pointsTruncated = (Math.Truncate(pointsTotal * 100) / 100);
+        pointsTruncated = Math.Truncate(pointsTotal * 100) / 100;
 
-		Update();
+        Update();
     }
 
     public void FractionalScore(double value)

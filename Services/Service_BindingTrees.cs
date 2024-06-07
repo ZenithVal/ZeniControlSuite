@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using Newtonsoft.Json;
+using ZeniControlSuite.Components;
 using ZeniControlSuite.Components.Pages;
-namespace ZeniControlSuite.Components;
+namespace ZeniControlSuite.Services;
 
 public class Service_BindingTrees : IHostedService
 {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components;
 public partial class Panel_LogsGamesPoints : IDisposable

@@ -1,7 +1,6 @@
 ﻿using Buttplug.Client;
 using Buttplug.Client.Connectors.WebsocketConnector;
 using MudBlazor;
-using ZeniControlSuite.Components;
 
 namespace ZeniControlSuite.Services;
 
@@ -145,6 +144,7 @@ public class IntifaceService: IHostedService, IDisposable
                 }
 
                 break;
+
             default:
                 break;
         }

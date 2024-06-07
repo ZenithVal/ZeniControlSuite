@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components.Pages;
 public partial class BindingManager : IDisposable
