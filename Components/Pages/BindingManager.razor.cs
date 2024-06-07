@@ -43,7 +43,7 @@ public partial class BindingManager : IDisposable
     {
         LogsService.AddLog(pageName, user, message, severity);
 
-        Console.WriteLine(DateTime.Now + " | " + message);
+        //Console.WriteLine(DateTime.Now + " | " + message);
         Snackbar.Add(message, severity);
         BindingTreesService.lastLog = message;
         BindingTreesService.lastLogSeverity = severity;

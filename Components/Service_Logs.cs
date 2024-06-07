@@ -22,6 +22,7 @@ public class Service_Logs : IHostedService
     public void AddLog(string source, string user, string message, Severity severity = Severity.Normal, Variant variant = Variant.Outlined)
     {
         logEvents.Add(new LogEvent {source = source, user = user, message = message, severity = severity, variant = variant });
+        Console.WriteLine($"{severity} | {source}: {message}");
         if (OnLogsUpdate != null)
             OnLogsUpdate();
 

@@ -34,6 +34,7 @@
     <PackageReference Include="Buttplug.Client.Connectors.WebsocketConnector" Version="3.0.1" />
     <PackageReference Include="MudBlazor" Version="6.20.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="OpenShock.SDK.CSharp" Version="0.0.19" />
   </ItemGroup>
 
   <ItemGroup>
