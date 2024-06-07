@@ -39,9 +39,6 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_BindingTre
 builder.Services.AddSingleton<Service_Intiface>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Intiface>());
 
-builder.Services.AddSingleton<IntifaceService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<IntifaceService>());
-
 
 
 var app = builder.Build();

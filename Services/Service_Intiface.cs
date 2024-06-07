@@ -1,13 +1,14 @@
 ﻿using Buttplug.Client;
 using Buttplug.Client.Connectors.WebsocketConnector;
 using MudBlazor;
+using static MudBlazor.CategoryTypes;
 
 namespace ZeniControlSuite.Services;
 
-public class IntifaceService: IHostedService, IDisposable
+public class Service_Intiface: IHostedService, IDisposable
 {
     public delegate void RequestDisplayUpdate();
-    public event IntifaceService.RequestDisplayUpdate? OnRequestDisplayUpdate;
+    public event Service_Intiface.RequestDisplayUpdate? OnRequestDisplayUpdate;
     
     private readonly Service_Logs LogService;
     private ButtplugClient _client = new ButtplugClient("ZeniControlSuite");
@@ -16,11 +17,12 @@ public class IntifaceService: IHostedService, IDisposable
     public bool InterfaceConnected { get; private set; } = false;
     
     public bool EnableIntiface { get; set; } = false;
+    
     public double PowerOutput { get; set; } = 0.0;
-    public double DisplayPowerOutput { get; set; } = 0.0;
+    public double PowerOutputPrevious { get; set; } = 0.0;
     public double PowerInput { get; set; } = 1.0;
     public double Power = 0.0;
-    public double PowerSpike { get; set; } = 1.0;
+    public double PowerSpike { get; set; } = 0.0;
     public bool FullStop { get; set; } = false;
     
     
@@ -28,7 +30,7 @@ public class IntifaceService: IHostedService, IDisposable
     public bool PatternRunning { get; private set; } = false;
     public bool PatUseRandomPower { get; set; } = false;
 
-    public PatternType PatternType { get; set; } = PatternType.Constant;
+    public PatternType PatternType { get; set; } = PatternType.Wave;
     public List<PatternType> GetPatternTypes => Enum.GetValues<PatternType>().ToList();
     
     public double PatSpeedClimb = 2.0;
@@ -45,22 +47,21 @@ public class IntifaceService: IHostedService, IDisposable
     public double PatRandomPowerMax = 1.0;
 
 
-    public IntifaceService(IServiceProvider services)
+    public Service_Intiface(IServiceProvider services)
     {
         LogService = services.GetRequiredService<Service_Logs>();
         _client.DeviceAdded += HandleDeviceAdded;
         _client.DeviceRemoved += HandleDeviceRemoved;
-
     }
 
     private void HandleDeviceAdded(object? _, DeviceAddedEventArgs aArgs)
     {
-        LogService.AddLog(ServiceName, "System", $"Device Added: {aArgs.Device.Name}", Severity.Normal, Variant.Outlined);
+        LogService.AddLog(ServiceName, "System", $"Device Added: {aArgs.Device.Name}", Severity.Info, Variant.Outlined);
         DeviceConnected = true;
     }
     private void HandleDeviceRemoved(object? _, DeviceRemovedEventArgs aArgs)
     {
-        LogService.AddLog(ServiceName, "System", $"Device Removed: {aArgs.Device.Name}", Severity.Normal, Variant.Outlined);
+        LogService.AddLog(ServiceName, "System", $"Device Removed: {aArgs.Device.Name}", Severity.Info, Variant.Outlined);
         DeviceConnected = false;
     }
     
@@ -81,9 +82,9 @@ public class IntifaceService: IHostedService, IDisposable
         foreach (var device in _client.Devices)
         {
             await device.VibrateAsync(PowerOutput);
-            if(TriggerWithinTolerance(PowerOutput))
+            if(TriggerWithinTolerance(PowerOutput - PowerOutputPrevious))
             {
-                DisplayPowerOutput = PowerOutput * 100;
+                PowerOutputPrevious = PowerOutput;
                 OnRequestDisplayUpdate?.Invoke();
             }
         }
@@ -112,6 +113,7 @@ public class IntifaceService: IHostedService, IDisposable
             case PatternType.Constant:
                 Power = PatPowerGoal;
                 await DelayRandom(PatRandomOnTimeMin, PatRandomOnTimeMax);
+                await Task.Delay(50);
                 break;
 
             case PatternType.Wave:
@@ -177,15 +179,12 @@ public class IntifaceService: IHostedService, IDisposable
             if (!PatternRunning)
             {
                 PatternRunning = true;
-                await Task.Run(async () =>
-                {
-                    await RunPattern();
-                });
+                RunPattern();
             }
 
             if (!FullStop)
             {
-                PowerOutput = Math.Clamp((PowerOutput * PowerInput) + PowerSpike, 0.0, 1.0);
+                PowerOutput = Math.Clamp((Power * PowerInput) + PowerSpike, 0.0, 1.0);
             }
             else
             {
@@ -193,7 +192,7 @@ public class IntifaceService: IHostedService, IDisposable
             }
 
             await ControlDevice();
-            await Task.Delay(50);
+            await Task.Delay(100);
         }
         
     }
@@ -217,9 +216,9 @@ public class IntifaceService: IHostedService, IDisposable
         }
     }
     
-    private bool TriggerWithinTolerance(double value, double tolerance = 0.05)
+    private bool TriggerWithinTolerance(double value, double tolerance = 0.03)
     {
-        return value >= -1 * tolerance && value <= tolerance;
+        return value > tolerance || value < -tolerance;
     }
     
     public decimal CreateSineWave( double freq, double amplitude, double offset)
