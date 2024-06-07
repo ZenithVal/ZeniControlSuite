@@ -3,7 +3,7 @@
 public class Game
 {
     public string Name { get; set; }
-    public List<DescriptionLine> Description { get; set; }
+    public List<DescriptionLine> Description { get; set; } = new List<DescriptionLine>();
 
     public class DescriptionLine
     {

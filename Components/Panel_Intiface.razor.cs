@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components;
 
@@ -10,11 +11,11 @@ public partial class Panel_Intiface : IDisposable
     private string pageName = "Panel_Intiface";
 
     [Inject] private Service_Logs LogService { get; set; } = default!;
-    [Inject] private Service_Intiface IntifaceService { get; set; } = default!;
+    [Inject] private IntifaceService IntifaceService { get; set; } = default!;
 
     protected override void OnInitialized()
     {
-        IntifaceService.OnIntifaceUpdate += OnIntifaceUpdate;
+        IntifaceService.OnRequestDisplayUpdate += OnIntifaceUpdate;
     }
 
     private void OnIntifaceUpdate()
@@ -24,17 +25,17 @@ public partial class Panel_Intiface : IDisposable
 
     public void Dispose()
     {
-        IntifaceService.OnIntifaceUpdate -= OnIntifaceUpdate;
+        IntifaceService.OnRequestDisplayUpdate -= OnIntifaceUpdate;
     }
 
     public void EnableIntiface()
     {
-        IntifaceService.EnableIntiface(LogService);
+        IntifaceService.Initialize(LogService);
     }
 
     public void PowerFullStop()
     {
-        IntifaceService.powerFullStop = !IntifaceService.powerFullStop;
+        IntifaceService.FullStop = !IntifaceService.FullStop;
     }
 
 }

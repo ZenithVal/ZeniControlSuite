@@ -1,6 +1,9 @@
-﻿using MudBlazor;
+﻿using System.Timers;
+using MudBlazor;
 using Buttplug.Client;
 using Buttplug.Client.Connectors.WebsocketConnector;
+using ZeniControlSuite.Services;
+
 namespace ZeniControlSuite.Components;
 
 public class Service_Intiface : IHostedService
@@ -139,6 +142,17 @@ public class Service_Intiface : IHostedService
         patRunning = false;
     }
 
+    public decimal CreateSineWave( double freq, double amplitude, double offset)
+    {
+        DateTime currentTime = DateTime.Now;
+        var time = currentTime.TimeOfDay.TotalSeconds; // Current time in seconds
+        return (decimal)((amplitude * Math.Sin(2 * Math.PI * freq * time)) + offset);
+    }
+
+   
+    
+    
+    
     public async Task IntifaceRunner(Service_Logs LogService, CancellationToken cancellationToken)
     {
         #region Startup
@@ -198,28 +212,44 @@ public class Service_Intiface : IHostedService
             }
         }
 
-
-        while (enabled)
+        Task.Run( async () =>
         {
-            if (!patRunning)
+            while (enabled)
             {
-                patRunning = true;
-                RunPattern();
-            }
+                if (!patRunning)
+                {
+                    patRunning = true;
+                    RunPattern().GetAwaiter();
+                }
 
-            if (!powerFullStop)
-            {
-                powerOutput = Math.Clamp((power * powerInput) + powerSpike, 0.0, 1.0);
-            }
-            else
-            {
-                powerOutput = 0.0;
-            }
+                if (!powerFullStop)
+                {
+                    powerOutput = Math.Clamp((power * powerInput) + powerSpike, 0.0, 1.0);
+                }
+                else
+                {
+                    powerOutput = 0.0;
+                }
 
-            await ControlDevice();
-            await Task.Delay(50);
-            Update();
-        }
+                await ControlDevice();
+                await Task.Delay(50);
+                if(TriggerWithinTolerance(powerOutput))
+                {
+                    Update();
+                }
+            }
+        });
+
+
     }
 
+    private async void UpdatePower()
+    {
+        
+    }
+    
+    private bool TriggerWithinTolerance(double value, double tolerance = 1.0)
+    {
+        return value > 0.5 - tolerance && value < 0.5 + tolerance;
+    }
 }

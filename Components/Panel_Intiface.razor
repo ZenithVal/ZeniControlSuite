@@ -1,4 +1,5 @@
 ﻿@page "/Intiface"
+@using ZeniControlSuite.Services
 @layout ZeniControlSuite.Components.Layout.NoMenuLayout
 
 <MudItem>
@@ -8,11 +9,11 @@
 
 <MudGrid Justify="Justify.Center" Style="width: 600px;align-items:center">
 	<MudItem xs="6">
-		<MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@IntifaceService.enabled" OnClick="EnableIntiface">Enable Intiface</MudButton>
+		<MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@IntifaceService.EnableIntiface" OnClick="EnableIntiface">Enable Intiface</MudButton>
 	</MudItem>
 
 	<MudItem xs="6">
-		@if (IntifaceService.powerFullStop)
+		@if (IntifaceService.FullStop)
 		{
 			<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="PowerFullStop">Resume</MudButton>
 		}
@@ -26,49 +27,49 @@
         <MudItem xs="11">
             <MudGrid>
                 <MudItem xs="12">
-                    <MudSelect Label="Pattern" @bind-Value="@IntifaceService.patType" Variant="Variant.Filled" Color="Color.Primary">
-						@foreach (var pattern in IntifaceService.powerPatterns)
+                    <MudSelect Label="Pattern" @bind-Value="@IntifaceService.PatternType" Variant="Variant.Filled" Color="Color.Primary">
+						@foreach (var pattern in Enum.GetValues<PatternType>().ToList())
 						{
-							<MudSelectItem Value="@pattern">@pattern</MudSelectItem>
+							<MudSelectItem Value="@pattern">@pattern.ToString()</MudSelectItem>
 						}
                     </MudSelect>
                 </MudItem>
 
                 @* Values that only appear if the patType is Wave*@
-                @if (IntifaceService.patType == "Wave")
+                @if (IntifaceService.PatternType == PatternType.Wave)
 				{
                     <MudItem xs="6">
-                        <MudNumericField @bind-Value="IntifaceService.patSpeedClimb" Label="Climb Speed" Variant="Variant.Outlined" Min="0.1" Max="10.0" Step="0.1" Format="N1" />
+                        <MudNumericField @bind-Value="@IntifaceService.PatSpeedClimb" Label="Climb Speed" Variant="Variant.Outlined" Min="0.1" Max="10.0" Step="0.1" Format="N1" />
                     </MudItem>
 
                     <MudItem xs="6">
-                        <MudNumericField @bind-Value="IntifaceService.patSpeedDrop" Label="Drop Speed" Variant="Variant.Outlined" Min="0.1" Max="10.0" Step="0.1" Format="N1" />
+                        <MudNumericField @bind-Value="@IntifaceService.PatSpeedDrop" Label="Drop Speed" Variant="Variant.Outlined" Min="0.1" Max="10.0" Step="0.1" Format="N1" />
                     </MudItem>
 				}
 
                 <MudItem xs="3">
-                    <MudNumericField @bind-Value="IntifaceService.patRandomOffTimeMin" Label="Off Min Sec" Variant="Variant.Outlined" Min="0" Max="29.9" Step="0.1" Format="N1" />
+                    <MudNumericField @bind-Value="@IntifaceService.PatRandomOffTimeMin" Label="Off Min Sec" Variant="Variant.Outlined" Min="0" Max="29.9" Step="0.1" Format="N1" />
                 </MudItem>
                 <MudItem xs="3">
-                    <MudNumericField @bind-Value="IntifaceService.patRandomOffTimeMax" Label="Off Max Sec" Variant="Variant.Outlined" Min="0" Max="30" Step="0.1" Format="N1" />
+                    <MudNumericField @bind-Value="@IntifaceService.PatRandomOffTimeMax" Label="Off Max Sec" Variant="Variant.Outlined" Min="0" Max="30" Step="0.1" Format="N1" />
                 </MudItem>
                 <MudItem xs="3">
-                    <MudNumericField @bind-Value="IntifaceService.patRandomOnTimeMin" Label="On Min Sec" Variant="Variant.Outlined" Min="0" Max="9.9" Step="0.1" Format="N1" />
+                    <MudNumericField @bind-Value="@IntifaceService.PatRandomOnTimeMin" Label="On Min Sec" Variant="Variant.Outlined" Min="0" Max="9.9" Step="0.1" Format="N1" />
                 </MudItem>
                 <MudItem xs="3">
-                    <MudNumericField @bind-Value="IntifaceService.patRandomOnTimeMax" Label="On Max Sec" Variant="Variant.Outlined" Min="0" Max="10" Step="0.1" Format="N1" />
+                    <MudNumericField @bind-Value="@IntifaceService.PatRandomOnTimeMax" Label="On Max Sec" Variant="Variant.Outlined" Min="0" Max="10" Step="0.1" Format="N1" />
                 </MudItem>
 
 @*                 <MudItem xs="1">
-                    <MudCheckBox @bind-Value="IntifaceService.patUseRandomPower" Label="Use Random Power" />
+                    <MudCheckBox @bind-Value="IntifaceService.patUseRandomPowerOutput" Label="Use Random PowerOutput" />
                 </MudItem> *@
 
                 <MudItem xs="6">
-                    <MudNumericField @bind-Value="IntifaceService.patRandomPowerMin" Label="Min Strength" Variant="Variant.Outlined" Min="0" Max="1" Step="0.1" Format="N1" />
+                    <MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMin" Label="Min Strength" Variant="Variant.Outlined" Min="0" Max="1" Step="0.1" Format="N1" />
                 </MudItem>
 
                 <MudItem xs="6">
-                    <MudNumericField @bind-Value="IntifaceService.patRandomPowerMax" Label="Max Strength" Variant="Variant.Outlined" Min="0" Max="1" Step="0.1" Format="N1" />
+                    <MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMax" Label="Max Strength" Variant="Variant.Outlined" Min="0" Max="1" Step="0.1" Format="N1" />
                 </MudItem>
 
 
@@ -87,7 +88,7 @@
         </MudItem>
 
         <MudItem xs="1">
-            <MudProgressLinear Vertical="true" Color="Color.Primary" Striped="true" Size="Size.Large" @bind-Value="@IntifaceService.powerOutputDisplay"/>
+            <MudProgressLinear Vertical="true" Color="Color.Primary" Striped="true" Size="Size.Large" @bind-Value="@IntifaceService.DisplayPowerOutput"/>
         </MudItem>
 
     </MudGrid>
