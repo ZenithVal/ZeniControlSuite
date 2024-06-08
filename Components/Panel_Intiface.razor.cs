@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using MudBlazor;
 using ZeniControlSuite.Services;
 
@@ -13,9 +14,14 @@ public partial class Panel_Intiface : IDisposable
     [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private Service_Intiface IntifaceService { get; set; } = default!;
 
+    //private ChartOptions chartOptions = new ChartOptions();
+
     protected override void OnInitialized()
     {
         IntifaceService.OnRequestDisplayUpdate += OnIntifaceUpdate;
+
+        //chartOptions.InterpolationOption = InterpolationOption.NaturalSpline;
+        //chartOptions.YAxisFormat = "c2";
     }
 
     private void OnIntifaceUpdate()

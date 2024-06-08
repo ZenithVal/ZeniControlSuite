@@ -24,8 +24,14 @@ public class Service_Intiface: IHostedService, IDisposable
     public double Power = 0.0;
     public double PowerSpike { get; set; } = 0.0;
     public bool FullStop { get; set; } = false;
-    
-    
+
+    /*    
+    public List<ChartSeries> powerHistory = new List<ChartSeries>()
+    {
+        new ChartSeries() { Name = "", Data = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 } },
+    };
+    */
+
     public bool UsePattern { get; set; } = false;
     public bool PatternRunning { get; private set; } = false;
     public bool PatUseRandomPower { get; set; } = false;
