@@ -9,6 +9,14 @@ public class Service_Intiface: IHostedService, IDisposable
 {
     public delegate void RequestDisplayUpdate();
     public event Service_Intiface.RequestDisplayUpdate? OnRequestDisplayUpdate;
+
+    public void InvokeRequestDisplayUpdate()
+    {
+        if (OnRequestDisplayUpdate != null)
+        {
+            OnRequestDisplayUpdate?.Invoke();
+        }
+    }
     
     private readonly Service_Logs LogService;
     private ButtplugClient _client = new ButtplugClient("ZeniControlSuite");
@@ -40,7 +48,7 @@ public class Service_Intiface: IHostedService, IDisposable
     public List<PatternType> GetPatternTypes => Enum.GetValues<PatternType>().ToList();
     
     public double PatSpeedClimb = 2.0;
-    public double PatSpeedDrop = 2.0;
+    public double PatSpeedDrop = 3.0;
     
     public double PatRandomOffTimeMin = 0.5; //time in seconds to wait before turning on
     public double PatRandomOffTimeMax = 2.0;
@@ -91,7 +99,7 @@ public class Service_Intiface: IHostedService, IDisposable
             if(TriggerWithinTolerance(PowerOutput - PowerOutputPrevious))
             {
                 PowerOutputPrevious = PowerOutput;
-                OnRequestDisplayUpdate?.Invoke();
+                InvokeRequestDisplayUpdate();
             }
         }
     }
@@ -102,11 +110,10 @@ public class Service_Intiface: IHostedService, IDisposable
         await Task.Delay((int)(delay * 1000));
     }
 
-
     private async Task RunPattern()
     {
         PatState = 0;
-        PatPowerGoal = PatRandomPowerMax;
+        PatPowerGoal = PowerInput;
 
         if (PatUseRandomPower)
         {
@@ -116,40 +123,49 @@ public class Service_Intiface: IHostedService, IDisposable
         Power = 0.0;
         switch (PatternType)
         {
-            case PatternType.Constant:
+            case PatternType.None:
+                while (PatternType == PatternType.None)
+                {
+                    Power = PowerInput;
+                    await Task.Delay(200);
+                }
+                break;
+
+            case PatternType.Pulse:
                 Power = PatPowerGoal;
                 await DelayRandom(PatRandomOnTimeMin, PatRandomOnTimeMax);
                 await Task.Delay(50);
+                Power = PatRandomPowerMin;
                 break;
 
             case PatternType.Wave:
                 //states= 0: Up, 1: Down
-                while (PatState == PatternState.Up)
+                while (PatternType == PatternType.Wave && PatState == PatternState.Up)
                 {
                     Power += (0.01 * PatSpeedClimb) * PatPowerGoal;
 
                     if (Power > 0.99 * PatPowerGoal)
                     {
                         PatState = PatternState.Down;
-                        Power = PatPowerGoal;
+                        
                     }
-
                     await Task.Delay(50);
                 }
-
+                Power = PatPowerGoal;
                 await DelayRandom(PatRandomOnTimeMin, PatRandomOnTimeMax);
-                while (PatState == PatternState.Down)
+
+                while (PatternType == PatternType.Wave && PatState == PatternState.Down)
                 {
                     Power -= (0.01 * PatSpeedDrop) * PatPowerGoal;
 
                     if (Power < 0.01 + PatRandomPowerMin)
                     {
                         PatState = PatternState.Up;
-                        Power = 0.0 + PatRandomPowerMin;
                     }
 
                     await Task.Delay(50);
                 }
+                Power = 0.0 + PatRandomPowerMin;
 
                 break;
 
@@ -174,6 +190,7 @@ public class Service_Intiface: IHostedService, IDisposable
             LogService.AddLog(ServiceName, "System", $"Error connecting to Intiface client: {e.Message}", Severity.Error, Variant.Outlined);
             InterfaceConnected = false;
             EnableIntiface = false;
+            InvokeRequestDisplayUpdate();
             return;
         }
         

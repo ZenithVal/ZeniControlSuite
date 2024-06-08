@@ -2,6 +2,7 @@
 
 public enum PatternType
 {
-    Constant,
+    None,
+    Pulse,
     Wave
 }

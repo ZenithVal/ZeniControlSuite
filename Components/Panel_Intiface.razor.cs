@@ -44,4 +44,19 @@ public partial class Panel_Intiface : IDisposable
         IntifaceService.FullStop = !IntifaceService.FullStop;
     }
 
+    public void ResetControlValues()
+    {
+        IntifaceService.PatUseRandomPower = false;
+        IntifaceService.PatSpeedClimb = 2.0;
+        IntifaceService.PatSpeedDrop = 3.0;
+        IntifaceService.PatRandomOffTimeMin = 0.5;
+        IntifaceService.PatRandomOffTimeMax = 1.0;
+        IntifaceService.PatRandomOnTimeMin = 0.5;
+        IntifaceService.PatRandomOnTimeMax = 2.0;
+        IntifaceService.PatRandomPowerMin = 0.1;
+        IntifaceService.PatRandomPowerMax = 1.0;
+        IntifaceService.PowerInput = 0.2;
+        InvokeAsync(StateHasChanged);
+    }
+
 }

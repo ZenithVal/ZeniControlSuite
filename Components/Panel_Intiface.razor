@@ -7,12 +7,12 @@
 </MudItem>
 
 
-<MudGrid Justify="Justify.Center" Style="width: 600px;align-items:center">
-	<MudItem xs="6">
+<MudGrid Justify="Justify.Center" Style="width: 600px">
+	<MudItem xs="4">
 		<MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@IntifaceService.EnableIntiface" OnClick="EnableIntiface">Enable Intiface</MudButton>
 	</MudItem>
 
-	<MudItem xs="6">
+	<MudItem xs="4">
 		@if (IntifaceService.FullStop)
 		{
 			<MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="PowerFullStop">STOPPED</MudButton>
@@ -22,6 +22,10 @@
 			<MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="PowerFullStop">Full Stop</MudButton>
 		}
 	</MudItem>
+
+    <MudItem xs="4">
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ResetControlValues">Reset Controls</MudButton>
+    </MudItem>
 
     <MudGrid Justify="Justify.Center">
         <MudItem xs="11">
@@ -39,13 +43,14 @@
                 @if (IntifaceService.PatternType == PatternType.Wave)
 				{
                     <MudItem xs="6">
-                        <MudNumericField @bind-Value="@IntifaceService.PatSpeedClimb" Label="Climb Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.1" Format="N1" />
+                        <MudNumericField @bind-Value="@IntifaceService.PatSpeedClimb" Label="Climb Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.2" Format="N1" />
                     </MudItem>
 
                     <MudItem xs="6">
-                        <MudNumericField @bind-Value="@IntifaceService.PatSpeedDrop" Label="Drop Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.1" Format="N1" />
+                        <MudNumericField @bind-Value="@IntifaceService.PatSpeedDrop" Label="Drop Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.2" Format="N1" />
                     </MudItem>
 				}
+
 
                 <MudItem xs="3">
                     <MudNumericField @bind-Value="@IntifaceService.PatRandomOffTimeMin" Label="Off Min Sec" Variant="Variant.Filled" Min="0" Max="@IntifaceService.PatRandomOffTimeMax" Step="0.1" Format="N1" />
@@ -60,27 +65,30 @@
                     <MudNumericField @bind-Value="@IntifaceService.PatRandomOnTimeMax" Label="On Max Sec" Variant="Variant.Filled" Min="@IntifaceService.PatRandomOnTimeMin" Max="10" Step="0.1" Format="N1" />
                 </MudItem>
 
-                <MudItem xs="5">
+
+                <MudItem xs="4">
                     <MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMin" Label="Min Strength" Variant="Variant.Filled" Min="0" Max="@IntifaceService.PatRandomPowerMax" Step="0.1" Format="N1" />
                 </MudItem>
 
-                <MudItem xs="2">
-                    <MudSwitch @bind-Value="@IntifaceService.PatUseRandomPower" Size="Size.Large" Color="Color.Primary" UnCheckedColor="Color.Secondary" />
+                <MudItem xs="4">
+                    <MudCheckBox @bind-Value="@IntifaceService.PatUseRandomPower" Size="Size.Large" Label="Random %" Color="Color.Primary" UnCheckedColor="Color.Secondary" />
                 </MudItem>
 
-                <MudItem xs="5">
+                <MudItem xs="4">
                     <MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMax" Label="Max Strength" Variant="Variant.Filled" Min="@IntifaceService.PatRandomPowerMin" Max="1" Step="0.1" Format="N1" />
                 </MudItem>
 
+
                 <MudItem xs="12">
-                    <MudSlider Vertical="false" Color="Color.Success" Variant="Variant.Filled" Size="Size.Large" Min="0.0" Max="1.0" Step="0.05" @bind-Value="@IntifaceService.PowerInput">Multiplier</MudSlider>
+                    <MudSlider Vertical="false" Color="Color.Tertiary" Variant="Variant.Filled" Size="Size.Large" Min="0.0" Max="1.0" Step="0.05" @bind-Value="@IntifaceService.PowerInput">Multiplier</MudSlider>
                 </MudItem>
+
 
             </MudGrid>
         </MudItem>
 
         <MudItem xs="1">
-            <MudProgressLinear Vertical="true" Color="Color.Primary" Striped="true" Size="Size.Large" Min="0.05" Max="0.95" @bind-Value="@IntifaceService.PowerOutput"/>
+            <MudProgressLinear Vertical="true" Color="Color.Warning" Striped="false" Size="Size.Large" Min="0.05" Max="0.95" @bind-Value="@IntifaceService.PowerOutput" Buffer="@IntifaceService.PatUseRandomPower" BufferValue="@IntifaceService.PatPowerGoal"/>
         </MudItem>
 
     </MudGrid>
