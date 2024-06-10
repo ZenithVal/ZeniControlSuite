@@ -13,7 +13,7 @@ public class Service_Intiface: IHostedService, IDisposable
     public delegate void RequestReadoutUpdate();
     public event Service_Intiface.RequestReadoutUpdate? OnIntifaceReadoutUpdate;
 
-    public void InvokeRequestControlUpdate()
+    public void InvokeControlUpdate()
     {
         if (OnIntifaceControlsUpdate != null)
         {
@@ -21,7 +21,7 @@ public class Service_Intiface: IHostedService, IDisposable
         }
     }
 
-    public void InvokeRequestReadoutUpdate()
+    public void InvokeReadoutUpdate()
     {
         if (OnIntifaceReadoutUpdate != null)
         {
@@ -35,6 +35,7 @@ public class Service_Intiface: IHostedService, IDisposable
         _client.DeviceAdded -= HandleDeviceAdded;
         _client.DeviceRemoved -= HandleDeviceRemoved;
     }
+
 
     private readonly Service_Logs LogService;
     private ButtplugClient _client = new ButtplugClient("ZeniControlSuite");
@@ -120,19 +121,19 @@ public class Service_Intiface: IHostedService, IDisposable
             IntifaceEnabled = true;
 
             LogService.AddLog(ServiceName, "System", "Intiface Connected", Severity.Normal, Variant.Outlined);
-            DeviceHeartbeat();
+            DeviceHeartbeatTimer();
 
-            InvokeRequestControlUpdate();
+            InvokeControlUpdate();
         }
         catch (Exception e)
         {
             LogService.AddLog(ServiceName, "System", "Intiface failed: " + e.Message, Severity.Error, Variant.Outlined);
             IntifaceEnabled = false;
-            InvokeRequestControlUpdate();
+            InvokeControlUpdate();
         }
     }
 
-    private void DeviceHeartbeat()
+    private void DeviceHeartbeatTimer()
     {
         var timer = new System.Timers.Timer(100);
         timer.Elapsed += async (sender, e) => await DeviceLoop();
@@ -235,7 +236,7 @@ public class Service_Intiface: IHostedService, IDisposable
             if (TriggerWithinTolerance(PowerOutput - PowerOutputPrevious))
             {
                 PowerOutputPrevious = PowerOutput;
-                InvokeRequestReadoutUpdate();
+                InvokeReadoutUpdate();
             }
         }
     }

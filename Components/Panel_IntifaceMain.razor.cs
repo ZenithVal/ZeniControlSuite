@@ -117,11 +117,11 @@ public partial class Panel_IntifaceMain : IDisposable
                 break;
 
             case ControlPreset.ClimbDrop:
-                SetIntifaceVariables(PatternType.Wave, 0.1, 6.0, 0.2, 1.0, 0.5, 1.0, false, 0.0, 1.0, 1.0);
+                SetIntifaceVariables(PatternType.Wave, 0.3, 6.0, 0.2, 1.0, 0.5, 1.0, false, 0.0, 1.0, 1.0);
                 break;
 
             case ControlPreset.ClimbDropHoldLonger:
-                SetIntifaceVariables(PatternType.Wave, 0.1, 6.0, 0.4, 4.0, 1.5, 4.0, false, 0.0, 1.0, 1.0);
+                SetIntifaceVariables(PatternType.Wave, 0.3, 6.0, 0.4, 4.0, 1.5, 4.0, false, 0.0, 1.0, 1.0);
                 break;
         }
     }
