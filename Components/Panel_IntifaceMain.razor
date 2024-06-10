@@ -9,7 +9,7 @@
 
 <MudGrid Justify="Justify.Center" Style="width: 600px">
 	<MudItem xs="4">
-		<MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@IntifaceService.EnableIntiface" OnClick="EnableIntiface">Enable Intiface</MudButton>
+		<MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@IntifaceService.IntifaceEnabled" OnClick="EnableIntiface">Enable Intiface</MudButton>
 	</MudItem>
 
 	<MudItem xs="4">
@@ -24,7 +24,12 @@
 	</MudItem>
 
     <MudItem xs="4">
-        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ResetControlValues">Reset Controls</MudButton>
+        <MudMenu Label="Presets" Variant="Variant.Outlined">
+            @foreach (var preset in Enum.GetValues<ControlPreset>().ToList())
+			{
+                <MudMenuItem @onclick="() => ApplyControlPreset(preset)">@preset.ToString()</MudMenuItem>
+			}
+        </MudMenu>
     </MudItem>
 
     <MudGrid Justify="Justify.Center">
@@ -87,9 +92,7 @@
             </MudGrid>
         </MudItem>
 
-        <MudItem xs="1">
-            <MudProgressLinear Vertical="true" Color="Color.Warning" Striped="false" Size="Size.Large" Min="0.05" Max="0.95" @bind-Value="@IntifaceService.PowerOutput" Buffer="@IntifaceService.PatUseRandomPower" BufferValue="@IntifaceService.PatPowerGoal"/>
-        </MudItem>
+        <Panel_IntifaceReadout/>
 
     </MudGrid>
 

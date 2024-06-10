@@ -7,24 +7,44 @@ namespace ZeniControlSuite.Services;
 
 public class Service_Intiface: IHostedService, IDisposable
 {
-    public delegate void RequestDisplayUpdate();
-    public event Service_Intiface.RequestDisplayUpdate? OnRequestDisplayUpdate;
+    public delegate void RequestControlUpdate();
+    public event Service_Intiface.RequestControlUpdate? OnIntifaceControlsUpdate;
 
-    public void InvokeRequestDisplayUpdate()
+    public delegate void RequestReadoutUpdate();
+    public event Service_Intiface.RequestReadoutUpdate? OnIntifaceReadoutUpdate;
+
+    public void InvokeRequestControlUpdate()
     {
-        if (OnRequestDisplayUpdate != null)
+        if (OnIntifaceControlsUpdate != null)
         {
-            OnRequestDisplayUpdate?.Invoke();
+            OnIntifaceControlsUpdate?.Invoke();
         }
     }
-    
+
+    public void InvokeRequestReadoutUpdate()
+    {
+        if (OnIntifaceReadoutUpdate != null)
+        {
+            OnIntifaceReadoutUpdate?.Invoke();
+        }
+    }
+
+    public void Dispose()
+    {
+        _client.Dispose();
+        _client.DeviceAdded -= HandleDeviceAdded;
+        _client.DeviceRemoved -= HandleDeviceRemoved;
+    }
+
     private readonly Service_Logs LogService;
     private ButtplugClient _client = new ButtplugClient("ZeniControlSuite");
     public const string ServiceName = "IntifaceService";
+
+
+    public bool IntifaceEnabled { get; set; } = false;
+    public bool IntifaceConnected { get; private set; } = false;
     public bool DeviceConnected { get; private set; } = false;
-    public bool InterfaceConnected { get; private set; } = false;
-    
-    public bool EnableIntiface { get; set; } = false;
+
     
     public double PowerOutput { get; set; } = 0.0;
     public double PowerOutputPrevious { get; set; } = 0.0;
@@ -32,13 +52,6 @@ public class Service_Intiface: IHostedService, IDisposable
     public double Power = 0.0;
     public double PowerSpike { get; set; } = 0.0;
     public bool FullStop { get; set; } = false;
-
-    /*    
-    public List<ChartSeries> powerHistory = new List<ChartSeries>()
-    {
-        new ChartSeries() { Name = "", Data = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 } },
-    };
-    */
 
     public bool UsePattern { get; set; } = false;
     public bool PatternRunning { get; private set; } = false;
@@ -60,7 +73,6 @@ public class Service_Intiface: IHostedService, IDisposable
     public double PatRandomPowerMin = 0.1;
     public double PatRandomPowerMax = 1.0;
 
-
     public Service_Intiface(IServiceProvider services)
     {
         LogService = services.GetRequiredService<Service_Logs>();
@@ -68,6 +80,19 @@ public class Service_Intiface: IHostedService, IDisposable
         _client.DeviceRemoved += HandleDeviceRemoved;
     }
 
+
+    #region Device Scanning and Connection
+    private async Task ScanForDevices()
+    {
+        await _client.StartScanningAsync();
+
+        while (DeviceConnected == false)
+        {
+            await Task.Delay(500);
+        }
+
+        await _client.StopScanningAsync();
+    }
     private void HandleDeviceAdded(object? _, DeviceAddedEventArgs aArgs)
     {
         LogService.AddLog(ServiceName, "System", $"Device Added: {aArgs.Device.Name}", Severity.Info, Variant.Outlined);
@@ -78,39 +103,64 @@ public class Service_Intiface: IHostedService, IDisposable
         LogService.AddLog(ServiceName, "System", $"Device Removed: {aArgs.Device.Name}", Severity.Info, Variant.Outlined);
         DeviceConnected = false;
     }
-    
-    public async Task ScanForDevices()
-    {
-        await _client.StartScanningAsync();
+    #endregion
 
-        while (DeviceConnected == false)
+
+    public async Task IntifaceStart(Service_Logs logService)
+    {
+        if (IntifaceEnabled)
         {
-            await Task.Delay(50);
+            return;
+        }
+        try
+        {
+            LogService.AddLog(ServiceName, "System", "Starting Intiface", Severity.Normal, Variant.Outlined);
+            await _client.ConnectAsync(new ButtplugWebsocketConnector(new Uri("ws://localhost:16261")));
+            await ScanForDevices();
+            IntifaceEnabled = true;
+
+            LogService.AddLog(ServiceName, "System", "Intiface Connected", Severity.Normal, Variant.Outlined);
+            DeviceHeartbeat();
+
+            InvokeRequestControlUpdate();
+        }
+        catch (Exception e)
+        {
+            LogService.AddLog(ServiceName, "System", "Intiface failed: " + e.Message, Severity.Error, Variant.Outlined);
+            IntifaceEnabled = false;
+            InvokeRequestControlUpdate();
+        }
+    }
+
+    private void DeviceHeartbeat()
+    {
+        var timer = new System.Timers.Timer(100);
+        timer.Elapsed += async (sender, e) => await DeviceLoop();
+        timer.AutoReset = true;
+        timer.Enabled = true;
+    }
+
+    private async Task DeviceLoop()
+    {
+        if (!PatternRunning)
+        {
+            PatternRunning = true;
+            DevicePattern();
         }
 
-        await _client.StopScanningAsync();
-    }
-    
-    public async Task ControlDevice()
-    {
-        foreach (var device in _client.Devices)
+        if (!FullStop)
         {
-            await device.VibrateAsync(PowerOutput);
-            if(TriggerWithinTolerance(PowerOutput - PowerOutputPrevious))
-            {
-                PowerOutputPrevious = PowerOutput;
-                InvokeRequestDisplayUpdate();
-            }
+            PowerOutput = Math.Clamp((Power * PowerInput) + PowerSpike, 0.0, 1.0);
         }
-    }
-    
-    private async Task DelayRandom(double min, double max)
-    {
-        double delay = new Random().NextDouble() * (max - min) + min;
-        await Task.Delay((int)(delay * 1000));
+        else
+        {
+            PowerOutput = 0.0;
+        }
+
+        await DeviceControl();
     }
 
-    private async Task RunPattern()
+    private async Task DevicePattern()
     {
         PatState = 0;
         PatPowerGoal = PowerInput;
@@ -177,80 +227,32 @@ public class Service_Intiface: IHostedService, IDisposable
         PatternRunning = false;
     }
 
-    public async Task IntifaceRunner(Service_Logs logService, CancellationToken stoppingToken)
+    public async Task DeviceControl()
     {
-        try
+        foreach (var device in _client.Devices)
         {
-            await _client.ConnectAsync(new ButtplugWebsocketConnector(new Uri("ws://localhost:16261")));
-            LogService.AddLog(ServiceName, "System", "Connected to Intiface client", Severity.Normal, Variant.Outlined);
-            InterfaceConnected = true;
-        }
-        catch (Exception e)
-        {
-            LogService.AddLog(ServiceName, "System", $"Error connecting to Intiface client: {e.Message}", Severity.Error, Variant.Outlined);
-            InterfaceConnected = false;
-            EnableIntiface = false;
-            InvokeRequestDisplayUpdate();
-            return;
-        }
-        
-        await ScanForDevices();
-        
-        
-        while (EnableIntiface)
-        {
-            if (!PatternRunning)
+            await device.VibrateAsync(PowerOutput);
+            if (TriggerWithinTolerance(PowerOutput - PowerOutputPrevious))
             {
-                PatternRunning = true;
-                RunPattern();
+                PowerOutputPrevious = PowerOutput;
+                InvokeRequestReadoutUpdate();
             }
-
-            if (!FullStop)
-            {
-                PowerOutput = Math.Clamp((Power * PowerInput) + PowerSpike, 0.0, 1.0);
-            }
-            else
-            {
-                PowerOutput = 0.0;
-            }
-
-            await ControlDevice();
-            await Task.Delay(100);
-        }
-        
-    }
-    
-    public void Initialize(Service_Logs logService)
-    {
-        if (EnableIntiface)
-        {
-            return;
-        }
-        try 
-        {
-            LogService.AddLog(ServiceName, "System", "Starting IntifaceRunner", Severity.Normal, Variant.Outlined);
-            Task.Run( async () => await IntifaceRunner(logService, CancellationToken.None));
-            EnableIntiface = true;
-        }
-        catch (Exception e) 
-        {
-            LogService.AddLog(ServiceName, "System", "IntifaceRunner failed: " + e.Message, Severity.Error, Variant.Outlined); 
-            EnableIntiface = false;
         }
     }
-    
+
+
+    private async Task DelayRandom(double min, double max)
+    {
+        double delay = new Random().NextDouble() * (max - min) + min;
+        await Task.Delay((int)(delay * 1000));
+    }
     private bool TriggerWithinTolerance(double value, double tolerance = 0.03)
     {
         return value > tolerance || value < -tolerance;
     }
-    
-    public decimal CreateSineWave( double freq, double amplitude, double offset)
-    {
-        DateTime currentTime = DateTime.Now;
-        var time = currentTime.TimeOfDay.TotalSeconds; // Current time in seconds
-        return (decimal)((amplitude * Math.Sin(2 * Math.PI * freq * time)) + offset);
-    }
 
+
+    #region Idk yet
     public Task StartAsync(CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
@@ -261,10 +263,11 @@ public class Service_Intiface: IHostedService, IDisposable
         return Task.CompletedTask;
     }
 
-    public void Dispose()
+    public decimal CreateSineWave(double freq, double amplitude, double offset)
     {
-        _client.Dispose();
-        _client.DeviceAdded -= HandleDeviceAdded;
-        _client.DeviceRemoved -= HandleDeviceRemoved;
+        DateTime currentTime = DateTime.Now;
+        var time = currentTime.TimeOfDay.TotalSeconds; // Current time in seconds
+        return (decimal)((amplitude * Math.Sin(2 * Math.PI * freq * time)) + offset);
     }
+    #endregion
 }
