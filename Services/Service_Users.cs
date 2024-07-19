@@ -9,7 +9,7 @@ using MudBlazor;
 
 namespace ZeniControlSuite.Data;
 
-public class Service_User
+public class Service_Users
 {
     private static HttpClient client = new HttpClient();
 	private readonly Service_Logs LogService;

@@ -15,6 +15,7 @@
   <ItemGroup>
     <Content Remove="Configs\BindingTrees Safe.json" />
     <Content Remove="Configs\BindingTrees.json" />
+    <Content Remove="Configs\DiscordUsers.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,8 +46,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Configs\BindingTrees Safe.json" />
     <None Include="Configs\BindingTrees.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Configs\DiscordUsers.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="wwwroot\images\Bindings.png">
