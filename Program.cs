@@ -33,7 +33,7 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.SnackbarVariant = Variant.Outlined;
 });
 
-builder.Services.AddSingleton<UserService>();
+builder.Services.AddSingleton<Service_User>();
 
 builder.Services.AddSingleton<Service_Logs>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Logs>());
