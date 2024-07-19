@@ -103,11 +103,9 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 app.MapBlazorHub(path:"/app");
 
-app.MapControllers();
 app.Run();
