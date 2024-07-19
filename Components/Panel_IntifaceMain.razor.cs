@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.Options;
 using MudBlazor;
 using ZeniControlSuite.Services;
@@ -8,18 +10,22 @@ namespace ZeniControlSuite.Components;
 public partial class Panel_IntifaceMain : IDisposable
 {
     public static bool pageEnabled = true;
-    private string user = "Undefined";
-    private string pageName = "Panel_Intiface";
 
-    [Inject] private Service_Logs LogService { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
+    [Inject] private Service_Logs LogsService { get; set; } = default!;
     [Inject] private Service_Intiface IntifaceService { get; set; } = default!;
 
-    protected override void OnInitialized()
+    private string user = "Undefined";
+    private AuthenticationState context;
+    private string pageName = "Panel_Intiface";
+
+    protected override async Task OnInitializedAsync()
     {
         IntifaceService.OnIntifaceControlsUpdate += OnIntifaceControlsUpdate;
 
-        //chartOptions.InterpolationOption = InterpolationOption.NaturalSpline;
-        //chartOptions.YAxisFormat = "c2";
+        var context = await AuthProvider.GetAuthenticationStateAsync();
+        user = context.GetUserName();
+        LogsService.AddLog(pageName, user, "PageLoad: Binding Manager", Severity.Normal);
     }
 
     private void OnIntifaceControlsUpdate()
@@ -34,7 +40,7 @@ public partial class Panel_IntifaceMain : IDisposable
 
     public void EnableIntiface()
     {
-        IntifaceService.IntifaceStart(LogService);
+        IntifaceService.IntifaceStart(LogsService);
     }
 
     public void PowerFullStop()

@@ -175,17 +175,6 @@ public class Service_BindingTrees : IHostedService
         InvokeBindingTreeUpdate();
     }
 
-    public void ShowBindingInfo(Binding binding)
-    {
-        //formMain.writeConsoleUI($"{binding.Name} ~ {binding.Description}", formMain.CC.Info);
-    }
-
-    //snackbar
-    public void Notify(string message, Color color)
-    {
-
-    }
-
     public void InvokeBindingTreeUpdate()
     {
         if (OnBindingTreeUpdate != null)
@@ -193,17 +182,6 @@ public class Service_BindingTrees : IHostedService
             OnBindingTreeUpdate.Invoke();
         }
     }
-
-    public void addBinding(Binding binding)
-    {
-
-    }
-
-    public void removeBinding(Binding binding)
-    {
-
-    }
-
     #endregion
 
 

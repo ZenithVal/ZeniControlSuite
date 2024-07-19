@@ -1,4 +1,5 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
 
 <MudThemeProvider IsDarkMode=true/>
 <MudDialogProvider/>
@@ -10,11 +11,23 @@
         <NavMenu />
     </div>
 
-    <main style="overflow: scroll;">
-        <article class="content px-4;">
-            @Body
-        </article>
-    </main>
+    <AuthorizeView>
+        <Authorized>
+            <main style="overflow: scroll;">
+                <article class="content px-4;">
+                    @Body
+                </article>
+            </main>
+        </Authorized>
+        <NotAuthorized>
+			<main style="overflow: scroll;">
+				<article class="content px-4;">
+					<h1>Not Authorized</h1>
+					<p class="alert alert-danger">Try Logging in</p>
+				</article>
+			</main>
+        </NotAuthorized>
+    </AuthorizeView>
 
 </div>
 

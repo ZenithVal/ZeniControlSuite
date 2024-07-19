@@ -8,8 +8,7 @@ public partial class BindingManager : IDisposable
 {
     public static bool pageEnabled = true;
 
-    [Inject] 
-    private AuthenticationStateProvider AuthProvider { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private Service_Logs LogsService { get; set; } = default!;
     [Inject] private Service_Points PointsService { get; set; } = default!;
     [Inject] private Service_BindingTrees BindingTreesService { get; set; } = default!;
@@ -26,10 +25,10 @@ public partial class BindingManager : IDisposable
     {
         PointsService.OnPointsUpdate += OnPointsUpdate;
         BindingTreesService.OnBindingTreeUpdate += OnBindingTreeUpdate;
-        
+
         var context = await AuthProvider.GetAuthenticationStateAsync();
         user = context.GetUserName();
-        LogsService.AddLog(pageName, user, "PageLoad: Binding Manager", Severity.Normal);
+        LogsService.AddLog(pageName, user, "PageLoad", Severity.Normal);
 
     }
 

@@ -12,6 +12,7 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
         <div class="nav-item px-3">
+
             <AuthorizeView>
                 <Authorized>
                     <div class="user-info-container">
@@ -21,7 +22,49 @@
                             <a href="Account/LogOut" style="width: min-content"> Log Out</a>
                         </div>
                     </div>
+
+                    @if (Pages.AvatarOSC.pageEnabled)
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="AvatarOSC">
+                                <MudIcon Icon="@Icons.Material.Filled.WifiTethering"></MudIcon>
+                                <span style="padding: 0 8px;">Avatar Controls</span>
+                            </NavLink>
+                        </div>
+                    }
+
+                    @if (Pages.GamesPoints.pageEnabled)
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="Points&Games">
+                                <MudIcon Icon="@Icons.Material.Filled.Games"></MudIcon>
+                                <span style="padding: 0 8px;">Points & Games</span>
+                            </NavLink>
+                        </div>
+                    }
+
+                    @if (Pages.BindingManager.pageEnabled)
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="Bindings">
+                                <MudIcon Icon="@Icons.Material.Filled.Lock"></MudIcon>
+                                <span style="padding: 0 8px;">Binding Unlocks</span>
+                            </NavLink>
+                        </div>
+                    }
+
+                    @if (Pages.Devices.pageEnabled && !Pages.Devices.pageHidden)
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="DeviceControls">
+                                <MudIcon Icon="@Icons.Material.Filled.SettingsRemote"></MudIcon>
+                                <span style="padding: 0 8px;">Device Controls</span>
+                            </NavLink>
+                        </div>
+                    }
+
                 </Authorized>
+
                 <NotAuthorized>
                     <NavLink class="nav-link" href="Account/Login">
                         <MudIcon Icon="@Icons.Material.Filled.Login"></MudIcon>
@@ -30,55 +73,7 @@
                 </NotAuthorized>
             </AuthorizeView>
             
-            
         </div>
-        @* 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div> 
-        *@
-        @if (Pages.AvatarOSC.pageEnabled)
-        {
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="AvatarOSC">
-                    <MudIcon Icon="@Icons.Material.Filled.WifiTethering"></MudIcon>
-                    <span style="padding: 0 8px;">Avatar Controls</span>
-                </NavLink>
-            </div>
-        }
-
-        @if (Pages.GamesPoints.pageEnabled)
-        {
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="Points&Games">
-                    <MudIcon Icon="@Icons.Material.Filled.Games"></MudIcon> 
-                    <span style="padding: 0 8px;">Points & Games</span>
-                </NavLink>
-            </div>
-        }
-
-        @if (Pages.BindingManager.pageEnabled)
-		{
-			<div class="nav-item px-3">
-				<NavLink class="nav-link" href="Bindings">
-					<MudIcon Icon="@Icons.Material.Filled.Lock"></MudIcon> 
-                    <span style="padding: 0 8px;">Binding Unlocks</span>
-				</NavLink>
-			</div>
-		}
-
-        @if (Pages.Devices.pageEnabled && !Pages.Devices.pageHidden)
-        {
-            <div class="nav-item px-3">
-				<NavLink class="nav-link" href="DeviceControls">
-					<MudIcon Icon="@Icons.Material.Filled.SettingsRemote"></MudIcon> 
-                    <span style="padding: 0 8px;">Device Controls</span>
-				</NavLink>
-			</div>
-        }
-
 
     </nav>
 </div>

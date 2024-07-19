@@ -6,6 +6,8 @@ using ZeniControlSuite.Components;
 using ZeniControlSuite.Services;
 using Microsoft.Extensions.Configuration;
 using ZeniControlSuite.Data;
+using Newtonsoft.Json;
+using ZeniControlSuite.Components.Pages;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,9 +58,28 @@ builder.Services.AddAuthentication(opt =>
     .AddCookie()
     .AddDiscord(x =>
     {
-        x.AppId = configuration["Discord:AppId"];
-        x.AppSecret = configuration["Discord:AppSecret"];
-        x.ClientId = configuration["Discord:ClientId"] ?? string.Empty;
+        string appId = string.Empty;
+        string appSecret = string.Empty;
+        string clientId = string.Empty;
+        
+        try
+        {
+            var json = File.ReadAllText("Configs/Discord.json");
+            var jObject = JsonConvert.DeserializeObject<dynamic>(json);
+            appId = jObject.AppID;
+            appSecret = jObject.AppSecret;
+            clientId = jObject.ClientID;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error loading Discord.json:\n{e.Message}");
+            Console.ReadKey();
+            Environment.Exit(0);
+        }
+
+        x.AppId = appId;
+        x.AppSecret = appSecret;
+        x.ClientId = clientId ?? string.Empty;
         x.Scope.Add("identify");
 
         //Required for accessing the oauth2 token in order to make requests on the user's behalf, ie. accessing the user's guild list
