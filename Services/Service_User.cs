@@ -7,7 +7,7 @@ using Newtonsoft.Json.Converters;
 
 namespace ZeniControlSuite.Data;
 
-public class UserService
+public class Service_User
 {
     private static HttpClient client = new HttpClient();
 
