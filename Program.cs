@@ -1,14 +1,21 @@
+using Discord.OAuth2;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using MudBlazor;
 using MudBlazor.Services;
 using ZeniControlSuite.Components;
 using ZeniControlSuite.Services;
+using Microsoft.Extensions.Configuration;
+using ZeniControlSuite.Data;
+
 
 var builder = WebApplication.CreateBuilder(args);
-
+var configuration = builder.Configuration;
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddMudServices();
+builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddMudServices(config =>
 {
@@ -24,6 +31,8 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.SnackbarVariant = Variant.Outlined;
 });
 
+builder.Services.AddSingleton<UserService>();
+
 builder.Services.AddSingleton<Service_Logs>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Logs>());
 
@@ -38,9 +47,23 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_BindingTre
 
 builder.Services.AddSingleton<Service_Intiface>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Intiface>());
+builder.Services.AddAuthentication(opt =>
+    {
+        opt.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        opt.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        opt.DefaultChallengeScheme = DiscordDefaults.AuthenticationScheme;
+    })
+    .AddCookie()
+    .AddDiscord(x =>
+    {
+        x.AppId = configuration["Discord:AppId"];
+        x.AppSecret = configuration["Discord:AppSecret"];
+        x.ClientId = configuration["Discord:ClientId"] ?? string.Empty;
+        x.Scope.Add("identify");
 
-
-
+        //Required for accessing the oauth2 token in order to make requests on the user's behalf, ie. accessing the user's guild list
+        x.SaveTokens = true;
+    });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -54,9 +77,16 @@ if (!app.Environment.IsDevelopment())
 app.Urls.Add("http://localhost:8080");
 
 app.UseStaticFiles();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+app.MapBlazorHub();
 
+app.MapControllers();
 app.Run();

@@ -113,3 +113,31 @@
         overflow-y: auto;
     }
 }
+
+.user-info-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center; /* Align items vertically */
+    gap: 8px;
+    padding: 8px 12px;
+}
+
+.user-info-container img {
+    height: 40px;
+}
+
+.user-info-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.user-info-text a {
+    text-decoration: none;
+}
+
+.user-info-text a:hover {
+    text-decoration: none;
+    color: white;
+}
