@@ -4,19 +4,22 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using ZeniControlSuite.Services;
+using MudBlazor;
 
 namespace ZeniControlSuite.Data;
 
 public class Service_User
 {
     private static HttpClient client = new HttpClient();
+	private readonly Service_Logs LogService;
 
-    /// <summary>
-    /// Parses the user's discord claim for their `identify` information
-    /// </summary>
-    /// <param name="httpContext"></param>
-    /// <returns></returns>
-    public DiscordUserClaim GetInfo(HttpContext httpContext)
+	/// <summary>
+	/// Parses the user's discord claim for their `identify` information
+	/// </summary>
+	/// <param name="httpContext"></param>
+	/// <returns></returns>
+	public DiscordUserClaim GetInfo(HttpContext httpContext)
     {
         if (!httpContext.User.Identity.IsAuthenticated)
         {
@@ -39,11 +42,12 @@ public class Service_User
             UserId = ulong.Parse(claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value),
             //Name = claims.First(x => x.Type == ClaimTypes.Name).Value,
             Name = claims.First(x => x.Type == "urn:discord:global_name").Value,
-            Discriminator = claims.First(x => x.Type == "urn:discord:discriminator").Value,
             Avatar = claims.First(x => x.Type == "urn:discord:avatar").Value,
             Email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value,
             Verified = verified
         };
+
+		LogService.AddLog("User", "System", $"User {userClaim.Name} logged in", Severity.Normal, Variant.Outlined);
     
         return userClaim;
     }
@@ -108,7 +112,6 @@ public class Service_User
     {
         public ulong UserId { get; set; }
         public string Name { get; set; }
-		public string Discriminator { get; set; }
         public string Avatar { get; set; }
     
         /// <summary>

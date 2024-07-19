@@ -1,7 +1,6 @@
 ﻿using Buttplug.Client;
 using Buttplug.Client.Connectors.WebsocketConnector;
 using MudBlazor;
-using static MudBlazor.CategoryTypes;
 
 namespace ZeniControlSuite.Services;
 
@@ -105,7 +104,6 @@ public class Service_Intiface: IHostedService, IDisposable
         DeviceConnected = false;
     }
     #endregion
-
 
     public async Task IntifaceStart(Service_Logs logService)
     {

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using ZeniControlSuite.Data;
 using Newtonsoft.Json;
 using ZeniControlSuite.Components.Pages;
+using ZeniControlSuite;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,7 +62,7 @@ builder.Services.AddAuthentication(opt =>
         string appId = string.Empty;
         string appSecret = string.Empty;
         string clientId = string.Empty;
-        
+
         try
         {
             var json = File.ReadAllText("Configs/Discord.json");
@@ -69,6 +70,13 @@ builder.Services.AddAuthentication(opt =>
             appId = jObject.AppID;
             appSecret = jObject.AppSecret;
             clientId = jObject.ClientID;
+            //whitelist = jObject.Whitelist.ToObject<List<string>>();
+
+/*            Console.WriteLine("Whitelist:");
+            foreach (var item in whitelist)
+            {
+				Console.WriteLine(item);
+			}*/
         }
         catch (Exception e)
         {
