@@ -7,8 +7,8 @@ namespace ZeniControlSuite.Services;
 
 public class Service_Games : IHostedService
 {
-    public delegate void GamesUpdate();
-    public event GamesUpdate? OnGamesUpdate;
+    public delegate void RequestGamesUpdate();
+    public event RequestGamesUpdate? OnGamesUpdate;
 
     [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private Service_Points Points { get; set; } = default!;

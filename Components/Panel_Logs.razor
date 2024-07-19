@@ -4,5 +4,5 @@
 
 @foreach (LogEvent logevent in LogService.logEvents.OrderByDescending(e => e.time))
 {
-    <MudAlert Dense="true" Severity="@logevent.severity">@logevent.source | @logevent.time | @logevent.message</MudAlert>
+    <MudAlert Dense="true" Severity="@logevent.severity">@logevent.source | @logevent.user | @logevent.time | @logevent.message</MudAlert>
 }
