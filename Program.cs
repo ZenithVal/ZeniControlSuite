@@ -82,11 +82,11 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-app.MapBlazorHub();
+app.MapBlazorHub("/app");
+app.MapDefaultControllerRoute();
+app.UseAntiforgery();
 
-app.MapControllers();
 app.Run();
