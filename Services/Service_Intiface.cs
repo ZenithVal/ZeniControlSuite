@@ -58,7 +58,7 @@ public class Service_Intiface: IHostedService, IDisposable
     public bool PatternRunning { get; private set; } = false;
     public bool PatUseRandomPower { get; set; } = false;
 
-    public PatternType PatternType { get; set; } = PatternType.Wave;
+	public PatternType PatternType { get; set; } = PatternType.Wave;
     public List<PatternType> GetPatternTypes => Enum.GetValues<PatternType>().ToList();
     
     public double PatSpeedClimb = 2.0;
@@ -69,7 +69,7 @@ public class Service_Intiface: IHostedService, IDisposable
     public double PatRandomOnTimeMin = 0.5; //time in seconds to wait before turning off
     public double PatRandomOnTimeMax = 2.0;
 
-    public PatternState PatState = PatternState.Up;
+	public PatternState PatState = PatternState.Up;
     public double PatPowerGoal = 0.0;
     public double PatRandomPowerMin = 0.1;
     public double PatRandomPowerMax = 1.0;

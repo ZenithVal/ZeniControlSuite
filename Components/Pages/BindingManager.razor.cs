@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using ZeniControlSuite.Services;
+using ZeniControlSuite.Components;
 
 namespace ZeniControlSuite.Components.Pages;
+
 public partial class BindingManager : IDisposable
 {
     public static bool pageEnabled = true;

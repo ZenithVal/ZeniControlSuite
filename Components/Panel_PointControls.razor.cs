@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using ZeniControlSuite.Services;
 
@@ -6,19 +7,23 @@ namespace ZeniControlSuite.Components;
 
 public partial class Panel_PointControls : IDisposable
 {
-    public static bool pageEnabled = true;
-    private string user = "Undefined"; //Will later be replaced with the user's name via discord Auth
-    private string pageName = "GamesPoints-PointControls";
-
     double third = 0.333;
     double fourth = 0.25;
 
+    [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private Service_Points PointsService { get; set; } = default!;
 
-    protected override void OnInitialized()
+    private string user = "Undefined"; //Will later be replaced with the user's name via discord Auth
+    private AuthenticationState context;
+    private string pageName = "PointControls";
+
+    protected override async Task OnInitializedAsync()
     {
         PointsService.OnPointsUpdate += OnPointsUpdate;
+
+        var context = await AuthProvider.GetAuthenticationStateAsync();
+        user = context.GetUserName();
     }
 
     private void OnPointsUpdate()

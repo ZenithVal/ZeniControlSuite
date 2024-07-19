@@ -37,7 +37,8 @@ public class Service_User
         var userClaim = new DiscordUserClaim
         {
             UserId = ulong.Parse(claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value),
-            Name = claims.First(x => x.Type == ClaimTypes.Name).Value,
+            //Name = claims.First(x => x.Type == ClaimTypes.Name).Value,
+            Name = claims.First(x => x.Type == "urn:discord:global_name").Value,
             Discriminator = claims.First(x => x.Type == "urn:discord:discriminator").Value,
             Avatar = claims.First(x => x.Type == "urn:discord:avatar").Value,
             Email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value,
@@ -107,7 +108,7 @@ public class Service_User
     {
         public ulong UserId { get; set; }
         public string Name { get; set; }
-        public string Discriminator { get; set; }
+		public string Discriminator { get; set; }
         public string Avatar { get; set; }
     
         /// <summary>

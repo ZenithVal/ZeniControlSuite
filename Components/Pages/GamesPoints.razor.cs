@@ -8,6 +8,7 @@ namespace ZeniControlSuite.Components.Pages;
 public partial class GamesPoints : IDisposable
 {
     public static bool pageEnabled = true;
+
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private Service_Points PointsService { get; set; } = default!;

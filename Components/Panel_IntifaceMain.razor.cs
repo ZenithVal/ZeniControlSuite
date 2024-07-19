@@ -17,7 +17,7 @@ public partial class Panel_IntifaceMain : IDisposable
 
     private string user = "Undefined";
     private AuthenticationState context;
-    private string pageName = "Panel_Intiface";
+    private string pageName = "Intiface";
 
     protected override async Task OnInitializedAsync()
     {
@@ -25,7 +25,7 @@ public partial class Panel_IntifaceMain : IDisposable
 
         var context = await AuthProvider.GetAuthenticationStateAsync();
         user = context.GetUserName();
-        LogsService.AddLog(pageName, user, "PageLoad: Binding Manager", Severity.Normal);
+        LogsService.AddLog(pageName, user, "PageLoad", Severity.Normal);
     }
 
     private void OnIntifaceControlsUpdate()
@@ -41,11 +41,13 @@ public partial class Panel_IntifaceMain : IDisposable
     public void EnableIntiface()
     {
         IntifaceService.IntifaceStart(LogsService);
+        LogsService.AddLog(pageName, user, "Intiface Starting", Severity.Normal);
     }
 
     public void PowerFullStop()
     {
         IntifaceService.FullStop = !IntifaceService.FullStop;
+        LogsService.AddLog(pageName, user, "Full Stop: " + IntifaceService.FullStop, Severity.Normal);
     }
 
     public void ResetControlValues()
@@ -146,6 +148,7 @@ public partial class Panel_IntifaceMain : IDisposable
         IntifaceService.PatRandomPowerMax = PatRandomPowerMax;
         IntifaceService.PowerInput = PowerInput;
 
+        LogsService.AddLog(pageName, user, "Control Preset Applied", Severity.Normal);
         InvokeAsync(StateHasChanged);
     }
 }

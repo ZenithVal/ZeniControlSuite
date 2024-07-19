@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using ZeniControlSuite.Services;
 
@@ -8,22 +9,26 @@ public partial class Panel_GameControls : IDisposable
 {
     public static bool pageEnabled = true;
     private string user = "Undefined"; 
-    private string pageName = "GamesPoints-GameControls";
+    private string pageName = "GameControls";
 
     private string localPlayerName = "";
     private string remotePlayerName = "";
 
+    [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private Service_Points PointsService { get; set; } = default!;
     [Inject] private Service_Games GamesService { get; set; } = default!;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         localPlayerName = GamesService.localPlayerName;
         remotePlayerName = GamesService.remotePlayerName;
 
         PointsService.OnPointsUpdate += OnPointsUpdate;
         GamesService.OnGamesUpdate += OnGamesUpdate;
+
+        var context = await AuthProvider.GetAuthenticationStateAsync();
+        user = context.GetUserName();
     }
 
     private void OnPointsUpdate()

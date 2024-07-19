@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Components\Panel_Intiface_PowerHistory.js" />
     <None Remove="Configs\BindingTrees - Copy.json.safe" />
     <None Remove="Configs\BindingTrees.json.safe" />
   </ItemGroup>

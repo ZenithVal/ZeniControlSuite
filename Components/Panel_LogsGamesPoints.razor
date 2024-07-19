@@ -6,8 +6,8 @@
 
 @foreach (LogEvent logevent in LogService.logEvents.OrderByDescending(e => e.time))
 {
-	if (logevent.source.StartsWith("GamesPoints") && logevent.severity == Severity.Info)
+	if (logevent.source.StartsWith("GamePoints") || logevent.source.StartsWith("GameControls") || logevent.source.StartsWith("GameControls") && logevent.severity == Severity.Info)
 	{
-		<MudAlert Dense="true" Severity="Severity.Normal">@logevent.message</MudAlert>
+		<MudAlert Dense="true" Severity="Severity.Normal">@logevent.user @logevent.message</MudAlert>
 	}
 }

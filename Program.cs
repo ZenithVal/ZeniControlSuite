@@ -107,5 +107,7 @@ app.UseAuthorization();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 app.MapBlazorHub(path:"/app");
+app.MapDefaultControllerRoute();
+app.UseAntiforgery();
 
 app.Run();

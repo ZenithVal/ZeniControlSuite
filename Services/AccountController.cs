@@ -15,13 +15,13 @@ public class AccountController : ControllerBase
         Provider = provider;
     }
 
-    [HttpGet("login")]
+    [HttpGet]
     public IActionResult Login(string returnUrl = "/")
     {
         return Challenge(new AuthenticationProperties { RedirectUri = returnUrl }, "Discord");
     }
 
-    [HttpGet("logout")]
+    [HttpGet]
     public async Task<IActionResult> LogOut(string returnUrl = "/")
     {
         //This removes the cookie assigned to the user login.
