@@ -107,7 +107,7 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-app.MapBlazorHub();
+app.MapBlazorHub(path:"/app");
 
 app.MapControllers();
 app.Run();
