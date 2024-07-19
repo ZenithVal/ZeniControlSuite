@@ -4,12 +4,8 @@ using MudBlazor;
 using MudBlazor.Services;
 using ZeniControlSuite.Components;
 using ZeniControlSuite.Services;
-using Microsoft.Extensions.Configuration;
 using ZeniControlSuite.Data;
 using Newtonsoft.Json;
-using ZeniControlSuite.Components.Pages;
-using ZeniControlSuite;
-
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -70,13 +66,6 @@ builder.Services.AddAuthentication(opt =>
             appId = jObject.AppID;
             appSecret = jObject.AppSecret;
             clientId = jObject.ClientID;
-            //whitelist = jObject.Whitelist.ToObject<List<string>>();
-
-/*            Console.WriteLine("Whitelist:");
-            foreach (var item in whitelist)
-            {
-				Console.WriteLine(item);
-			}*/
         }
         catch (Exception e)
         {

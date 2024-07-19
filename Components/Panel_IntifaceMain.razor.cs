@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using Microsoft.Extensions.Options;
 using MudBlazor;
 using ZeniControlSuite.Services;
 

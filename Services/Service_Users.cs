@@ -6,19 +6,16 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using ZeniControlSuite.Services;
 using MudBlazor;
+using Microsoft.AspNetCore.Components;
 
 namespace ZeniControlSuite.Data;
 
 public class Service_Users
 {
     private static HttpClient client = new HttpClient();
-	private readonly Service_Logs LogService;
+	[Inject] private Service_Logs LogService { get; set; } = default!;
 
-	/// <summary>
 	/// Parses the user's discord claim for their `identify` information
-	/// </summary>
-	/// <param name="httpContext"></param>
-	/// <returns></returns>
 	public DiscordUserClaim GetInfo(HttpContext httpContext)
     {
         if (!httpContext.User.Identity.IsAuthenticated)
@@ -47,16 +44,12 @@ public class Service_Users
             Verified = verified
         };
 
-		LogService.AddLog("User", "System", $"User {userClaim.Name} logged in", Severity.Normal, Variant.Outlined);
+		LogService.AddLog("User", "System", $"User {userClaim.Name} logged in", Severity.Info, Variant.Outlined);
     
         return userClaim;
     }
     
-    /// <summary>
     /// Gets the user's discord oauth2 access token
-    /// </summary>
-    /// <param name="httpContext"></param>
-    /// <returns></returns>
     public async Task<string> GetTokenAsync(HttpContext httpContext)
     {
         if (!httpContext.User.Identity.IsAuthenticated)
@@ -68,11 +61,7 @@ public class Service_Users
         return tk;
     }
     
-    /// <summary>
     /// Gets a list of the user's guilds, Requires `Guilds` scope
-    /// </summary>
-    /// <param name="httpContext"></param>
-    /// <returns></returns>
     public async Task<List<Guild>> GetUserGuildsAsync(HttpContext httpContext)
     {
         if (!httpContext.User.Identity.IsAuthenticated)
@@ -114,14 +103,10 @@ public class Service_Users
         public string Name { get; set; }
         public string Avatar { get; set; }
     
-        /// <summary>
         /// Will be null if the email scope is not provided
-        /// </summary>
         public string Email { get; set; } = null;
     
-        /// <summary>
         /// Whether the email on this account has been verified, can be null
-        /// </summary>
         public bool? Verified { get; set; } = null;
     }
     
@@ -155,5 +140,6 @@ public class Service_Users
                 new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
             },
         };
-    }
+	}
+
 }  
