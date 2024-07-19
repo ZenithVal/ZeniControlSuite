@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using ZeniControlSuite.Services;
 
@@ -7,6 +8,8 @@ public partial class BindingManager : IDisposable
 {
     public static bool pageEnabled = true;
 
+    [Inject] 
+    private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private Service_Logs LogsService { get; set; } = default!;
     [Inject] private Service_Points PointsService { get; set; } = default!;
     [Inject] private Service_BindingTrees BindingTreesService { get; set; } = default!;
@@ -16,13 +19,22 @@ public partial class BindingManager : IDisposable
     private static string hoverBindingDescription = "";
 
     private string user = "Undefined"; //Will later be replaced with the user's name via discord Auth
+    private AuthenticationState context;
     private readonly string pageName = "Binding Manager";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         PointsService.OnPointsUpdate += OnPointsUpdate;
         BindingTreesService.OnBindingTreeUpdate += OnBindingTreeUpdate;
+        
+        var context = await AuthProvider.GetAuthenticationStateAsync();
+        user = context.GetUserName();
         LogsService.AddLog(pageName, user, "PageLoad: Binding Manager", Severity.Normal);
+
+    }
+
+    protected override void OnParametersSet()
+    {
     }
 
     private void OnPointsUpdate()

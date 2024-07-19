@@ -1,4 +1,7 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider context
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Zeni Control Suite</a>
     </div>
@@ -8,7 +11,32 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
+        <div class="nav-item px-3">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="user-info-container">
+                        <img src="@context.GetAvatar()" alt="User Avatar"/>
+                        <div class="user-info-text">
+                            <div> @context.GetUserName()</div>
+                            <a href="Account/LogOut" style="width: min-content"> Log Out</a>
+                        </div>
+                    </div>
 
+
+
+
+
+                </Authorized>
+                <NotAuthorized>
+                    <NavLink class="nav-link" href="Account/Login">
+                        <MudIcon Icon="@Icons.Material.Filled.Login"></MudIcon>
+                        <span style="padding: 0 8px;"> Log in </span>
+                    </NavLink>
+                </NotAuthorized>
+            </AuthorizeView>
+            
+            
+        </div>
         @* 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
@@ -16,13 +44,12 @@
             </NavLink>
         </div> 
         *@
-
         @if (Pages.AvatarOSC.pageEnabled)
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="AvatarOSC">
                     <MudIcon Icon="@Icons.Material.Filled.WifiTethering"></MudIcon>
-                    &nbsp; Avatar Controls
+                    <span style="padding: 0 8px;">Avatar Controls</span>
                 </NavLink>
             </div>
         }
@@ -32,7 +59,7 @@
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="Points&Games">
                     <MudIcon Icon="@Icons.Material.Filled.Games"></MudIcon> 
-                    &nbsp; Points & Games
+                    <span style="padding: 0 8px;">Points & Games</span>
                 </NavLink>
             </div>
         }
@@ -42,7 +69,7 @@
 			<div class="nav-item px-3">
 				<NavLink class="nav-link" href="Bindings">
 					<MudIcon Icon="@Icons.Material.Filled.Lock"></MudIcon> 
-					&nbsp; Binding Unlocks
+                    <span style="padding: 0 8px;">Binding Unlocks</span>
 				</NavLink>
 			</div>
 		}
@@ -52,10 +79,11 @@
             <div class="nav-item px-3">
 				<NavLink class="nav-link" href="DeviceControls">
 					<MudIcon Icon="@Icons.Material.Filled.SettingsRemote"></MudIcon> 
-					&nbsp; Device Controls
+                    <span style="padding: 0 8px;">Device Controls</span>
 				</NavLink>
 			</div>
         }
+
 
     </nav>
 </div>
