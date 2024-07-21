@@ -23,6 +23,16 @@
                         </div>
                     </div>
 
+                    @* 
+                    <div>@context.GetUserName()</div>
+                    <div>@context.GetAvatar()</div>
+                    @foreach (var role in context.GetRoles())
+                    {
+                    <div>@role</div>
+                    }
+                    *@
+
+
                     @if (Pages.AvatarOSC.pageEnabled)
                     {
                         <div class="nav-item px-3">
@@ -73,6 +83,7 @@
                         <span style="padding: 0 8px;"> Log in </span>
                     </NavLink>
                 </NotAuthorized>
+
             </AuthorizeView>
             
         </div>

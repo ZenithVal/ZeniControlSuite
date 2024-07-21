@@ -15,8 +15,9 @@ public class Service_Users
     private static HttpClient client = new HttpClient();
 	[Inject] private Service_Logs LogService { get; set; } = default!;
 
-	/// Parses the user's discord claim for their `identify` information
-	public DiscordUserClaim GetInfo(HttpContext httpContext)
+
+    /// Parses the user's discord claim for their `identify` information
+    public DiscordUserClaim GetInfo(HttpContext httpContext)
     {
         if (!httpContext.User.Identity.IsAuthenticated)
         {
@@ -33,18 +34,16 @@ public class Service_Users
         {
             verified = null;
         }
-        
-        var userClaim = new DiscordUserClaim
-        {
+
+        var userClaim = new DiscordUserClaim {
             UserId = ulong.Parse(claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value),
-            //Name = claims.First(x => x.Type == ClaimTypes.Name).Value,
             Name = claims.First(x => x.Type == "urn:discord:global_name").Value,
             Avatar = claims.First(x => x.Type == "urn:discord:avatar").Value,
             Email = claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value,
-            Verified = verified
+            Verified = verified,
         };
 
-		LogService.AddLog("User", "System", $"User {userClaim.Name} logged in", Severity.Info, Variant.Outlined);
+        LogService.AddLog("User", "System", $"User {userClaim.Name} logged in", Severity.Info, Variant.Outlined);
     
         return userClaim;
     }
@@ -108,8 +107,17 @@ public class Service_Users
     
         /// Whether the email on this account has been verified, can be null
         public bool? Verified { get; set; } = null;
+
+        public List<string> Roles { get; set; }
+}
+
+    public class DiscordUser
+    {
+        public ulong Id { get; set; }
+        public string DisplayName { get; set; }
+        public List<string> Roles { get; set; }
     }
-    
+
     public class Guild
     {
         [JsonProperty("id")]

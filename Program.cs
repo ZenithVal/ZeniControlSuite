@@ -82,6 +82,13 @@ builder.Services.AddAuthentication(opt =>
         //Required for accessing the oauth2 token in order to make requests on the user's behalf, ie. accessing the user's guild list
         x.SaveTokens = true;
     });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("GamesPoints", policy => policy.RequireRole("GamesPoints"));
+    options.AddPolicy("AvatarOSC", policy => policy.RequireRole("AvatarOSC"));
+    options.AddPolicy("Devices", policy => policy.RequireRole("Devices"));
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
