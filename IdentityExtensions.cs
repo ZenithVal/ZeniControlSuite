@@ -10,7 +10,12 @@ public static class IdentityExtensions
     public static string GetAvatar(this AuthenticationState context) => $"https://cdn.discordapp.com/avatars/{context.GetUserId()}/{context.GetAvatarId()}";
     public static List<string> GetRoles(this AuthenticationState context)
     {
-        var roles = context.User.Claims.Where(x => x.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role").Select(x => x.Value).ToList();
-        return roles;
+        if (context !=null)
+        {
+            var roles = context.User.Claims.Where(x => x.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role").Select(x => x.Value).ToList();
+            return roles;
+        }
+
+        return new List<string>();
     }
 }

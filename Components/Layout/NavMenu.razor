@@ -1,6 +1,6 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-
-
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -24,7 +24,7 @@
                         </div>
                     </div>
 
-                    @if (Pages.AvatarOSC.pageEnabled)
+                    @if (context.User.IsInRole("Admin") || (Pages.AvatarOSC.pageEnabled && context.User.IsInRole("AvatarOSC")))
                     {
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="AvatarOSC">
@@ -34,7 +34,7 @@
                         </div>
                     }
 
-                    @if (Pages.GamesPoints.pageEnabled)
+                    @if (context.User.IsInRole("Admin") || (Pages.GamesPoints.pageEnabled && context.User.IsInRole("GamesPoints")))
                     {
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="Points&Games">
@@ -44,7 +44,7 @@
                         </div>
                     }
 
-                    @if (Pages.BindingManager.pageEnabled)
+                    @if (context.User.IsInRole("Admin") || (Pages.BindingManager.pageEnabled && context.User.IsInRole("Bindings")))
                     {
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="Bindings">
@@ -54,8 +54,7 @@
                         </div>
                     }
 
-                    @* 
-                    @if (Pages.Devices.pageEnabled)
+                    @if (context.User.IsInRole("Admin") || (Pages.Devices.pageEnabled && context.User.IsInRole("Intiface") || context.User.IsInRole("Shocker")))
                     {
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="Devices">
@@ -64,17 +63,43 @@
                             </NavLink>
                         </div>
                     }
-                    *@
 
+                    @if (context.User.IsInRole("Admin") || context.User.IsInRole("LocalHost"))
+					{
+						<div class="nav-item px-3">
+							<NavLink class="nav-link" href="Settings">
+								<MudIcon Icon="@Icons.Material.Filled.Settings"></MudIcon>
+								<span style="padding: 0 8px;">Settings</span>
+							</NavLink>
+						</div>
 
-                    @* roles at bottom of nav list *@
+                        <div class="nav-item px-3">
+							<NavLink class="nav-link" href="Logs">
+								<MudIcon Icon="@Icons.Material.Filled.List"></MudIcon>
+								<span style="padding: 0 8px;">Logs</span>
+							</NavLink>
+                        </div>
+					}
+
+                    @* Debug Roles *@
                     <div class="nav-item px-3">
 						<MudDivider />
-                        @foreach (string role in context.GetRoles())
+                        <span style="padding: 0 8px;">Roles Debug:</span>
+                        @try
+                        {
+                            @foreach (string role in context.GetRoles())
+                            {
+                                <div class="nav-item px-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.Security"></MudIcon>
+                                    <span style="padding: 0 8px;">@role</span>
+                                </div>
+                            }
+                        }
+                        catch (Exception e)
 						{
 							<div class="nav-item px-3">
 								<MudIcon Icon="@Icons.Material.Filled.Security"></MudIcon>
-								<span style="padding: 0 8px;">@role</span>
+								<span style="padding: 0 8px;">Error</span>
 							</div>
 						}
 					</div>
@@ -95,3 +120,12 @@
     </nav>
 </div>
 
+@code {
+  private bool _sidebarOpen = false;
+  
+  private void ToggleSidebar()
+  {
+    _sidebarOpen = !_sidebarOpen;
+  }
+
+}

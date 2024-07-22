@@ -62,6 +62,7 @@ builder.Services.AddAuthentication(opt =>
     {
         opt.Cookie.SameSite = SameSiteMode.Lax;
         opt.Cookie.SecurePolicy = CookieSecurePolicy.None;
+        opt.AccessDeniedPath = "/"; //Send the user to home page instead of access denied
     })
     .AddDiscord(opt =>
     {
@@ -105,6 +106,8 @@ builder.Services.AddAuthentication(opt =>
                 return Task.CompletedTask;
             }
         };
+        
+        opt.AccessDeniedPath = "/";
     });
 
 Whitelist.loadDiscordUsersJson();

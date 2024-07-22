@@ -1,14 +1,32 @@
 ﻿@page "/Devices"
 @using Microsoft.AspNetCore.Authorization
-@* @attribute [Authorize(Roles = "Admin, Intiface, Shocker")] *@
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize(Roles = "Admin, Intiface, Shocker")]
 
 <PageTitle>Device Controls</PageTitle>
 
 <h1>Device Controls</h1>
 <MudDivider></MudDivider>
 
-<Panel_IntifaceMain/>
+<AuthorizeView>
+    <Authorized>
+        @if (@context.User.IsInRole("LocalHost"))
+        {
+            <Panel_IntifaceMain/>
+        }
+        else if (context.User.IsInRole("Intiface") && pageEnabled)
+        {
+            <Panel_IntifaceMain/>
+
+            <MudButton Href="Intiface" Variant="Variant.Filled" Color="Color.Primary">Dedicated Page</MudButton>
+        }
+        else if (context.User.IsInRole("Intiface"))
+        {
+            <p>Intiface is currently disabled.</p>
+        }
+    </Authorized>
+</AuthorizeView>
 
 @code {
-	public static bool pageEnabled = true;
+    public static bool pageEnabled = true;
 }

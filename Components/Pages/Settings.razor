@@ -1,6 +1,7 @@
-﻿@using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "Admin")]
-@page "/Settings"
+﻿@page "/Settings"
+@using ZeniControlSuite.Authentication
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin, LocalHost")]
 
 <PageTitle>Settings</PageTitle>
 <MudDivider></MudDivider>
@@ -11,16 +12,20 @@
     <h3>Avatar OSC</h3>
     <MudSwitch @bind-Value="@AvatarOSC.pageEnabled" Color="Color.Primary" />
     <br>
-    <h3>Points & Games</h3>
+    <h3>Games & Points</h3>
     <MudSwitch @bind-Value="@GamesPoints.pageEnabled" Color="Color.Primary" />
     <br>
     <h3>Bindings</h3>
     <MudSwitch @bind-Value="@BindingManager.pageEnabled" Color="Color.Primary" />
     <br>
-    <h3>Device Controls</h3>
+    <h3>Devices</h3>
     <MudSwitch @bind-Value="@Devices.pageEnabled" Color="Color.Primary" />
     <br>
 </div>
+
+
+@*reload DiscordUsers.Json*@
+<MudButton OnClick="@(() => { Whitelist.loadDiscordUsersJson(); })">Reload Discord Users Json</MudButton>
 
 @code {
 }

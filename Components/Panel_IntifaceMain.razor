@@ -1,16 +1,14 @@
-﻿@page "/Intiface"
-@layout ZeniControlSuite.Components.Layout.NoMenuLayout
+﻿@layout ZeniControlSuite.Components.Layout.NoMenuLayout
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Components.Authorization
 
 <MudItem>
     <MudText Typo="Typo.h6">Intiface</MudText>
 </MudItem>
 
-
 <MudGrid Justify="Justify.Center" Style="width: 600px">
 	<MudItem xs="4">
-		<MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@IntifaceService.IntifaceEnabled" OnClick="EnableIntiface">Enable Intiface</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@IntifaceService.IntifaceEnabled" OnClick="EnableIntiface">Enable Intiface</MudButton>
 	</MudItem>
 
 	<MudItem xs="4">
