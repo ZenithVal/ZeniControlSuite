@@ -50,7 +50,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Configs\DiscordUsers.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Include="wwwroot\images\Bindings.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>

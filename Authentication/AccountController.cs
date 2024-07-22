@@ -3,14 +3,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ZeniControlSuite.Services;
+namespace ZeniControlSuite.Authentication;
 
 [Route("[controller]/[action]")]
 public class AccountController : ControllerBase
 {
     public IDataProtectionProvider Provider { get; }
 
-	public AccountController(IDataProtectionProvider provider)
+    public AccountController(IDataProtectionProvider provider)
     {
         Provider = provider;
     }
@@ -18,7 +18,7 @@ public class AccountController : ControllerBase
     [HttpGet]
     public IActionResult Login(string returnUrl = "/")
     {
-		return Challenge(new AuthenticationProperties { RedirectUri = returnUrl }, "Discord");
+        return Challenge(new AuthenticationProperties { RedirectUri = returnUrl }, "Discord");
     }
 
     [HttpGet]
@@ -27,6 +27,6 @@ public class AccountController : ControllerBase
         //This removes the cookie assigned to the user login.
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return LocalRedirect(returnUrl);
-	}
+    }
 
 }

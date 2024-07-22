@@ -1,5 +1,6 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
-@inject AuthenticationStateProvider context
+
+
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -16,22 +17,12 @@
             <AuthorizeView>
                 <Authorized>
                     <div class="user-info-container">
-                        <img src="@context.GetAvatar()" alt="User Avatar"/>
+                        <img src="@context.GetAvatar()" alt="User Avatar" />
                         <div class="user-info-text">
                             <div> @context.GetUserName()</div>
                             <a href="Account/LogOut" style="width: min-content"> Log Out</a>
                         </div>
                     </div>
-
-                    @* 
-                    <div>@context.GetUserName()</div>
-                    <div>@context.GetAvatar()</div>
-                    @foreach (var role in context.GetRoles())
-                    {
-                    <div>@role</div>
-                    }
-                    *@
-
 
                     @if (Pages.AvatarOSC.pageEnabled)
                     {
@@ -74,6 +65,19 @@
                         </div>
                     }
                     *@
+
+
+                    @* roles at bottom of nav list *@
+                    <div class="nav-item px-3">
+						<MudDivider />
+                        @foreach (string role in context.GetRoles())
+						{
+							<div class="nav-item px-3">
+								<MudIcon Icon="@Icons.Material.Filled.Security"></MudIcon>
+								<span style="padding: 0 8px;">@role</span>
+							</div>
+						}
+					</div>
 
                 </Authorized>
 
