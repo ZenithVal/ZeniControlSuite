@@ -59,10 +59,9 @@ public class DiscordAuthStateProvider : AuthenticationStateProvider
 		if (!Whitelist.usersAccepted.ContainsKey(userID))
 		{
             var userInfo = Whitelist.usersToAccept[userID];
-            Whitelist.usersAccepted.Add(userID, new Whitelist.DiscordUser { DisplayName = userInfo.DisplayName, Roles = userInfo.Roles });
+			try { Whitelist.usersAccepted.Add(userID, new Whitelist.DiscordUser { DisplayName = userInfo.DisplayName, Roles = userInfo.Roles }); } catch { }
 			Console.WriteLine($"||| AUTH |||| User {Whitelist.usersAccepted[userID].DisplayName} authenticated");
 		}
-
 	}
 
     public static void AddUserToDeniedList(ClaimsPrincipal user)
@@ -70,9 +69,17 @@ public class DiscordAuthStateProvider : AuthenticationStateProvider
 		var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 		if (user != null && userID != null && user.Identity.IsAuthenticated && !Whitelist.usersToAccept.ContainsKey(userID))
 		{
-			Console.WriteLine($"||| AUTH |||| User {userID} | {user.Identity.Name} is not registered, adding to denied users.");
-			Whitelist.usersDenied.Add(userID, new Whitelist.DiscordUser { DisplayName = user.Identity.Name, Roles = new List<string>() });
-			Whitelist.saveDeniedUsersJson();
+			if (Whitelist.usersDenied.ContainsKey(userID))
+			{
+				Console.WriteLine($"||| AUTH |||| User {userID} | {user.Identity.Name} tried to authenticate again");
+			}
+			else
+			{
+				Console.WriteLine($"||| AUTH |||| User {userID} | {user.Identity.Name} is not registered, adding to denied users.");
+				//this sometimes seems to fire async? so this is here so stuff doesnt explode.
+				try { Whitelist.usersDenied.Add(userID, new Whitelist.DiscordUser { DisplayName = user.Identity.Name, Roles = new List<string>() }); } catch { }
+				Whitelist.saveDeniedUsersJson();
+			}
 		}
 	}
 
