@@ -20,7 +20,7 @@
                         <img src="@context.GetAvatar()" alt="User Avatar" />
                         <div class="user-info-text">
                             <div> @context.GetUserName()</div>
-                            <a href="Account/LogOut" style="width: min-content"> Log Out</a>
+                            <a href="Api/Account/LogOut" style="width: min-content"> Log Out</a>
                         </div>
                     </div>
 
@@ -107,7 +107,7 @@
                 </Authorized>
 
                 <NotAuthorized>
-                    <NavLink class="nav-link" href="Account/Login">
+                    <NavLink class="nav-link" href="Api/Account/Login">
                         <MudIcon Icon="@Icons.Material.Filled.Login"></MudIcon>
                         <span style="padding: 0 8px;"> Log in </span>
                     </NavLink>

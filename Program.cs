@@ -11,15 +11,34 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Components.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
+
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
 builder.Services.AddMudServices();
-builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
+
+
+builder.Services.AddCascadingAuthenticationState();
+
+builder.Services.AddControllers();
+
+builder.Services.AddAntiforgery(options =>
+{
+	options.HeaderName = "X-CSRF-TOKEN";
+	options.Cookie.HttpOnly = true;
+});
+
 
 builder.Services.AddMudServices(config =>
 {
@@ -62,8 +81,40 @@ builder.Services.AddAuthentication(opt =>
     {
         opt.Cookie.SameSite = SameSiteMode.Lax;
         opt.Cookie.SecurePolicy = CookieSecurePolicy.None;
-        opt.AccessDeniedPath = "/"; //Send the user to home page instead of access denied
-    })
+		opt.Cookie.HttpOnly = true;
+		opt.Cookie.Name = "ZeniControlSuite";
+		opt.LoginPath = "/api/account/login";
+		opt.LogoutPath = "/api/account/logout";
+		opt.AccessDeniedPath = "/AccessDenied";
+		opt.Cookie.IsEssential = true;
+        opt.Events.OnValidatePrincipal = async context =>
+        {
+            var user = context.Principal;
+
+			if (user.Identity?.IsAuthenticated == true)
+			{
+                var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (userID != null && Whitelist.usersToAccept.ContainsKey(userID))
+                {
+                    var claims = DiscordAuthStateProvider.GetClaims(user, userID);
+
+                    var identity = new ClaimsIdentity(claims, "Discord");
+                    var principal = new ClaimsPrincipal(identity);
+
+					DiscordAuthStateProvider.AddUserToAcceptedList(userID);
+
+					context.ReplacePrincipal(principal);
+				}
+				else
+				{
+					context.RejectPrincipal();
+					await context.HttpContext.SignOutAsync();
+					DiscordAuthStateProvider.AddUserToDeniedList(user);
+				}
+			}
+        };
+	})
     .AddDiscord(opt =>
     {
         string appId = string.Empty;
@@ -82,9 +133,10 @@ builder.Services.AddAuthentication(opt =>
         opt.AppSecret = appSecret;
         opt.ClientId = clientId ?? string.Empty;
         opt.Scope.Add("identify");
+		opt.CallbackPath = new PathString("/signin-discord");
 
-        //Required for accessing the oauth2 token in order to make requests on the user's behalf, ie. accessing the user's guild list
-        opt.SaveTokens = true;
+		//Required for accessing the oauth2 token in order to make requests on the user's behalf, ie. accessing the user's guild list
+		opt.SaveTokens = true;
 
         opt.Events = new OAuthEvents {
             OnCreatingTicket = async context =>
@@ -98,17 +150,14 @@ builder.Services.AddAuthentication(opt =>
 
                 var user = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                 context.RunClaimActions(user.RootElement);
-            },
-            OnRemoteFailure = context =>
-            {
-                context.Response.Redirect("error?message=" + context.Failure.Message);
-                context.HandleResponse();
-                return Task.CompletedTask;
-            }
+			},
         };
         
         opt.AccessDeniedPath = "/";
     });
+
+builder.Services.AddAuthenticationCore();
+builder.Services.AddScoped<AuthenticationStateProvider, DiscordReAuthStateProvider>();
 
 Whitelist.loadDiscordUsersJson();
 
@@ -137,11 +186,12 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
-app.MapBlazorHub(path:"/app");
+    .AddInteractiveServerRenderMode()
+    .RequireAuthorization();
+
 app.MapDefaultControllerRoute();
+app.MapControllers();
 app.UseAntiforgery();
 
 app.Run();

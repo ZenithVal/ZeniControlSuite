@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ZeniControlSuite.Authentication;
 
-[Route("[controller]/[action]")]
+[Route("api/[controller]/[action]")]
 public class AccountController : ControllerBase
 {
     public IDataProtectionProvider Provider { get; }
