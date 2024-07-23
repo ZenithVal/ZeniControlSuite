@@ -6,3 +6,53 @@
 {
     <MudAlert Dense="true" Severity="@logevent.severity">@logevent.source | @logevent.user | @logevent.time | @logevent.message</MudAlert>
 }
+
+
+@* idea for MudTable logs *@
+@* <MudSimpleTable Hover="true" Dense="true" FixedHeader="true" Style="height:100%;")">
+    <thead>
+        <tr>
+            @foreach (var h in LogHeaders)
+            {
+                <th>@h</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var log in LogService.logEvents)
+		{
+			<tr>
+                <td>
+                    @if (log.severity == Severity.Normal)
+                    {
+						<MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Success"></MudIcon>
+					}
+					else if (log.severity == Severity.Warning)
+					{
+						<MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning"></MudIcon>
+					}
+					else if (log.severity == Severity.Error)
+					{
+						<MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error"></MudIcon>
+					}
+					else
+					{
+						<MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Success"></MudIcon>
+					}
+                </td>
+                <td>@log.source</td>
+				<td>@log.user</td>
+				<td>@log.time</td>
+				<td>@log.message</td>
+
+			</tr>
+		}
+    </tbody>
+</MudSimpleTable> 
+
+@code {
+    string[] LogHeaders = { "Source", "User", "Time", "Message", "Severity" };
+}
+
+*@
+
