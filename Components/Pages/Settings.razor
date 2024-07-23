@@ -6,7 +6,8 @@
 <PageTitle>Settings</PageTitle>
 <MudDivider></MudDivider>
 
-<br><br/>
+<br/>
+<br />
 
 <div>
     <h3>Avatar OSC</h3>
@@ -24,8 +25,11 @@
 </div>
 
 
+<br />
+
 @*reload DiscordUsers.Json*@
 <MudButton OnClick="@(() => { Whitelist.loadDiscordUsersJson(); })">Reload Discord Users Json</MudButton>
 
 @code {
+    bool AppDebug = false;
 }

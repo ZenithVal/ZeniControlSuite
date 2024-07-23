@@ -17,7 +17,11 @@
             <AuthorizeView>
                 <Authorized>
                     <div class="user-info-container">
-                        <img src="@context.GetAvatar()" alt="User Avatar" />
+
+                        <MudAvatar>
+                            <MudImage src="@context.GetAvatar()" Alt="User Avatar"></MudImage>
+                        </MudAvatar>
+
                         <div class="user-info-text">
                             <div> @context.GetUserName()</div>
                             <a href="Api/Account/LogOut" style="width: min-content"> Log Out</a>
@@ -37,9 +41,9 @@
                     @if (context.User.IsInRole("Admin") || (Pages.GamesPoints.pageEnabled && context.User.IsInRole("GamesPoints")))
                     {
                         <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="Points&Games">
+                            <NavLink class="nav-link" href="Games&Points">
                                 <MudIcon Icon="@Icons.Material.Filled.Games"></MudIcon>
-                                <span style="padding: 0 8px;">Points & Games</span>
+                                <span style="padding: 0 8px;">Games & Points</span>
                             </NavLink>
                         </div>
                     }
