@@ -65,7 +65,7 @@ public class Service_BindingTrees : IHostedService
         catch (Exception e)
         {
             Console.WriteLine($"Error loading Binding Trees:\n{e.Message}");
-            BindingManager.pageEnabled = false;
+            Bindings.pageEnabled = false;
         }
     }
 

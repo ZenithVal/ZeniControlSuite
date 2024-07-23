@@ -6,7 +6,7 @@ using ZeniControlSuite.Components;
 
 namespace ZeniControlSuite.Components.Pages;
 
-public partial class BindingManager : IDisposable
+public partial class Bindings : IDisposable
 {
     public static bool pageEnabled = true;
 
