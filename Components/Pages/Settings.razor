@@ -22,7 +22,12 @@
     <h3>Devices</h3>
     <MudSwitch @bind-Value="@Devices.pageEnabled" Color="Color.Primary" />
     <br>
+    <h3>App Debug Mode</h3>
+    <MudSwitch @bind-Value="@Settings.AppDebug" Color="Color.Primary" />
+    <br>
 </div>
+
+
 
 
 <br />
@@ -31,5 +36,5 @@
 <MudButton OnClick="@(() => { Whitelist.loadDiscordUsersJson(); })">Reload Discord Users Json</MudButton>
 
 @code {
-    bool AppDebug = false;
+    public static bool AppDebug = false;
 }

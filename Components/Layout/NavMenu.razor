@@ -85,28 +85,32 @@
                         </div>
 					}
 
-                    @* Debug Roles *@
-                    <div class="nav-item px-3">
-						<MudDivider />
-                        <span style="padding: 0 8px;">Roles Debug:</span>
-                        @try
-                        {
-                            @foreach (string role in context.GetRoles())
+                    @if (Pages.Settings.AppDebug)
+                    {
+                        <br />
+                        <div class="nav-item px-3">
+                            <MudDivider />
+                            <br />
+                            <span style="padding: 0 8px;">Roles Debug:</span>
+                            @try
+                            {
+                                @foreach (string role in context.GetRoles())
+                                {
+                                    <div class="nav-item px-3">
+                                        <MudIcon Icon="@Icons.Material.Filled.Security"></MudIcon>
+                                        <span style="padding: 0 8px;">@role</span>
+                                    </div>
+                                }
+                            }
+                            catch (Exception e)
                             {
                                 <div class="nav-item px-3">
                                     <MudIcon Icon="@Icons.Material.Filled.Security"></MudIcon>
-                                    <span style="padding: 0 8px;">@role</span>
+                                    <span style="padding: 0 8px;">Error</span>
                                 </div>
                             }
-                        }
-                        catch (Exception e)
-						{
-							<div class="nav-item px-3">
-								<MudIcon Icon="@Icons.Material.Filled.Security"></MudIcon>
-								<span style="padding: 0 8px;">Error</span>
-							</div>
-						}
-					</div>
+                        </div>
+                    }
 
                 </Authorized>
 
