@@ -23,14 +23,14 @@ public class Binding
     public List<string> Prerequisites { get; set; } //List of items that need to be bought before this item can be bought.
     public List<string> Conflicts { get; set; } //List of items that can't be bought if this item is bought.
     public List<string> Replaces { get; set; } //A restraint that replaces the prereq item as an "upgrade".
-                                                //(EG, A alternate version of an item) Can't be bought if item that it replaces is locked sicne they can't take off the previous item.
+                                               //(EG, A alternate version of an item) Can't be bought if item that it replaces is locked sicne they can't take off the previous item.
 
     public double TempDuration { get; set; } //If greater than 0, Item lasts for this duration in minutes before being removed.
-                                                //If something is bought that has it as a prereq, its timer pauses.
-                                                //If the item that made it pause is sold, the timer continues
+                                             //If something is bought that has it as a prereq, its timer pauses.
+                                             //If the item that made it pause is sold, the timer continues
 
     public int ConsumableCount { get; set; } //If greater than -1, It's a limited use consumable item that can be bought this many times.
-                                                //Can't be sold. (EG: Buy a new rule that opponent needs to follow)
+                                             //Can't be sold. (EG: Buy a new rule that opponent needs to follow)
 
     //Information Variables
     public bool CanBeLocked { get; set; } //Can the item be locked?

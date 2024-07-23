@@ -17,11 +17,11 @@ public class Game
 
 public class GameType_TerrorsOfNowhere
 {
-    
+
 }
 
 public class GameType_Billiards
 {
-    
+
 }
 

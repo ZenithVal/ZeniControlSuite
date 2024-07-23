@@ -21,67 +21,67 @@ public class DiscordAuthStateProvider : AuthenticationStateProvider
         {
             var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-			if (userID != null && Whitelist.usersToAccept.ContainsKey(userID))
-			{
-				var claims = GetClaims(user, userID);
+            if (userID != null && Whitelist.usersToAccept.ContainsKey(userID))
+            {
+                var claims = GetClaims(user, userID);
 
-				var identity = new ClaimsIdentity(claims, "Discord");
-				var principal = new ClaimsPrincipal(identity);
+                var identity = new ClaimsIdentity(claims, "Discord");
+                var principal = new ClaimsPrincipal(identity);
 
-				AddUserToAcceptedList(userID);
+                AddUserToAcceptedList(userID);
 
-				return Task.FromResult(new AuthenticationState(principal)).Result;
-			}
+                return Task.FromResult(new AuthenticationState(principal)).Result;
+            }
         }
 
-		AddUserToDeniedList(user);
-		return Task.FromResult(new AuthenticationState(new ClaimsPrincipal())).Result;
+        AddUserToDeniedList(user);
+        return Task.FromResult(new AuthenticationState(new ClaimsPrincipal())).Result;
     }
-	public static List<Claim> GetClaims(ClaimsPrincipal user, string userID)
-	{
-		var claims = new List<Claim>(user.Claims);
+    public static List<Claim> GetClaims(ClaimsPrincipal user, string userID)
+    {
+        var claims = new List<Claim>(user.Claims);
 
-		claims.RemoveAll(x => x.Type == ClaimTypes.Name);
-		claims.Add(new Claim(ClaimTypes.Name, Whitelist.usersToAccept[userID].DisplayName));
+        claims.RemoveAll(x => x.Type == ClaimTypes.Name);
+        claims.Add(new Claim(ClaimTypes.Name, Whitelist.usersToAccept[userID].DisplayName));
 
-		var roles = Whitelist.usersToAccept[userID].Roles;
-		claims.RemoveAll(x => x.Type == ClaimTypes.Role);
-		foreach (var role in roles)
-		{
-			claims.Add(new Claim(ClaimTypes.Role, role));
-		}
+        var roles = Whitelist.usersToAccept[userID].Roles;
+        claims.RemoveAll(x => x.Type == ClaimTypes.Role);
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
-		return claims;
-	}
+        return claims;
+    }
 
     public static void AddUserToAcceptedList(string userID)
     {
-		if (!Whitelist.usersAccepted.ContainsKey(userID))
-		{
+        if (!Whitelist.usersAccepted.ContainsKey(userID))
+        {
             var userInfo = Whitelist.usersToAccept[userID];
-			try { Whitelist.usersAccepted.Add(userID, new Whitelist.DiscordUser { DisplayName = userInfo.DisplayName, Roles = userInfo.Roles }); } catch { }
-			Console.WriteLine($"||| AUTH |||| User {Whitelist.usersAccepted[userID].DisplayName} authenticated");
-		}
-	}
+            try { Whitelist.usersAccepted.Add(userID, new Whitelist.DiscordUser { DisplayName = userInfo.DisplayName, Roles = userInfo.Roles }); } catch { }
+            Console.WriteLine($"||| AUTH |||| User {Whitelist.usersAccepted[userID].DisplayName} authenticated");
+        }
+    }
 
     public static void AddUserToDeniedList(ClaimsPrincipal user)
     {
-		var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-		if (user != null && userID != null && user.Identity.IsAuthenticated && !Whitelist.usersToAccept.ContainsKey(userID))
-		{
-			if (Whitelist.usersDenied.ContainsKey(userID))
-			{
-				Console.WriteLine($"||| AUTH |||| User {userID} | {user.Identity.Name} tried to authenticate again");
-			}
-			else
-			{
-				Console.WriteLine($"||| AUTH |||| User {userID} | {user.Identity.Name} is not registered, adding to denied users.");
-				//this sometimes seems to fire async? so this is here so stuff doesnt explode.
-				try { Whitelist.usersDenied.Add(userID, new Whitelist.DiscordUser { DisplayName = user.Identity.Name, Roles = new List<string>() }); } catch { }
-				Whitelist.saveDeniedUsersJson();
-			}
-		}
-	}
+        var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (user != null && userID != null && user.Identity.IsAuthenticated && !Whitelist.usersToAccept.ContainsKey(userID))
+        {
+            if (Whitelist.usersDenied.ContainsKey(userID))
+            {
+                Console.WriteLine($"||| AUTH |||| User {userID} | {user.Identity.Name} tried to authenticate again");
+            }
+            else
+            {
+                Console.WriteLine($"||| AUTH |||| User {userID} | {user.Identity.Name} is not registered, adding to denied users.");
+                //this sometimes seems to fire async? so this is here so stuff doesnt explode.
+                try { Whitelist.usersDenied.Add(userID, new Whitelist.DiscordUser { DisplayName = user.Identity.Name, Roles = new List<string>() }); } catch { }
+                Whitelist.saveDeniedUsersJson();
+            }
+        }
+    }
 
 
 }

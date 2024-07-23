@@ -8,7 +8,7 @@ namespace ZeniControlSuite.Components;
 public partial class Panel_GameControls : IDisposable
 {
     public static bool pageEnabled = true;
-    private string user = "Undefined"; 
+    private string user = "Undefined";
     private string pageName = "GameControls";
 
     private string localPlayerName = "";
@@ -33,7 +33,7 @@ public partial class Panel_GameControls : IDisposable
 
     private void OnPointsUpdate()
     {
-		InvokeAsync(StateHasChanged);
+        InvokeAsync(StateHasChanged);
     }
 
     private void OnGamesUpdate()
@@ -43,15 +43,15 @@ public partial class Panel_GameControls : IDisposable
 
     private void ChangeNames()
     {
-		if (GamesService.AutoGameRunning)
+        if (GamesService.AutoGameRunning)
         {
-			LogService.AddLog(pageName, user, "Cannot change usernames while autoGame is running", Severity.Error, Variant.Outlined);
-			return;
-		}
+            LogService.AddLog(pageName, user, "Cannot change usernames while autoGame is running", Severity.Error, Variant.Outlined);
+            return;
+        }
 
-		GamesService.ChangeNames(localPlayerName, remotePlayerName);
-		LogService.AddLog(pageName, user, $"Usernames changed: {localPlayerName} & {remotePlayerName} ", Severity.Info, Variant.Outlined);
-	}
+        GamesService.ChangeNames(localPlayerName, remotePlayerName);
+        LogService.AddLog(pageName, user, $"Usernames changed: {localPlayerName} & {remotePlayerName} ", Severity.Info, Variant.Outlined);
+    }
 
     private void AutoGameStart()
     {

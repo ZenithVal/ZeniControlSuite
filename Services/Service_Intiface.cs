@@ -4,7 +4,7 @@ using MudBlazor;
 
 namespace ZeniControlSuite.Services;
 
-public class Service_Intiface: IHostedService, IDisposable
+public class Service_Intiface : IHostedService, IDisposable
 {
     public delegate void RequestControlUpdate();
     public event Service_Intiface.RequestControlUpdate? OnIntifaceControlsUpdate;
@@ -45,7 +45,7 @@ public class Service_Intiface: IHostedService, IDisposable
     public bool IntifaceConnected { get; private set; } = false;
     public bool DeviceConnected { get; private set; } = false;
 
-    
+
     public double PowerOutput { get; set; } = 0.0;
     public double PowerOutputPrevious { get; set; } = 0.0;
     public double PowerInput { get; set; } = 1.0;
@@ -57,18 +57,18 @@ public class Service_Intiface: IHostedService, IDisposable
     public bool PatternRunning { get; private set; } = false;
     public bool PatUseRandomPower { get; set; } = false;
 
-	public PatternType PatternType { get; set; } = PatternType.Wave;
+    public PatternType PatternType { get; set; } = PatternType.Wave;
     public List<PatternType> GetPatternTypes => Enum.GetValues<PatternType>().ToList();
-    
+
     public double PatSpeedClimb = 2.0;
     public double PatSpeedDrop = 3.0;
-    
+
     public double PatRandomOffTimeMin = 0.5; //time in seconds to wait before turning on
     public double PatRandomOffTimeMax = 2.0;
     public double PatRandomOnTimeMin = 0.5; //time in seconds to wait before turning off
     public double PatRandomOnTimeMax = 2.0;
 
-	public PatternState PatState = PatternState.Up;
+    public PatternState PatState = PatternState.Up;
     public double PatPowerGoal = 0.0;
     public double PatRandomPowerMin = 0.1;
     public double PatRandomPowerMax = 1.0;
@@ -196,7 +196,7 @@ public class Service_Intiface: IHostedService, IDisposable
                     if (Power > 0.99 * PatPowerGoal)
                     {
                         PatState = PatternState.Down;
-                        
+
                     }
                     await Task.Delay(50);
                 }

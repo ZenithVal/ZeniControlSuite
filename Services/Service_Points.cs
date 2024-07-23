@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using MudBlazor;
-namespace ZeniControlSuite.Services;
+﻿namespace ZeniControlSuite.Services;
 
 public class Service_Points : IHostedService
 {

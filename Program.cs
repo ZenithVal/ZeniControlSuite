@@ -1,21 +1,18 @@
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text.Json;
 using Discord.OAuth2;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.CookiePolicy;
 using MudBlazor;
 using MudBlazor.Services;
-using ZeniControlSuite.Components;
-using ZeniControlSuite.Services;
 using Newtonsoft.Json;
 using ZeniControlSuite.Authentication;
-using Microsoft.AspNetCore.Authentication.OAuth;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using Microsoft.AspNetCore.CookiePolicy;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.DependencyInjection;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Components.Server;
+using ZeniControlSuite.Components;
+using ZeniControlSuite.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -35,8 +32,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddAntiforgery(options =>
 {
-	options.HeaderName = "X-CSRF-TOKEN";
-	options.Cookie.HttpOnly = true;
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.HttpOnly = true;
 });
 
 
@@ -81,18 +78,18 @@ builder.Services.AddAuthentication(opt =>
     {
         opt.Cookie.SameSite = SameSiteMode.Lax;
         opt.Cookie.SecurePolicy = CookieSecurePolicy.None;
-		opt.Cookie.HttpOnly = true;
-		opt.Cookie.Name = "ZeniControlSuite";
-		opt.LoginPath = "/api/account/login";
-		opt.LogoutPath = "/api/account/logout";
-		opt.AccessDeniedPath = "/AccessDenied";
-		opt.Cookie.IsEssential = true;
+        opt.Cookie.HttpOnly = true;
+        opt.Cookie.Name = "ZeniControlSuite";
+        opt.LoginPath = "/api/account/login";
+        opt.LogoutPath = "/api/account/logout";
+        opt.AccessDeniedPath = "/AccessDenied";
+        opt.Cookie.IsEssential = true;
         opt.Events.OnValidatePrincipal = async context =>
         {
             var user = context.Principal;
 
-			if (user.Identity?.IsAuthenticated == true)
-			{
+            if (user.Identity?.IsAuthenticated == true)
+            {
                 var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 if (userID != null && Whitelist.usersToAccept.ContainsKey(userID))
@@ -102,19 +99,19 @@ builder.Services.AddAuthentication(opt =>
                     var identity = new ClaimsIdentity(claims, "Discord");
                     var principal = new ClaimsPrincipal(identity);
 
-					DiscordAuthStateProvider.AddUserToAcceptedList(userID);
+                    DiscordAuthStateProvider.AddUserToAcceptedList(userID);
 
-					context.ReplacePrincipal(principal);
-				}
-				else
-				{
-					context.RejectPrincipal();
-					await context.HttpContext.SignOutAsync();
-					DiscordAuthStateProvider.AddUserToDeniedList(user);
-				}
-			}
+                    context.ReplacePrincipal(principal);
+                }
+                else
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync();
+                    DiscordAuthStateProvider.AddUserToDeniedList(user);
+                }
+            }
         };
-	})
+    })
     .AddDiscord(opt =>
     {
         string appId = string.Empty;
@@ -133,10 +130,10 @@ builder.Services.AddAuthentication(opt =>
         opt.AppSecret = appSecret;
         opt.ClientId = clientId ?? string.Empty;
         opt.Scope.Add("identify");
-		opt.CallbackPath = new PathString("/signin-discord");
+        opt.CallbackPath = new PathString("/signin-discord");
 
-		//Required for accessing the oauth2 token in order to make requests on the user's behalf, ie. accessing the user's guild list
-		opt.SaveTokens = true;
+        //Required for accessing the oauth2 token in order to make requests on the user's behalf, ie. accessing the user's guild list
+        opt.SaveTokens = true;
 
         opt.Events = new OAuthEvents {
             OnCreatingTicket = async context =>
@@ -150,9 +147,9 @@ builder.Services.AddAuthentication(opt =>
 
                 var user = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                 context.RunClaimActions(user.RootElement);
-			},
+            },
         };
-        
+
         opt.AccessDeniedPath = "/";
     });
 

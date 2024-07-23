@@ -73,7 +73,7 @@ public partial class Panel_IntifaceMain : IDisposable
         PulsesRandomOnOffLong,
 
         ConstantRandom,
-        
+
         Waves,
         WavesRandom,
         WavesRandomOffTime,

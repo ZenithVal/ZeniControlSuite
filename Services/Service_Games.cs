@@ -1,5 +1,5 @@
-﻿using MudBlazor;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace ZeniControlSuite.Services;
 
