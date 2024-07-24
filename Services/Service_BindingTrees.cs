@@ -11,6 +11,10 @@ public class Service_BindingTrees : IHostedService
 {
     [Inject] private Service_Points PointsService { get; set; } = default!;
     [Inject] private Service_Logs LogService { get; set; } = default!;
+    private void Log(string message, Severity severity)
+    {
+        LogService.AddLog("Service_BindingTrees", "System", message, severity);
+    }
 
     //===========================================//
     #region HostedService Stuff
@@ -49,11 +53,6 @@ public class Service_BindingTrees : IHostedService
     public string lastLog = "";
     public Color lastLogColor = Color.Default;
     public Severity lastLogSeverity = Severity.Normal;
-
-    private void Log(string message, Severity severity)
-    {
-        LogService.AddLog("Service_BindingTrees", "System", message, severity);
-    }
 
     //===========================================//
     #region Initialization & Binding Tree Managmenet

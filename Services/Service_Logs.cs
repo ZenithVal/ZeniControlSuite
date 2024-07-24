@@ -3,6 +3,8 @@
 namespace ZeniControlSuite.Services;
 public class Service_Logs : IHostedService
 {
+    //===========================================//
+    #region HostedService Stuff 
     public delegate void RequestLogsUpdate();
     public event RequestLogsUpdate? OnLogsUpdate;
     public Task StartAsync(CancellationToken cancellationToken)
@@ -15,7 +17,10 @@ public class Service_Logs : IHostedService
     {
         return Task.CompletedTask;
     }
+    #endregion
 
+
+    //===========================================//
     public List<LogEvent> logEvents { get; private set; } = new();
 
     public void AddLog(string source, string user, string message, Severity severity = Severity.Normal, Variant variant = Variant.Outlined)

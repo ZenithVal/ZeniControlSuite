@@ -6,11 +6,17 @@ namespace ZeniControlSuite.Services;
 
 public class Service_Games : IHostedService
 {
-    public delegate void RequestGamesUpdate();
-    public event RequestGamesUpdate? OnGamesUpdate;
-
     [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private Service_Points Points { get; set; } = default!;
+    private void Log(string message, Severity severity)
+    {
+        LogService.AddLog("Service_Games", "System", message, severity);
+    }
+
+    //===========================================//
+    #region HostedService Stuff
+    public delegate void RequestGamesUpdate();
+    public event RequestGamesUpdate? OnGamesUpdate;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -21,7 +27,7 @@ public class Service_Games : IHostedService
         catch (Exception e)
         {
             gamesList.Add(new Game { Name = "Error", Description = new List<Game.DescriptionLine> { new Game.DescriptionLine { typo = Typo.body1, text = "Games.ini parsing failed: " + e.Message } } });
-            Console.WriteLine("Games.ini parsing failed: " + e.Message);
+            Log("Games.ini parsing failed: " + e.Message, Severity.Error);
         }
         return Task.CompletedTask;
     }
@@ -36,15 +42,19 @@ public class Service_Games : IHostedService
         if (OnGamesUpdate != null)
             OnGamesUpdate();
     }
+    #endregion
 
+
+    //===========================================//
     public Game gameSelected { get; set; } = new Game();
-
     public List<Game> gamesList = new List<Game>();
     public bool AutoGameRunning { get; set; } = false;
     public string localPlayerName { get; set; } = "localPlayer";
     public string remotePlayerName { get; set; } = "remotePlayer";
 
-    //Parse Games.ini file for games
+
+    //===========================================//
+    #region Initialization & Game Config
     public void ParseGames()
     {
         string ini = "Configs/Games.ini";
@@ -121,7 +131,10 @@ public class Service_Games : IHostedService
         remotePlayerName = remote;
         Update();
     }
+    #endregion
 
+    //===========================================//
+    #region AutoGames
     public void AG_Start()
     {
         AutoGameRunning = true;
@@ -133,6 +146,7 @@ public class Service_Games : IHostedService
         AutoGameRunning = false;
         Update();
     }
+    #endregion
 
 
     /*

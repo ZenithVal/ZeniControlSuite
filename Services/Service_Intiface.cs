@@ -2,16 +2,34 @@
 using Buttplug.Client.Connectors.WebsocketConnector;
 using ZeniControlSuite.Models.Intiface;
 using MudBlazor;
+using Microsoft.AspNetCore.Components;
 
 namespace ZeniControlSuite.Services;
 
 public class Service_Intiface : IHostedService, IDisposable
 {
+    [Inject] private Service_Logs LogService { get; set; } = default!;
+    private void Log(string message, Severity severity)
+    {
+        LogService.AddLog("Service_AvatarControls", "System", message, severity);
+    }
+
+    //===========================================//
+    #region HostedService Stuff 
     public delegate void RequestControlUpdate();
     public event Service_Intiface.RequestControlUpdate? OnIntifaceControlsUpdate;
 
     public delegate void RequestReadoutUpdate();
     public event Service_Intiface.RequestReadoutUpdate? OnIntifaceReadoutUpdate;
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
 
     public void InvokeControlUpdate()
     {
@@ -28,19 +46,11 @@ public class Service_Intiface : IHostedService, IDisposable
             OnIntifaceReadoutUpdate?.Invoke();
         }
     }
+    #endregion
 
-    public void Dispose()
-    {
-        _client.Dispose();
-        _client.DeviceAdded -= HandleDeviceAdded;
-        _client.DeviceRemoved -= HandleDeviceRemoved;
-    }
-
-
-    private readonly Service_Logs LogService;
+    //===========================================//
     private ButtplugClient _client = new ButtplugClient("ZeniControlSuite");
     public const string ServiceName = "IntifaceService";
-
 
     public bool IntifaceEnabled { get; set; } = false;
     public bool IntifaceConnected { get; private set; } = false;
@@ -80,8 +90,14 @@ public class Service_Intiface : IHostedService, IDisposable
         _client.DeviceAdded += HandleDeviceAdded;
         _client.DeviceRemoved += HandleDeviceRemoved;
     }
+    public void Dispose()
+    {
+        _client.Dispose();
+        _client.DeviceAdded -= HandleDeviceAdded;
+        _client.DeviceRemoved -= HandleDeviceRemoved;
+    }
 
-
+    //===========================================//
     #region Device Scanning and Connection
     private async Task ScanForDevices()
     {
@@ -260,14 +276,4 @@ public class Service_Intiface : IHostedService, IDisposable
         return (decimal)((amplitude * Math.Sin(2 * Math.PI * freq * time)) + offset);
     }
     #endregion
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
 }
