@@ -1,4 +1,6 @@
-﻿<MudItem>
+﻿@using ZeniControlSuite.Models.Games
+
+<MudItem>
     @if (!GamesService.AutoGameRunning)
     {
         <MudSelect Label="Select a game" @bind-Value="localGame" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px"
