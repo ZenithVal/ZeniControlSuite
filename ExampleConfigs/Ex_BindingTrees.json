@@ -1,0 +1,458 @@
+[
+    {
+        "Name": "Main",
+        "Bindings": [
+            {
+                "Name": "Item A 1",
+                "Position": {
+                    "X": 0,
+                    "Y": 0
+                },
+                "Description": "aaaaa",
+                "PointValue": 1.0,
+                "Prerequisites": [],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": true,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+            {
+                "Name": "Item A 2",
+                "Position": {
+                    "X": 0,
+                    "Y": 1
+                },
+                "Description": "",
+                "PointValue": 2.0,
+                "Prerequisites": [ "Item A 1" ],
+                "Conflicts": [],
+                "Replaces": [ "Item A 1" ],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": true,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+            {
+                "Name": "Item A 3",
+                "Position": {
+                    "X": 0,
+                    "Y": 2
+                },
+                "Description": "asdfasdf",
+                "PointValue": 2.0,
+                "Prerequisites": [ "Item A 2" ],
+                "Conflicts": [],
+                "Replaces": [ "Item A 2" ],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+
+            {
+                "Name": "Item B 1",
+                "Position": {
+                    "X": 2,
+                    "Y": 0
+                },
+                "Description": "woah",
+                "PointValue": 1.0,
+                "Prerequisites": [],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": true,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+            {
+                "Name": "Item B 2",
+                "Position": {
+                    "X": 2,
+                    "Y": 1
+                },
+                "Description": "",
+                "PointValue": 1.0,
+                "Prerequisites": [ "Item B 1" ],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": true,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+            {
+                "Name": "Item B 3",
+                "Position": {
+                    "X": 2,
+                    "Y": 2
+                },
+                "Description": "",
+                "PointValue": 2.0,
+                "Prerequisites": [ "Item B 2" ],
+                "Conflicts": [],
+                "Replaces": [ "Item B 2" ],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": true,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+            {
+                "Name": "Item B + C",
+                "Position": {
+                    "X": 3,
+                    "Y": 3
+                },
+                "Description": "",
+                "PointValue": 2.0,
+                "Prerequisites": [ "Item B 3", "Item C 1" ],
+                "Conflicts": [],
+                "Replaces": [ "Item B 3" ],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+
+            {
+                "Name": "Item C 1",
+                "Position": {
+                    "X": 4,
+                    "Y": 0
+                },
+                "Description": "C fasfasdfasdfasdfgfhdf",
+                "PointValue": 2.0,
+                "Prerequisites": [],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": true,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+            {
+                "Name": "Item C 2",
+                "Position": {
+                    "X": 4,
+                    "Y": 1
+                },
+                "Description": "",
+                "PointValue": 1.0,
+                "Prerequisites": [ "Item C 1" ],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+
+            {
+                "Name": "Item D 1",
+                "Position": {
+                    "X": 6,
+                    "Y": 0
+                },
+                "Description": "fasdgdfgytiutyk",
+                "PointValue": 1.0,
+                "Prerequisites": [],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": true,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+            {
+                "Name": "Item D 2",
+                "Position": {
+                    "X": 6,
+                    "Y": 1
+                },
+                "Description": "Connects",
+                "PointValue": 1.0,
+                "Prerequisites": [ "Item D 1" ],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+            {
+                "Name": "Item D 3",
+                "Position": {
+                    "X": 6,
+                    "Y": 2
+                },
+                "Description": "",
+                "PointValue": 2.0,
+                "Prerequisites": [ "Item D 2" ],
+                "Conflicts": [],
+                "Replaces": [ "Item D 2" ],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isOwned": false,
+                "isLocked": false
+            },
+
+            {
+                "Name": "Item E 1",
+                "Position": {
+                    "X": 8,
+                    "Y": 0
+                },
+                "Description": "",
+                "PointValue": 1.0,
+                "Prerequisites": [],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+
+            {
+                "Name": "Item E 2",
+                "Position": {
+                    "X": 8,
+                    "Y": 1
+                },
+                "Description": "",
+                "PointValue": 1.0,
+                "Prerequisites": [ "Item E 1" ],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+
+            {
+                "Name": "Item B + D",
+                "Position": {
+                    "X": 4,
+                    "Y": 4
+                },
+                "Description": "",
+                "PointValue": 4.0,
+                "Prerequisites": [ "Item D 2", "Item B + C" ],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": true,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+
+            {
+                "Name": "Temp Item",
+                "Position": {
+                    "X": 0,
+                    "Y": 4
+                },
+                "Description": "Enable item for 5 minutes",
+                "PointValue": 2.0,
+                "Prerequisites": [],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 5.0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+            {
+                "Name": "Freeze Temp Item",
+                "Position": {
+                    "X": 0,
+                    "Y": 5
+                },
+                "Description": "Freezes Timer",
+                "PointValue": 5.0,
+                "Prerequisites": [ "Temp Item" ],
+                "Conflicts": [],
+                "Replaces": [ "Temp Item" ],
+                "TempDuration": 0,
+                "ConsumableCount": -1,
+                "CanBeLocked": false,
+                "CanBeSold": true,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": true,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            },
+
+            {
+                "Name": "New Rule",
+                "Position": {
+                    "X": 8,
+                    "Y": 5
+                },
+                "Description": "Create a new rule or something idk",
+                "PointValue": 2.0,
+                "Prerequisites": [],
+                "Conflicts": [],
+                "Replaces": [],
+                "TempDuration": 0,
+                "ConsumableCount": 5,
+                "CanBeLocked": false,
+                "CanBeSold": false,
+                "GameEnder": false,
+
+                "isBuyable": true,
+                "isSellable": false,
+                "isPrereqLocked": false,
+                "isConflictLocked": false,
+                "isOwned": false,
+                "isLocked": false
+            }
+        ],
+        "Padlocks": {
+            "Enabled": true,
+            "Position": {
+                "X": 2,
+                "Y": 5
+            },
+            "Cost": 3.0,
+            "CostIncrease": 1.0,
+            "Limit": 4,
+            "Owned": 0,
+            "Used": 0
+        }
+    }
+
+]

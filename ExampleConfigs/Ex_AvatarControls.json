@@ -1,0 +1,108 @@
+{
+    "GlobalControls": [
+        {
+            "Name": "Example Button",
+            "RequiredRoles": "",
+            "Type": "Button",
+            "Parameter": {
+                "Path": "/avatar/parameters/Button",
+                "Type": "Bool",
+                "Value": false,
+                "RequiredRoles": ""
+            },
+            "ValueOff": 0.0,
+            "ValueOn": 1.0
+        },
+        {
+            "Name": "Example Toggle",
+            "RequiredRoles": "",
+            "Type": "Toggle",
+            "Parameter": {
+                "Path": "/avatar/parameters/Toggle",
+                "Type": "Bool",
+                "Value": false,
+                "RequiredRoles": ""
+            },
+            "ValueOff": 0.0,
+            "ValueOn": 1.0
+        },
+        {
+            "Name": "Example Radial",
+            "RequiredRoles": "",
+            "Type": "Radial",
+            "Parameter": {
+                "Path": "/avatar/parameters/Radial",
+                "Type": "Float",
+                "Value": 0.0
+            },
+            "ValueMin": 0.0,
+            "ValueMax": 1.0
+        },
+
+        {
+            "Name": "Color-Primary",
+            "RequiredRoles": "",
+            "Type": "HSV",
+            "ParameterHue": {
+                "Path": "/avatar/parameters/PriHue",
+                "Type": "Float",
+                "Value": 0.0
+            },
+            "ParameterSaturation": {
+                "Path": "/avatar/parameters/PriSat",
+                "Type": "Float",
+                "Value": 0.0
+            },
+            "Parameter Brightness": {
+                "Path": "/avatar/parameters/PriVal",
+                "Type": "Float",
+                "Value": 0.0
+            },
+            "InvertedBrightness": false
+        },
+        {
+            "Name": "Color-Secondary",
+            "RequiredRoles": "",
+            "Type": "HSV",
+            "ParameterHue": {
+                "Path": "/avatar/parameters/SecHue",
+                "Type": "Float",
+                "Value": 0.0
+            },
+            "ParameterSaturation": {
+                "Path": "/avatar/parameters/SecSat",
+                "Type": "Float",
+                "Value": 0.0
+            },
+            "Parameter Brightness": {
+                "Path": "/avatar/parameters/SecVal",
+                "Type": "Float",
+                "Value": 0.0
+            },
+            "InvertedBrightness": true
+        }
+
+    ],
+    "Avatars": [
+        {
+            "ID": "avatarIdGoesHere",
+            "Name": "AvatarName",
+            "Controls": [
+                {
+                    "Name": "Test",
+                    "RequiredRoles": "",
+                    "Type": "Button",
+                    "Parameter": {
+                        "Path": "/avatar/parameters/Test",
+                        "Type": "Bool",
+                        "Value": false,
+                        "RequiredRoles": ""
+                    },
+                    "ValueOff": 0.0,
+                    "ValueOn": 1.0
+                }
+            ],
+            "InheritedGlobalControls": [ "Example Button", "Color-Primary", "Color-Secondary" ]
+        }
+    ]
+}
