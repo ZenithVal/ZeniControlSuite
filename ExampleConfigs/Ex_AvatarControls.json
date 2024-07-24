@@ -53,7 +53,7 @@
                 "Type": "Float",
                 "Value": 0.0
             },
-            "Parameter Brightness": {
+            "ParameterBrightness": {
                 "Path": "/avatar/parameters/PriVal",
                 "Type": "Float",
                 "Value": 0.0
@@ -74,7 +74,7 @@
                 "Type": "Float",
                 "Value": 0.0
             },
-            "Parameter Brightness": {
+            "ParameterBrightness": {
                 "Path": "/avatar/parameters/SecVal",
                 "Type": "Float",
                 "Value": 0.0

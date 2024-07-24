@@ -44,7 +44,7 @@ public class ContTypeHSV : Control
     public override ControlType Type => ControlType.HSV;
     public required Parameter ParameterHue { get; set; }
     public required Parameter ParameterSaturation { get; set; }
-    public required Parameter ParamterBrightness { get; set; }
+    public required Parameter ParameterBrightness { get; set; }
     public bool InvertedBrightness { get; set; }
 }
 
