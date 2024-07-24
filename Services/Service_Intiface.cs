@@ -1,5 +1,6 @@
 ﻿using Buttplug.Client;
 using Buttplug.Client.Connectors.WebsocketConnector;
+using ZeniControlSuite.Models.Intiface;
 using MudBlazor;
 
 namespace ZeniControlSuite.Services;
@@ -252,6 +253,14 @@ public class Service_Intiface : IHostedService, IDisposable
 
 
     #region Idk yet
+    public decimal CreateSineWave(double freq, double amplitude, double offset)
+    {
+        DateTime currentTime = DateTime.Now;
+        var time = currentTime.TimeOfDay.TotalSeconds; // Current time in seconds
+        return (decimal)((amplitude * Math.Sin(2 * Math.PI * freq * time)) + offset);
+    }
+    #endregion
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
@@ -261,12 +270,4 @@ public class Service_Intiface : IHostedService, IDisposable
     {
         return Task.CompletedTask;
     }
-
-    public decimal CreateSineWave(double freq, double amplitude, double offset)
-    {
-        DateTime currentTime = DateTime.Now;
-        var time = currentTime.TimeOfDay.TotalSeconds; // Current time in seconds
-        return (decimal)((amplitude * Math.Sin(2 * Math.PI * freq * time)) + offset);
-    }
-    #endregion
 }

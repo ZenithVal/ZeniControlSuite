@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using Newtonsoft.Json;
-using ZeniControlSuite.Components;
+using ZeniControlSuite.Models.BindingTrees;
 using ZeniControlSuite.Components.Pages;
 
 namespace ZeniControlSuite.Services;
@@ -50,6 +50,11 @@ public class Service_BindingTrees : IHostedService
     public Color lastLogColor = Color.Default;
     public Severity lastLogSeverity = Severity.Normal;
 
+    private void Log(string message, Severity severity)
+    {
+        LogService.AddLog("Service_BindingTrees", "System", message, severity);
+    }
+
     //===========================================//
     #region Initialization & Binding Tree Managmenet
     private void InitializeBindingTrees()
@@ -64,7 +69,7 @@ public class Service_BindingTrees : IHostedService
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error loading Binding Trees:\n{e.Message}");
+            Log($"Error loading Binding Trees:\n{e.Message}", Severity.Error);
             Bindings.pageEnabled = false;
         }
     }
@@ -85,7 +90,7 @@ public class Service_BindingTrees : IHostedService
                     {
                         if (bindingTrees.SelectMany(tree => tree.Bindings).FirstOrDefault(b => b.Name == prerequisite) == null)
                         {
-                            Console.WriteLine($"Binding Tree Error: {binding.Name} has a prerequisite of {prerequisite} which doesn't exist.");
+                            Log($"Binding Tree Error: {binding.Name} has a prerequisite of {prerequisite} which doesn't exist.", Severity.Error);
                             binding.Prerequisites.Remove(prerequisite);
                         }
                     }
@@ -97,7 +102,7 @@ public class Service_BindingTrees : IHostedService
                     {
                         if (bindingTrees.SelectMany(tree => tree.Bindings).FirstOrDefault(b => b.Name == conflict) == null)
                         {
-                            Console.WriteLine($"Binding Tree Error: {binding.Name} has a conflict of {conflict} which doesn't exist.");
+                            Log($"Binding Tree Error: {binding.Name} has a conflict of {conflict} which doesn't exist.", Severity.Error);
                             //Remove the conflict to prevent errors
                             binding.Conflicts.Remove(conflict);
                         }
@@ -110,7 +115,7 @@ public class Service_BindingTrees : IHostedService
                     {
                         if (bindingTrees.SelectMany(tree => tree.Bindings).FirstOrDefault(b => b.Name == replace) == null)
                         {
-                            Console.WriteLine($"Binding Tree Error: {binding.Name} has a replace of {replace} which doesn't exist.");
+                            Log($"Binding Tree Error: {binding.Name} has a replace of {replace} which doesn't exist.", Severity.Error);
                             //Remove the replace to prevent errors
                         }
                     }

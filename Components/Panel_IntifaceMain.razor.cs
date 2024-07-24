@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using ZeniControlSuite.Services;
+using ZeniControlSuite.Models.Intiface;
 
 namespace ZeniControlSuite.Components;
 
@@ -10,7 +11,7 @@ public partial class Panel_IntifaceMain : IDisposable
     public static bool pageEnabled = true;
 
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
-    [Inject] private Service_Logs LogsService { get; set; } = default!;
+    [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private Service_Intiface IntifaceService { get; set; } = default!;
 
     private string user = "Undefined";
@@ -23,7 +24,7 @@ public partial class Panel_IntifaceMain : IDisposable
 
         var context = await AuthProvider.GetAuthenticationStateAsync();
         user = context.GetUserName();
-        LogsService.AddLog(pageName, user, "PageLoad", Severity.Normal);
+        LogService.AddLog(pageName, user, "PageLoad", Severity.Normal);
     }
 
     private void OnIntifaceControlsUpdate()
@@ -38,14 +39,14 @@ public partial class Panel_IntifaceMain : IDisposable
 
     public void EnableIntiface()
     {
-        IntifaceService.IntifaceStart(LogsService);
-        LogsService.AddLog(pageName, user, "Intiface Starting", Severity.Normal);
+        IntifaceService.IntifaceStart(LogService);
+        LogService.AddLog(pageName, user, "Intiface Starting", Severity.Normal);
     }
 
     public void PowerFullStop()
     {
         IntifaceService.FullStop = !IntifaceService.FullStop;
-        LogsService.AddLog(pageName, user, "Full Stop: " + IntifaceService.FullStop, Severity.Normal);
+        LogService.AddLog(pageName, user, "Full Stop: " + IntifaceService.FullStop, Severity.Normal);
     }
 
     public void ResetControlValues()
@@ -146,7 +147,7 @@ public partial class Panel_IntifaceMain : IDisposable
         IntifaceService.PatRandomPowerMax = PatRandomPowerMax;
         IntifaceService.PowerInput = PowerInput;
 
-        LogsService.AddLog(pageName, user, "Control Preset Applied", Severity.Normal);
+        LogService.AddLog(pageName, user, "Control Preset Applied", Severity.Normal);
         InvokeAsync(StateHasChanged);
     }
 }

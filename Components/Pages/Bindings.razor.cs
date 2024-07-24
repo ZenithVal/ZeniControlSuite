@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using ZeniControlSuite.Services;
+using ZeniControlSuite.Models.BindingTrees;
 
 namespace ZeniControlSuite.Components.Pages;
 
@@ -10,7 +11,7 @@ public partial class Bindings : IDisposable
     public static bool pageEnabled = true;
 
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
-    [Inject] private Service_Logs LogsService { get; set; } = default!;
+    [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private Service_Points PointsService { get; set; } = default!;
     [Inject] private Service_BindingTrees BindingTreesService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
@@ -29,7 +30,7 @@ public partial class Bindings : IDisposable
 
         var context = await AuthProvider.GetAuthenticationStateAsync();
         user = context.GetUserName();
-        LogsService.AddLog(pageName, user, "PageLoad", Severity.Normal);
+        LogService.AddLog(pageName, user, "PageLoad", Severity.Normal);
 
     }
 
@@ -54,7 +55,7 @@ public partial class Bindings : IDisposable
 
     private void Log(string message, Severity severity)
     {
-        LogsService.AddLog(pageName, user, message, severity);
+        LogService.AddLog(pageName, user, message, severity);
 
         //Console.WriteLine(DateTime.Now + " | " + message);
         Snackbar.Add(message, severity);
