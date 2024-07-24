@@ -1,8 +1,8 @@
 ﻿using Buttplug.Client;
 using Buttplug.Client.Connectors.WebsocketConnector;
-using ZeniControlSuite.Models.Intiface;
-using MudBlazor;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
+using ZeniControlSuite.Models.Intiface;
 
 namespace ZeniControlSuite.Services;
 
@@ -11,7 +11,7 @@ public class Service_Intiface : IHostedService, IDisposable
     [Inject] private Service_Logs LogService { get; set; } = default!;
     private void Log(string message, Severity severity)
     {
-        LogService.AddLog("Service_AvatarControls", "System", message, severity);
+        LogService.AddLog("Intiface", "System", message, severity, Variant.Outlined);
     }
 
     //===========================================//
@@ -48,9 +48,10 @@ public class Service_Intiface : IHostedService, IDisposable
     }
     #endregion
 
+
     //===========================================//
+    #region Settings
     private ButtplugClient _client = new ButtplugClient("ZeniControlSuite");
-    public const string ServiceName = "IntifaceService";
 
     public bool IntifaceEnabled { get; set; } = false;
     public bool IntifaceConnected { get; private set; } = false;
@@ -96,6 +97,8 @@ public class Service_Intiface : IHostedService, IDisposable
         _client.DeviceAdded -= HandleDeviceAdded;
         _client.DeviceRemoved -= HandleDeviceRemoved;
     }
+    #endregion
+
 
     //===========================================//
     #region Device Scanning and Connection
@@ -112,16 +115,19 @@ public class Service_Intiface : IHostedService, IDisposable
     }
     private void HandleDeviceAdded(object? _, DeviceAddedEventArgs aArgs)
     {
-        LogService.AddLog(ServiceName, "System", $"Device Added: {aArgs.Device.Name}", Severity.Info, Variant.Outlined);
+        Log("Device Added: " + aArgs.Device.Name, Severity.Info);
         DeviceConnected = true;
     }
     private void HandleDeviceRemoved(object? _, DeviceRemovedEventArgs aArgs)
     {
-        LogService.AddLog(ServiceName, "System", $"Device Removed: {aArgs.Device.Name}", Severity.Info, Variant.Outlined);
+        Log("Device Removed: " + aArgs.Device.Name, Severity.Info);
         DeviceConnected = false;
     }
     #endregion
 
+
+    //===========================================//
+    #region Intiface Control
     public async Task IntifaceStart(Service_Logs logService)
     {
         if (IntifaceEnabled)
@@ -130,19 +136,19 @@ public class Service_Intiface : IHostedService, IDisposable
         }
         try
         {
-            LogService.AddLog(ServiceName, "System", "Starting Intiface", Severity.Normal, Variant.Outlined);
+            Log("Intiface Starting", Severity.Info);
             await _client.ConnectAsync(new ButtplugWebsocketConnector(new Uri("ws://localhost:16261")));
             await ScanForDevices();
             IntifaceEnabled = true;
 
-            LogService.AddLog(ServiceName, "System", "Intiface Connected", Severity.Normal, Variant.Outlined);
+            Log("Intiface Connected", Severity.Info);
             DeviceHeartbeatTimer();
 
             InvokeControlUpdate();
         }
         catch (Exception e)
         {
-            LogService.AddLog(ServiceName, "System", "Intiface failed: " + e.Message, Severity.Error, Variant.Outlined);
+            Log("Intiface failed: " + e.Message, Severity.Error);
             IntifaceEnabled = false;
             InvokeControlUpdate();
         }
@@ -255,7 +261,17 @@ public class Service_Intiface : IHostedService, IDisposable
             }
         }
     }
+    #endregion
 
+
+    //===========================================//
+    #region Idk yet
+    public decimal CreateSineWave(double freq, double amplitude, double offset)
+    {
+        DateTime currentTime = DateTime.Now;
+        var time = currentTime.TimeOfDay.TotalSeconds; // Current time in seconds
+        return (decimal)((amplitude * Math.Sin(2 * Math.PI * freq * time)) + offset);
+    }
 
     private async Task DelayRandom(double min, double max)
     {
@@ -266,14 +282,8 @@ public class Service_Intiface : IHostedService, IDisposable
     {
         return value > tolerance || value < -tolerance;
     }
-
-
-    #region Idk yet
-    public decimal CreateSineWave(double freq, double amplitude, double offset)
-    {
-        DateTime currentTime = DateTime.Now;
-        var time = currentTime.TimeOfDay.TotalSeconds; // Current time in seconds
-        return (decimal)((amplitude * Math.Sin(2 * Math.PI * freq * time)) + offset);
-    }
     #endregion
+
+
+
 }

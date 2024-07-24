@@ -64,6 +64,9 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Points>())
 builder.Services.AddSingleton<Service_BindingTrees>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_BindingTrees>());
 
+builder.Services.AddSingleton<Service_AvatarControls>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_AvatarControls>());
+
 builder.Services.AddSingleton<Service_Intiface>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Intiface>());
 

@@ -21,6 +21,7 @@ public class Service_Logs : IHostedService
 
 
     //===========================================//
+    #region Log Stuff
     public List<LogEvent> logEvents { get; private set; } = new();
 
     public void AddLog(string source, string user, string message, Severity severity = Severity.Normal, Variant variant = Variant.Outlined)
@@ -43,5 +44,8 @@ public class Service_Logs : IHostedService
             OnLogsUpdate.Invoke();
         }
     }
+    #endregion
+
+
 }
 

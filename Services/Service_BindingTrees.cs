@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using Newtonsoft.Json;
-using ZeniControlSuite.Models.BindingTrees;
 using ZeniControlSuite.Components.Pages;
+using ZeniControlSuite.Models.BindingTrees;
 
 namespace ZeniControlSuite.Services;
 
@@ -13,7 +13,7 @@ public class Service_BindingTrees : IHostedService
     [Inject] private Service_Logs LogService { get; set; } = default!;
     private void Log(string message, Severity severity)
     {
-        LogService.AddLog("Service_BindingTrees", "System", message, severity);
+        LogService.AddLog("Service_BindingTrees", "System", message, severity, Variant.Outlined);
     }
 
     //===========================================//
@@ -45,6 +45,9 @@ public class Service_BindingTrees : IHostedService
     }
     #endregion
 
+
+    //===========================================//
+    #region Settings
     public List<BindingTree> bindingTrees = new();
     public List<Binding> bindingsList = new();
     public Padlocks padlocks = new();
@@ -53,6 +56,8 @@ public class Service_BindingTrees : IHostedService
     public string lastLog = "";
     public Color lastLogColor = Color.Default;
     public Severity lastLogSeverity = Severity.Normal;
+    #endregion
+
 
     //===========================================//
     #region Initialization & Binding Tree Managmenet
@@ -193,9 +198,6 @@ public class Service_BindingTrees : IHostedService
 
     //===========================================//
     #region Info Functions
-    //==============================
-    // Info Functions
-
     public Padlocks GetPadlocks()
     {
         return padlocks;
@@ -267,4 +269,6 @@ public class Service_BindingTrees : IHostedService
     }
 
     #endregion
+
+
 }

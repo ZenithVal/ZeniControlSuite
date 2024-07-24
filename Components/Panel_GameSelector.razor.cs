@@ -1,8 +1,8 @@
-﻿using MudBlazor;
-using ZeniControlSuite.Services;
-using ZeniControlSuite.Models.Games;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using MudBlazor;
+using ZeniControlSuite.Models.Games;
+using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components;
 

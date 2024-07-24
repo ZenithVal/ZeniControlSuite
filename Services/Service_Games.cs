@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
-using ZeniControlSuite.Models.Games;
 using MudBlazor;
+using ZeniControlSuite.Models.Games;
 
 namespace ZeniControlSuite.Services;
 
@@ -10,7 +10,7 @@ public class Service_Games : IHostedService
     [Inject] private Service_Points Points { get; set; } = default!;
     private void Log(string message, Severity severity)
     {
-        LogService.AddLog("Service_Games", "System", message, severity);
+        LogService.AddLog("Service_Games", "System", message, severity, Variant.Outlined);
     }
 
     //===========================================//
@@ -46,11 +46,13 @@ public class Service_Games : IHostedService
 
 
     //===========================================//
+    #region Settings
     public Game gameSelected { get; set; } = new Game();
     public List<Game> gamesList = new List<Game>();
     public bool AutoGameRunning { get; set; } = false;
     public string localPlayerName { get; set; } = "localPlayer";
     public string remotePlayerName { get; set; } = "remotePlayer";
+    #endregion
 
 
     //===========================================//
@@ -132,6 +134,7 @@ public class Service_Games : IHostedService
         Update();
     }
     #endregion
+
 
     //===========================================//
     #region AutoGames

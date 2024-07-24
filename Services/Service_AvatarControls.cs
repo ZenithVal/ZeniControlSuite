@@ -1,19 +1,15 @@
-﻿using MudBlazor;
-using System.Text.Json;
-using Newtonsoft.Json;
+﻿using System.Text.Json;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using ZeniControlSuite.Components.Avatars;
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace ZeniControlSuite.Services;
 public class Service_AvatarControls : IHostedService
 {
-    [Inject] private Service_Points PointsService { get; set; } = default!;
     [Inject] private Service_Logs LogService { get; set; } = default!;
     private void Log(string message, Severity severity)
     {
-        LogService.AddLog("Service_AvatarControls", "System", message, severity);
+        LogService.AddLog("Service_AvatarControls", "System", message, severity, Variant.Outlined);
     }
 
     //===========================================//
@@ -23,6 +19,7 @@ public class Service_AvatarControls : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        InitializeAvatarControls();
         return Task.CompletedTask;
     }
     public Task StopAsync(CancellationToken cancellationToken)
@@ -40,11 +37,28 @@ public class Service_AvatarControls : IHostedService
 
 
     //===========================================//
+    #region Settings
     public List<Control> globalControls = new List<Control>();
     public List<Avatar> avatars = new List<Avatar>();
+    #endregion
+
 
     //===========================================//
-    #region Load Avatars From json
+    #region Initialization & Avatar Controls
+
+    private void InitializeAvatarControls()
+    {
+        try
+        {
+            var jsonString = File.ReadAllText("AvatarControls.json");
+            ReadAvatarControlsJson(jsonString);
+        }
+        catch (Exception e)
+        {
+            Log("AvatarControls.json parsing failed: " + e.Message, Severity.Error);
+        }
+    }
+
     public void ReadAvatarControlsJson(string jsonString)
     {
         // Deserialize the JSON string
@@ -165,6 +179,7 @@ public class Service_AvatarControls : IHostedService
         return parameter;
     }
     #endregion
+
 
     //===========================================//
 }

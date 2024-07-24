@@ -1,7 +1,18 @@
-﻿namespace ZeniControlSuite.Services;
+﻿using Microsoft.AspNetCore.Components;
+using MudBlazor;
+
+namespace ZeniControlSuite.Services;
 
 public class Service_Points : IHostedService
 {
+    [Inject] private Service_Logs LogService { get; set; } = default!;
+    private void Log(string message, Severity severity)
+    {
+        LogService.AddLog("Service_BindingTrees", "System", message, severity, Variant.Outlined);
+    }
+
+    //===========================================//
+    #region HostedService Stuff 
     public delegate void GamesPointsUpdate();
     public event GamesPointsUpdate? OnPointsUpdate;
     public Task StartAsync(CancellationToken cancellationToken)
@@ -13,26 +24,28 @@ public class Service_Points : IHostedService
     {
         return Task.CompletedTask;
     }
-    public void Update()
-    {
-        if (OnPointsUpdate != null)
-            OnPointsUpdate();
-    }
+    #endregion
 
+
+    //===========================================//
+    #region Settings
     public string pointsDisplay { get; private set; } = "0";
-
     public double pointsTruncated { get; private set; } = 0;
     public double pointsTotal { get; private set; } = 0;
     public double pointsWhole { get; private set; } = 0;
     public double pointAddStreak { get; private set; } = 0;
     public double pointsPartial { get; private set; } = 0;
     public double pointsPartialFlipped { get; private set; } = 100;
+    #endregion
 
+
+    //===========================================//
+    #region Point Controls
     public void UpdatePoints(double points)
     {
         if (points == 0)
         {
-            Update();
+            InvokePointsUpdate();
             return;
         }
 
@@ -70,7 +83,7 @@ public class Service_Points : IHostedService
         //FractionalScore(pointsTotal);
         pointsTruncated = Math.Truncate(pointsTotal * 100) / 100;
 
-        Update();
+        InvokePointsUpdate();
     }
 
     public void FractionalScore(double value)
@@ -111,5 +124,12 @@ public class Service_Points : IHostedService
 
 
     }
+
+    public void InvokePointsUpdate()
+    {
+        if (OnPointsUpdate != null)
+            OnPointsUpdate.Invoke();
+    }
+    #endregion
 
 }
