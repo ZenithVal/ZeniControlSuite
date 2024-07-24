@@ -16,6 +16,7 @@
     <Content Remove="Configs\AvatarControls.json" />
     <Content Remove="Configs\BindingTrees Safe.json" />
     <Content Remove="Configs\BindingTrees.json" />
+    <Content Remove="Configs\Discord.json" />
     <Content Remove="Configs\DiscordUsers.json" />
     <Content Remove="Configs\Example_AvatarControls.json" />
   </ItemGroup>
@@ -48,13 +49,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Configs\Example_AvatarControls.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="Configs\AvatarControls.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Configs\BindingTrees.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Configs\Discord.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Configs\DiscordUsers.json">

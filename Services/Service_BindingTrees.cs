@@ -10,7 +10,8 @@ namespace ZeniControlSuite.Services;
 public class Service_BindingTrees : IHostedService
 {
     [Inject] private Service_Points PointsService { get; set; } = default!;
-    [Inject] private Service_Logs LogService { get; set; } = default!;
+    private readonly Service_Logs LogService;
+    public Service_BindingTrees(Service_Logs serviceLogs) { LogService = serviceLogs; }
     private void Log(string message, Severity severity)
     {
         LogService.AddLog("Service_BindingTrees", "System", message, severity, Variant.Outlined);
@@ -27,13 +28,14 @@ public class Service_BindingTrees : IHostedService
 
         if (bindingTrees.Count == 0)
         {
-            Console.WriteLine("No Binding Trees Found");
+            Log("No Binding Trees Found", Severity.Warning);
         }
         else
         {
             ValidateBindingTreesJson();
             CheckBindingRelations();
-            Console.WriteLine("BindingTreesService Started");
+            Log("Service Started", Severity.Normal);
+            Console.WriteLine("");
         }
 
         return Task.CompletedTask;
@@ -83,18 +85,19 @@ public class Service_BindingTrees : IHostedService
         //Check all the binding jsons for errors that'll crash the app
         foreach (BindingTree tree in bindingTrees)
         {
-            Console.WriteLine($"Validating {tree.Name}");
+            Console.WriteLine($"BT | Validating Tree {tree.Name}");
             foreach (Binding binding in tree.Bindings)
             {
-                Console.WriteLine($"Validating {binding.Name}");
+                Console.WriteLine($"BT | Validating Binding {binding.Name}");
                 if (binding.Prerequisites.Count > 0)
                 {
-                    Console.WriteLine($"Validating Prereqs of {binding.Name}");
+                    Console.WriteLine($"BT | Validating Prereqs of {binding.Name}");
                     foreach (string prerequisite in binding.Prerequisites)
                     {
                         if (bindingTrees.SelectMany(tree => tree.Bindings).FirstOrDefault(b => b.Name == prerequisite) == null)
                         {
-                            Log($"Binding Tree Error: {binding.Name} has a prerequisite of {prerequisite} which doesn't exist.", Severity.Error);
+
+                            Log($"BT | Error: {binding.Name} has a prerequisite of {prerequisite} which doesn't exist.", Severity.Error);
                             binding.Prerequisites.Remove(prerequisite);
                         }
                     }
@@ -106,7 +109,7 @@ public class Service_BindingTrees : IHostedService
                     {
                         if (bindingTrees.SelectMany(tree => tree.Bindings).FirstOrDefault(b => b.Name == conflict) == null)
                         {
-                            Log($"Binding Tree Error: {binding.Name} has a conflict of {conflict} which doesn't exist.", Severity.Error);
+                            Log($"BT | Error: {binding.Name} has a conflict of {conflict} which doesn't exist.", Severity.Error);
                             //Remove the conflict to prevent errors
                             binding.Conflicts.Remove(conflict);
                         }
@@ -119,7 +122,7 @@ public class Service_BindingTrees : IHostedService
                     {
                         if (bindingTrees.SelectMany(tree => tree.Bindings).FirstOrDefault(b => b.Name == replace) == null)
                         {
-                            Log($"Binding Tree Error: {binding.Name} has a replace of {replace} which doesn't exist.", Severity.Error);
+                            Log($"BT | Error: {binding.Name} has a replace of {replace} which doesn't exist.", Severity.Error);
                             //Remove the replace to prevent errors
                         }
                     }

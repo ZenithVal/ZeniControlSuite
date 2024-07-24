@@ -5,10 +5,11 @@ namespace ZeniControlSuite.Services;
 
 public class Service_Points : IHostedService
 {
-    [Inject] private Service_Logs LogService { get; set; } = default!;
+    private readonly Service_Logs LogService;
+    public Service_Points(Service_Logs serviceLogs) { LogService = serviceLogs; }
     private void Log(string message, Severity severity)
     {
-        LogService.AddLog("Service_BindingTrees", "System", message, severity, Variant.Outlined);
+        LogService.AddLog("Service_Points", "System", message, severity, Variant.Outlined);
     }
 
     //===========================================//

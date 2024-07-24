@@ -2,11 +2,13 @@
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using ZeniControlSuite.Components.Avatars;
+using ZeniControlSuite.Components.Pages;
 
 namespace ZeniControlSuite.Services;
 public class Service_AvatarControls : IHostedService
 {
-    [Inject] private Service_Logs LogService { get; set; } = default!;
+    private readonly Service_Logs LogService;
+    public Service_AvatarControls(Service_Logs serviceLogs){LogService = serviceLogs;}
     private void Log(string message, Severity severity)
     {
         LogService.AddLog("Service_AvatarControls", "System", message, severity, Variant.Outlined);
@@ -46,18 +48,24 @@ public class Service_AvatarControls : IHostedService
     //===========================================//
     #region Initialization & Avatar Controls
 
+    private string validationLog = "";
     private void InitializeAvatarControls()
     {
         try
         {
-            var jsonString = File.ReadAllText("AvatarControls.json");
+            var jsonString = File.ReadAllText("Configs/AvatarControls.json");
             ReadAvatarControlsJson(jsonString);
+            Log("Service Started", Severity.Normal);
+            Console.WriteLine("");
         }
         catch (Exception e)
         {
-            Log("AvatarControls.json parsing failed: " + e.Message, Severity.Error);
+            Log($"AvatarControls.json parsing failed during {validationLog}", Severity.Error);
+            Console.WriteLine(e.Message);
         }
     }
+    //Error help
+    //The given key was not present in the dictionary = Parameter## was spelled incorrectly ~ EG HSV "PUramterSatAration"
 
     public void ReadAvatarControlsJson(string jsonString)
     {
@@ -76,6 +84,8 @@ public class Service_AvatarControls : IHostedService
         var avatarsElement = jsonDocument.RootElement.GetProperty("Avatars");
         foreach (var avatarElement in avatarsElement.EnumerateArray())
         {
+            Console.WriteLine($"AC | Loading Avatar {avatarElement.GetProperty("Name").GetString()}");
+            validationLog = $"loading avatar {avatarElement.GetProperty("Name").GetString()}";
             var avatar = new Avatar {
                 ID = avatarElement.GetProperty("ID").GetString(),
                 Name = avatarElement.GetProperty("Name").GetString(),
@@ -92,8 +102,11 @@ public class Service_AvatarControls : IHostedService
 
             // Deserialize Inherited Global Controls
             var inheritedControlsElement = avatarElement.GetProperty("InheritedGlobalControls");
+            Console.WriteLine($"AC | Loading inherited controls");
             foreach (var controlName in inheritedControlsElement.EnumerateArray())
             {
+                validationLog = $"loading inherited control {controlName.GetString()}";
+                    
                 var globalControl = globalControls.FirstOrDefault(c => c.GetType().Name == controlName.GetString());
                 if (globalControl != null)
                 {
@@ -107,6 +120,8 @@ public class Service_AvatarControls : IHostedService
 
     private Control DeserializeControl(JsonElement controlElement)
     {
+        Console.WriteLine($"AC | Deserializing Control {controlElement.GetProperty("Name").GetString()}");
+        validationLog = $"deserializing control {controlElement.GetProperty("Name").GetString()}";
         var type = controlElement.GetProperty("Type").GetString();
         Control control;
 
@@ -124,7 +139,7 @@ public class Service_AvatarControls : IHostedService
                     ValueOn = controlElement.GetProperty("ValueOn").GetSingle()
                 };
                 break;
-            case "Slider":
+            case "Radial":
                 control = new ContTypeRadial {
                     Parameter = DeserializeParameter(controlElement.GetProperty("Parameter")),
                     ValueMin = controlElement.GetProperty("ValueMin").GetSingle(),
@@ -135,12 +150,12 @@ public class Service_AvatarControls : IHostedService
                 control = new ContTypeHSV {
                     ParameterHue = DeserializeParameter(controlElement.GetProperty("ParameterHue")),
                     ParameterSaturation = DeserializeParameter(controlElement.GetProperty("ParameterSaturation")),
-                    ParamterBrightness = DeserializeParameter(controlElement.GetProperty("ParamterBrightness")),
+                    ParameterBrightness = DeserializeParameter(controlElement.GetProperty("ParameterBrightness")),
                     InvertedBrightness = controlElement.GetProperty("InvertedBrightness").GetBoolean()
                 };
                 break;
             default:
-                throw new InvalidOperationException("Unknown control type.");
+                throw new InvalidOperationException($"Unknown control type: {type}");
         }
 
         return control;
@@ -148,6 +163,8 @@ public class Service_AvatarControls : IHostedService
 
     private Parameter DeserializeParameter(JsonElement parameterElement)
     {
+        Console.WriteLine($"AC | Deserializing Param {parameterElement.GetProperty("Path").GetString()}");
+        validationLog = $"deserializing param {parameterElement.GetProperty("Path").GetString()}";
         var type = parameterElement.GetProperty("Type").GetString();
         Parameter parameter;
 

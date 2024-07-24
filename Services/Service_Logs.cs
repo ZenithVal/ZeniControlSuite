@@ -9,7 +9,8 @@ public class Service_Logs : IHostedService
     public event RequestLogsUpdate? OnLogsUpdate;
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        AddLog("Logs", "System", "Log Service Started", Severity.Normal, Variant.Outlined);
+        AddLog("Service_Logs", "System", "Service Started", Severity.Normal, Variant.Outlined);
+        Console.WriteLine("");
         return Task.CompletedTask;
     }
 
@@ -28,6 +29,7 @@ public class Service_Logs : IHostedService
     {
         logEvents.Add(new LogEvent { source = source, user = user, message = message, severity = severity, variant = variant });
         Console.WriteLine($"{severity} | {user} | {source}: {message}");
+        //Console.WriteLine(user == "System" ? $"{severity} | {source}: {message}" : $"{severity} | {user} | {source}: {message}");
         InvokeLogsIpdate();
 
         if (logEvents.Count > 100)
@@ -39,13 +41,8 @@ public class Service_Logs : IHostedService
 
     public void InvokeLogsIpdate()
     {
-        if (OnLogsUpdate != null)
-        {
-            OnLogsUpdate.Invoke();
-        }
+        OnLogsUpdate?.Invoke();
     }
     #endregion
-
-
 }
 

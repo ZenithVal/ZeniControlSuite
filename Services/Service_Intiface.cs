@@ -11,7 +11,7 @@ public class Service_Intiface : IHostedService, IDisposable
     [Inject] private Service_Logs LogService { get; set; } = default!;
     private void Log(string message, Severity severity)
     {
-        LogService.AddLog("Intiface", "System", message, severity, Variant.Outlined);
+        LogService.AddLog("Service_Intiface", "System", message, severity, Variant.Outlined);
     }
 
     //===========================================//
@@ -104,6 +104,7 @@ public class Service_Intiface : IHostedService, IDisposable
     #region Device Scanning and Connection
     private async Task ScanForDevices()
     {
+        Log("Scanning for devices", Severity.Info);
         await _client.StartScanningAsync();
 
         while (DeviceConnected == false)

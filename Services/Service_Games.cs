@@ -6,8 +6,8 @@ namespace ZeniControlSuite.Services;
 
 public class Service_Games : IHostedService
 {
-    [Inject] private Service_Logs LogService { get; set; } = default!;
-    [Inject] private Service_Points Points { get; set; } = default!;
+    private readonly Service_Logs LogService;
+    public Service_Games(Service_Logs serviceLogs) { LogService = serviceLogs; }
     private void Log(string message, Severity severity)
     {
         LogService.AddLog("Service_Games", "System", message, severity, Variant.Outlined);
@@ -23,6 +23,8 @@ public class Service_Games : IHostedService
         try
         {
             ParseGames();
+            Log("Service Started", Severity.Normal);
+            Console.WriteLine("");
         }
         catch (Exception e)
         {
@@ -72,6 +74,7 @@ public class Service_Games : IHostedService
             if (line.StartsWith("["))
             {
                 gamesList.Add(new Game { Name = line.Replace("[", "").Replace("]", ""), Description = new List<Game.DescriptionLine>() });
+                Console.WriteLine("GS | Adding Game " + line.Replace("[", "").Replace("]", ""));
             }
             else
             {
