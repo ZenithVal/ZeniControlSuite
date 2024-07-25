@@ -181,6 +181,18 @@ public class Service_AvatarControls : IHostedService
                     ParameterBrightness = DeserializeParameter(controlElement.GetProperty("ParameterBrightness")),
                     InvertedBrightness = controlElement.GetProperty("InvertedBrightness").GetBoolean()
                 };
+                if (control is ContTypeHSV contHSV)
+                {
+                    if (contHSV.InvertedBrightness)
+                    {
+                        contHSV.ParameterBrightness.Value = 1 - contHSV.ParameterBrightness.Value;
+                    }
+                    contHSV.targetColor = new MudBlazor.Utilities.MudColor(
+                        (double)contHSV.ParameterHue.Value*360,
+                        (double)contHSV.ParameterSaturation.Value,
+                        (double)contHSV.ParameterBrightness.Value, 
+                        0);
+                }
                 break;
             default:
                 throw new InvalidOperationException($"Unknown control type: {type}");

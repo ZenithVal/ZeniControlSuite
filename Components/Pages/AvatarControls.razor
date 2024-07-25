@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using ZeniControlSuite.Models.AvatarControls;
 @using MudBlazor.Services
+@using MudBlazor.Utilities
 @attribute [Authorize(Roles = "Admin, Avatar")]
 
 <PageTitle>Avatar Controls</PageTitle>
@@ -53,10 +54,20 @@
 					{
                         <MudText Typo="Typo.caption">HSV</MudText>
 
-                        <MudColorPicker ShowToolbar="false" ShowAlpha="false" ShowModeSwitch="false" 
-                                        ThrottleInterval="100" DragEffect="@true"
-                                        Label="ColorPicker" PickerVariant="PickerVariant.Inline" ColorPickerMode="ColorPickerMode.HSL"
-                                        Value="contHSV.targetColor" ValueChanged="@((MudBlazor.Utilities.MudColor color) => ControlHSVChange(contHSV, color))" />
+                        string hex = contHSV.targetColor.ToString(MudColorOutputFormats.Hex);
+                        hex = hex + "99";
+                        <MudPaper Style="@("position: absolute; width: 184px; height: 80px; padding: 8px; opacity: 1.0;background-color: " + hex)">
+
+
+                            <MudColorPicker ShowToolbar="false" ShowAlpha="false" ShowModeSwitch="false"
+                                            ThrottleInterval="100" DragEffect="@true" Elevation="8"
+                                            Label="ColorPicker" PickerVariant="PickerVariant.Inline" ColorPickerMode="ColorPickerMode.HSL"
+                                            Value="contHSV.targetColor" ValueChanged="@((MudBlazor.Utilities.MudColor color) => ControlHSVChange(contHSV, color))" />
+
+
+                        </MudPaper>
+
+
 					}
 
 					else
