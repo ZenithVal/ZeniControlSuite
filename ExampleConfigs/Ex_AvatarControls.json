@@ -2,33 +2,33 @@
     "GlobalControls": [
         {
             "Name": "Example Button",
-            "RequiredRoles": "",
+            "RequiredRoles": [],
             "Type": "Button",
             "Parameter": {
                 "Path": "/avatar/parameters/Button",
                 "Type": "Bool",
                 "Value": false,
-                "RequiredRoles": ""
+                "RequiredRoles": []
             },
             "ValueOff": 0.0,
             "ValueOn": 1.0
         },
         {
             "Name": "Example Toggle",
-            "RequiredRoles": "",
+            "RequiredRoles": [],
             "Type": "Toggle",
             "Parameter": {
                 "Path": "/avatar/parameters/Toggle",
                 "Type": "Bool",
                 "Value": false,
-                "RequiredRoles": ""
+                "RequiredRoles": []
             },
             "ValueOff": 0.0,
             "ValueOn": 1.0
         },
         {
             "Name": "Example Radial",
-            "RequiredRoles": "",
+            "RequiredRoles": [],
             "Type": "Radial",
             "Parameter": {
                 "Path": "/avatar/parameters/Radial",
@@ -41,7 +41,7 @@
 
         {
             "Name": "Color-Primary",
-            "RequiredRoles": "",
+            "RequiredRoles": [],
             "Type": "HSV",
             "ParameterHue": {
                 "Path": "/avatar/parameters/PriHue",
@@ -62,7 +62,7 @@
         },
         {
             "Name": "Color-Secondary",
-            "RequiredRoles": "",
+            "RequiredRoles": [],
             "Type": "HSV",
             "ParameterHue": {
                 "Path": "/avatar/parameters/SecHue",
@@ -90,13 +90,13 @@
             "Controls": [
                 {
                     "Name": "Test",
-                    "RequiredRoles": "",
+                    "RequiredRoles": [],
                     "Type": "Button",
                     "Parameter": {
                         "Path": "/avatar/parameters/Test",
                         "Type": "Bool",
                         "Value": false,
-                        "RequiredRoles": ""
+                        "RequiredRoles": []
                     },
                     "ValueOff": 0.0,
                     "ValueOn": 1.0

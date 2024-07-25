@@ -1,4 +1,4 @@
-﻿namespace ZeniControlSuite.Components.Avatars;
+﻿namespace ZeniControlSuite.Models.AvatarControls;
 
 public class Avatar
 {

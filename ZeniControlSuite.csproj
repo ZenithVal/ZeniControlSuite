@@ -73,6 +73,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Components\AvatarControls\" />
     <Folder Include="Icons\" />
   </ItemGroup>
 

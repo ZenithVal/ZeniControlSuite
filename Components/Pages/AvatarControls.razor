@@ -1,5 +1,7 @@
 ﻿@page "/AvatarControls"
 @using Microsoft.AspNetCore.Authorization
+@using ZeniControlSuite.Models.AvatarControls;
+@using MudBlazor.Services
 @attribute [Authorize(Roles = "Admin, Avatar")]
 
 <PageTitle>Avatar Controls</PageTitle>
@@ -7,6 +9,58 @@
 <h1>Avatar Controls</h1>
 <MudDivider></MudDivider>
 
-@code {
-	public static bool pageEnabled = true;
-}
+<br />
+<br />
+
+<MudGrid Spacing="3" Justify="Justify.FlexStart">
+    @if (!AvatarsService.avatarsLoaded)
+    {
+        <MudItem>
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </MudItem>
+    }
+    else
+    {
+        @foreach (Control control in AvatarsService.selectedAvatar.Controls)
+        {
+            <MudItem>
+                <MudPaper Style="@("width: 200px; height: 270px; padding: 8px")">
+                    <MudText Typo="Typo.h6">@control.Name</MudText>
+
+                    @switch (control.Type)
+                    {
+                        case ControlType.Button:
+                            <MudText Typo="Typo.caption">Button</MudText>
+                            break;
+
+                        case ControlType.Toggle:
+                            <MudText Typo="Typo.caption">Toggle</MudText>
+                            @if ((float)control.Paramter.Value = control.ValueOff)
+                            {
+                                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => controlTogglePress(control))">+</MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => controlTogglePress(control))">-</MudButton>
+                            }
+                            break;
+
+                        case ControlType.Radial:
+                            <MudText Typo="Typo.caption">Radial</MudText>
+                            break;
+
+                        case ControlType.HSV:
+                            <MudText Typo="Typo.caption">HSV</MudText>
+                            break;
+
+                        default: //getting here is impossible, but just in case
+                            <MudText Typo="Typo.caption">Unknown Type</MudText>
+                            break;
+
+                    }
+
+                </MudPaper>
+            </MudItem>
+        }
+    }
+</MudGrid>

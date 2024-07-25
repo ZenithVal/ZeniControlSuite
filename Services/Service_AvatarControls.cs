@@ -1,14 +1,14 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using ZeniControlSuite.Components.Avatars;
+using ZeniControlSuite.Models.AvatarControls;
 using ZeniControlSuite.Components.Pages;
 
 namespace ZeniControlSuite.Services;
 public class Service_AvatarControls : IHostedService
 {
     private readonly Service_Logs LogService;
-    public Service_AvatarControls(Service_Logs serviceLogs){LogService = serviceLogs;}
+    public Service_AvatarControls(Service_Logs serviceLogs) { LogService = serviceLogs; }
     private void Log(string message, Severity severity)
     {
         LogService.AddLog("Service_AvatarControls", "System", message, severity, Variant.Outlined);
@@ -39,9 +39,13 @@ public class Service_AvatarControls : IHostedService
 
 
     //===========================================//
-    #region Settings
+    #region Settings/Variables
     public List<Control> globalControls = new List<Control>();
     public List<Avatar> avatars = new List<Avatar>();
+
+    public bool avatarsLoaded = false;
+    public Avatar selectedAvatar = new Avatar();
+    //public string selectedAvatarID = "Global";
     #endregion
 
 
@@ -57,11 +61,14 @@ public class Service_AvatarControls : IHostedService
             ReadAvatarControlsJson(jsonString);
             Log("Service Started", Severity.Normal);
             Console.WriteLine("");
+            InvokeAvatarControlsUpdate();
         }
         catch (Exception e)
         {
             Log($"AvatarControls.json parsing failed during {validationLog}", Severity.Error);
             Console.WriteLine(e.Message);
+            avatarsLoaded = false;
+            InvokeAvatarControlsUpdate();
         }
     }
     //Error help
@@ -69,6 +76,10 @@ public class Service_AvatarControls : IHostedService
 
     public void ReadAvatarControlsJson(string jsonString)
     {
+        avatarsLoaded = false;
+        globalControls.Clear();
+        avatars.Clear();
+
         // Deserialize the JSON string
         var jsonDocument = JsonDocument.Parse(jsonString);
 
@@ -79,6 +90,18 @@ public class Service_AvatarControls : IHostedService
             var control = DeserializeControl(controlElement);
             globalControls.Add(control);
         }
+
+        //Sort congrolGroups
+        //Any controls with - are grouped. Strip the text before " - " and add the item to the group
+
+
+        var globalAvatar = new Avatar {
+            ID = "Global",
+            Name = "Global",
+            Controls = globalControls
+        };
+        avatars.Add(globalAvatar);
+        selectedAvatar = globalAvatar;
 
         // Deserialize Avatars
         var avatarsElement = jsonDocument.RootElement.GetProperty("Avatars");
@@ -106,7 +129,7 @@ public class Service_AvatarControls : IHostedService
             foreach (var controlName in inheritedControlsElement.EnumerateArray())
             {
                 validationLog = $"loading inherited control {controlName.GetString()}";
-                    
+
                 var globalControl = globalControls.FirstOrDefault(c => c.GetType().Name == controlName.GetString());
                 if (globalControl != null)
                 {
@@ -116,12 +139,17 @@ public class Service_AvatarControls : IHostedService
 
             avatars.Add(avatar);
         }
+
+        avatarsLoaded = true;
+        InvokeAvatarControlsUpdate();
     }
 
     private Control DeserializeControl(JsonElement controlElement)
     {
-        Console.WriteLine($"AC | Deserializing Control {controlElement.GetProperty("Name").GetString()}");
-        validationLog = $"deserializing control {controlElement.GetProperty("Name").GetString()}";
+        string controlName = controlElement.GetProperty("Name").GetString();
+        Console.WriteLine($"AC | Deserializing Control {controlName}");
+        validationLog = $"deserializing control type of {controlName}";
+
         var type = controlElement.GetProperty("Type").GetString();
         Control control;
 
@@ -157,6 +185,12 @@ public class Service_AvatarControls : IHostedService
             default:
                 throw new InvalidOperationException($"Unknown control type: {type}");
         }
+
+        validationLog = $"deserializing control name of {controlName}";
+        control.Name = controlElement.GetProperty("Name").GetString();
+
+        validationLog = $"deserializing control roles of {controlName}";
+        control.RequiredRoles = controlElement.GetProperty("RequiredRoles").EnumerateArray().Select(r => r.GetString()).ToList();
 
         return control;
     }
@@ -199,5 +233,50 @@ public class Service_AvatarControls : IHostedService
 
 
     //===========================================//
-}
+    #region Avatar Functions
+    public void SelectAvatar(string avatarID)
+    {
+        if (avatars.Any(a => a.ID == avatarID))
+        {
+            selectedAvatar = avatars.FirstOrDefault(a => a.ID == avatarID);
+            Log($"Selected avatar {selectedAvatar.Name}", Severity.Normal);
 
+            InvokeAvatarControlsUpdate();
+        }
+        else
+        {
+            //tuncate avatarID to 13 characters for log
+            string avatarIDTruncated = avatarID.Length > 13 ? avatarID.Substring(0, 13) : avatarID;
+
+            Log($"No avatar for {avatarIDTruncated} found", Severity.Warning);
+            selectedAvatar = avatars.FirstOrDefault(a => a.ID == "Global");
+            Log($"Selected avatar Global", Severity.Normal);
+
+            InvokeAvatarControlsUpdate();
+        }
+    }
+    #endregion
+
+
+    //===========================================//
+    #region Helper function
+    public void setParameterValue(Parameter parameter, float value)
+    {
+        switch (parameter.Type)
+        {
+            case ParameterType.Bool:
+                ((ParamTypeBool)parameter).Value = value > 0.5f;
+                break;
+            case ParameterType.Int:
+                ((ParamTypeInt)parameter).Value = (int)value;
+                break;
+            case ParameterType.Float:
+                ((ParamTypeFloat)parameter).Value = value;
+                break;
+        }
+
+        //TODO: Send OSC message with new value. Just log for now
+        Log($"Set {parameter.Path} to {value}", Severity.Normal);
+    }
+    #endregion
+}
