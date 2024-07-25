@@ -21,36 +21,42 @@
     }
     else
     {
-        @foreach (Control control in AvatarsService.selectedAvatar.Controls)
+        foreach (Control control in AvatarsService.selectedAvatar.Controls)
         {
             <MudItem>
                 <MudPaper Style="@("width: 200px; height: 270px; padding: 8px")">
                     <MudText Typo="Typo.h6">@control.Name</MudText>
 
-                    @if (control is ContTypeToggle contTog)
+                    @if (control is ContTypeButton contBut)
                     {
-                        @if (contTog.Parameter.Value == contTog.ValueOff)
+
+                    }
+
+                    else if (control is ContTypeToggle contTog)
+                    {
+                        if (contTog.Parameter.Value == contTog.ValueOff)
                         {
-                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => controlTogglePress(contTog))">+</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => ControlTogglePress(contTog))">+</MudButton>
                         }
                         else
                         {
-                            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => controlTogglePress(contTog))">-</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => ControlTogglePress(contTog))">-</MudButton>
                         }
-                    }
-
-                    else if (control is ContTypeButton contBut)
-					{
                     }
 
                     else if (control is ContTypeRadial contRad)
                     {
-                    
+                        <MudSlider Min="contRad.ValueMin" Max="contRad.ValueMax" Step="0.01f" Value="contRad.Parameter.Value" ValueChanged="@((float value) => ControlRadialChange(contRad, value))"/>
                     }
 
-                    else if (control is ContTypeHSV contTypeHSV)
+                    else if (control is ContTypeHSV contHSV)
 					{
                         <MudText Typo="Typo.caption">HSV</MudText>
+
+                        <MudColorPicker ShowToolbar="false" ShowAlpha="false" ShowModeSwitch="false" 
+                                        ThrottleInterval="100" DragEffect="@true"
+                                        Label="ColorPicker" PickerVariant="PickerVariant.Inline" ColorPickerMode="ColorPickerMode.HSL"
+                                        Value="contHSV.targetColor" ValueChanged="@((MudBlazor.Utilities.MudColor color) => ControlHSVChange(contHSV, color))" />
 					}
 
 					else
@@ -66,8 +72,3 @@
         }
     }
 </MudGrid>
-
-public abstract class Control
-{
-    // control properties and methods
-}

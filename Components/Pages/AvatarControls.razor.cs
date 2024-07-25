@@ -41,7 +41,7 @@ public partial class AvatarControls : IDisposable
 	}
 
 
-    private void controlTogglePress(ContTypeToggle control)
+    private void ControlTogglePress(ContTypeToggle control)
     {
         if (control.Parameter.Value == control.ValueOff)
         {
@@ -51,8 +51,35 @@ public partial class AvatarControls : IDisposable
         {
             control.Parameter.Value = control.ValueOff;
         }
+		AvatarsService.InvokeAvatarControlsUpdate();
 
-        LogService.AddLog(pageName, user, $"{control.Name} toggled to {control.Parameter.Value}", Severity.Normal);
+        LogService.AddLog(pageName, user, $"toggled {control.Name} set to {control.Parameter.Value}", Severity.Normal);
+    }
+
+	private void ControlRadialChange(ContTypeRadial control, float value)
+	{
+		control.Parameter.Value = value;
+        AvatarsService.InvokeAvatarControlsUpdate();
+        //LogService.AddLog(pageName, user, $"radial {control.Name} set to {control.Parameter.Value}", Severity.Normal);
+    }
+
+	private void ControlHSVChange(ContTypeHSV control, MudBlazor.Utilities.MudColor targetColor)
+	{
+        control.targetColor = targetColor;
+
+        control.ParameterHue.Value = (float)control.targetColor.H/360;
+        control.ParameterSaturation.Value = (float)control.targetColor.S;
+		if (control.InvertedBrightness)
+		{
+			control.ParameterBrightness.Value = 1.0f - (float)control.targetColor.L;
+		}
+		else
+		{
+            control.ParameterBrightness.Value = (float)control.targetColor.L;
+        }
+        
+        AvatarsService.InvokeAvatarControlsUpdate();
+        LogService.AddLog(pageName, user, $"hsv {control.Name} set to {control.ParameterHue.Value}, {control.ParameterSaturation.Value}, {control.ParameterBrightness.Value}", Severity.Normal);
     }
 
 }

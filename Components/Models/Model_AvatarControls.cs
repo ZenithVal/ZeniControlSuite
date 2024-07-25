@@ -1,4 +1,8 @@
-﻿namespace ZeniControlSuite.Models.AvatarControls;
+﻿using System.Data.Common;
+using System.Drawing;
+using System.Reflection.Metadata;
+
+namespace ZeniControlSuite.Models.AvatarControls;
 
 public class Avatar
 {
@@ -36,12 +40,14 @@ public class ContTypeRadial : Control
 {
     public override ControlType Type => ControlType.Radial;
     public required Parameter Parameter { get; set; }
+    public double SliderValue { get => (double)Parameter.Value; set => Parameter.Value = (float)value;}
     public float ValueMin { get; set; }
     public float ValueMax { get; set; }
 }
 public class ContTypeHSV : Control
 {
     public override ControlType Type => ControlType.HSV;
+    public MudBlazor.Utilities.MudColor targetColor { get; set; } = new MudBlazor.Utilities.MudColor(0, 0, 0, 0);
     public required Parameter ParameterHue { get; set; }
     public required Parameter ParameterSaturation { get; set; }
     public required Parameter ParameterBrightness { get; set; }
