@@ -27,40 +27,47 @@
                 <MudPaper Style="@("width: 200px; height: 270px; padding: 8px")">
                     <MudText Typo="Typo.h6">@control.Name</MudText>
 
-                    @switch (control.Type)
+                    @if (control is ContTypeToggle contTog)
                     {
-                        case ControlType.Button:
-                            <MudText Typo="Typo.caption">Button</MudText>
-                            break;
-
-                        case ControlType.Toggle:
-                            <MudText Typo="Typo.caption">Toggle</MudText>
-                            @if ((float)control.Paramter.Value = control.ValueOff)
-                            {
-                                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => controlTogglePress(control))">+</MudButton>
-                            }
-                            else
-                            {
-                                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => controlTogglePress(control))">-</MudButton>
-                            }
-                            break;
-
-                        case ControlType.Radial:
-                            <MudText Typo="Typo.caption">Radial</MudText>
-                            break;
-
-                        case ControlType.HSV:
-                            <MudText Typo="Typo.caption">HSV</MudText>
-                            break;
-
-                        default: //getting here is impossible, but just in case
-                            <MudText Typo="Typo.caption">Unknown Type</MudText>
-                            break;
-
+                        @if (contTog.Parameter.Value == contTog.ValueOff)
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => controlTogglePress(contTog))">+</MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => controlTogglePress(contTog))">-</MudButton>
+                        }
                     }
+
+                    else if (control is ContTypeButton contBut)
+					{
+                    }
+
+                    else if (control is ContTypeRadial contRad)
+                    {
+                    
+                    }
+
+                    else if (control is ContTypeHSV contTypeHSV)
+					{
+                        <MudText Typo="Typo.caption">HSV</MudText>
+					}
+
+					else
+					{
+						<MudText Typo="Typo.caption">Unknown Type</MudText>
+					}
+
+
+
 
                 </MudPaper>
             </MudItem>
         }
     }
 </MudGrid>
+
+public abstract class Control
+{
+    // control properties and methods
+}

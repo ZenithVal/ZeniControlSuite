@@ -55,23 +55,10 @@ public enum ParameterType
     Int,
     Float
 }
-public abstract class Parameter
+
+public class Parameter
 {
     public string Path { get; set; }
-    public abstract ParameterType Type { get; }
-}
-public class ParamTypeBool : Parameter
-{
-    public override ParameterType Type => ParameterType.Bool;
-    public bool Value { get; set; }
-}
-public class ParamTypeInt : Parameter
-{
-    public override ParameterType Type => ParameterType.Int;
-    public int Value { get; set; }
-}
-public class ParamTypeFloat : Parameter
-{
-    public override ParameterType Type => ParameterType.Float;
+    public ParameterType Type { get; set; }
     public float Value { get; set; }
 }

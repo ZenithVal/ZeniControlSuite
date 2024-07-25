@@ -41,22 +41,16 @@ public partial class AvatarControls : IDisposable
 	}
 
 
-
-
-    private void controlTogglePress(Control control)
+    private void controlTogglePress(ContTypeToggle control)
     {
-		float value = (float)control.Parameter.Value;
-
-		if (value == control.ValueOff)
-		{
-            value = control.ValueOn;
+        if (control.Parameter.Value == control.ValueOff)
+        {
+            control.Parameter.Value = control.ValueOn;
         }
-		else
-		{
-            value = control.ValueOff;
+        else
+        {
+            control.Parameter.Value = control.ValueOff;
         }
-
-        AvatarsService.setParameterValue(control.Parameter.Path, value);
 
         LogService.AddLog(pageName, user, $"{control.Name} toggled to {control.Parameter.Value}", Severity.Normal);
     }

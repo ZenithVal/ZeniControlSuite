@@ -197,30 +197,26 @@ public class Service_AvatarControls : IHostedService
 
     private Parameter DeserializeParameter(JsonElement parameterElement)
     {
+        var parameter = new Parameter();
+
         Console.WriteLine($"AC | Deserializing Param {parameterElement.GetProperty("Path").GetString()}");
         validationLog = $"deserializing param {parameterElement.GetProperty("Path").GetString()}";
+        parameter.Path = parameterElement.GetProperty("Path").GetString();
         var type = parameterElement.GetProperty("Type").GetString();
-        Parameter parameter;
 
         switch (type)
         {
             case "Bool":
-                parameter = new ParamTypeBool {
-                    Path = parameterElement.GetProperty("Path").GetString(),
-                    Value = parameterElement.GetProperty("Value").GetBoolean()
-                };
+                parameter.Type = ParameterType.Bool;
+                parameter.Value = parameterElement.GetProperty("Value").GetBoolean() ? 1 : 0;
                 break;
             case "Int":
-                parameter = new ParamTypeInt {
-                    Path = parameterElement.GetProperty("Path").GetString(),
-                    Value = parameterElement.GetProperty("Value").GetInt32()
-                };
+                parameter.Type = ParameterType.Int;
+                parameter.Value = parameterElement.GetProperty("Value").GetInt32();
                 break;
             case "Float":
-                parameter = new ParamTypeFloat {
-                    Path = parameterElement.GetProperty("Path").GetString(),
-                    Value = parameterElement.GetProperty("Value").GetSingle()
-                };
+                parameter.Type = ParameterType.Float;
+                parameter.Value = parameterElement.GetProperty("Value").GetSingle();
                 break;
             default:
                 Log("Unknown parameter type", Severity.Error);
@@ -262,19 +258,6 @@ public class Service_AvatarControls : IHostedService
     #region Helper function
     public void setParameterValue(Parameter parameter, float value)
     {
-        switch (parameter.Type)
-        {
-            case ParameterType.Bool:
-                ((ParamTypeBool)parameter).Value = value > 0.5f;
-                break;
-            case ParameterType.Int:
-                ((ParamTypeInt)parameter).Value = (int)value;
-                break;
-            case ParameterType.Float:
-                ((ParamTypeFloat)parameter).Value = value;
-                break;
-        }
-
         //TODO: Send OSC message with new value. Just log for now
         Log($"Set {parameter.Path} to {value}", Severity.Normal);
     }
