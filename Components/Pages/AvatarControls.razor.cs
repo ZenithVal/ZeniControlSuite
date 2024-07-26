@@ -69,17 +69,30 @@ public partial class AvatarControls : IDisposable
 
         control.ParameterHue.Value = (float)control.targetColor.H/360;
         control.ParameterSaturation.Value = (float)control.targetColor.S;
-		if (control.InvertedBrightness)
+
+		float brightnessCorrector = Math.Clamp((2 * control.ParameterSaturation.Value), 1, 2);
+        if (control.InvertedBrightness)
 		{
-			control.ParameterBrightness.Value = 1.0f - (float)control.targetColor.L;
+			control.ParameterBrightness.Value = (1.0f - (float)control.targetColor.L)*brightnessCorrector;
 		}
 		else
 		{
-            control.ParameterBrightness.Value = (float)control.targetColor.L;
+            control.ParameterBrightness.Value = ((float)control.targetColor.L)*brightnessCorrector;
         }
+        control.ParameterBrightness.Value = Math.Clamp(control.ParameterBrightness.Value, 0, 1);
         
         AvatarsService.InvokeAvatarControlsUpdate();
-        LogService.AddLog(pageName, user, $"hsv {control.Name} set to {control.ParameterHue.Value}, {control.ParameterSaturation.Value}, {control.ParameterBrightness.Value}", Severity.Normal);
+		//LogService.AddLog(pageName, user, $"hsv {control.Name} set to {control.ParameterHue.Value}, {control.ParameterSaturation.Value}, {control.ParameterBrightness.Value}", Severity.Normal);
+    }
+
+	private void ControlHSVReset(ContTypeHSV control)
+	{
+
+    }
+
+	private void ControlHSVPreset(ContTypeHSV control)
+	{
+
     }
 
 }
