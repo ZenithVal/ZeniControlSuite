@@ -204,6 +204,24 @@ public class Service_AvatarControls : IHostedService
         validationLog = $"deserializing control roles of {controlName}";
         control.RequiredRoles = controlElement.GetProperty("RequiredRoles").EnumerateArray().Select(r => r.GetString()).ToList();
 
+        if (!Directory.Exists("Images"))
+        {
+            Directory.CreateDirectory("Images");
+        }
+
+        //if /api/ImageController/{controlName} exists, set IconPath to that, otherwise leave blank
+        string controlNameNoSpaces = controlName.Replace(" ", "");
+        if (File.Exists($"Images/{controlNameNoSpaces}.png"))
+        {
+            Console.WriteLine($"AC | Found image for {controlName}");
+            control.IconPath = $"/api/Images/{controlNameNoSpaces}.png";
+        }
+        else
+        {
+            Console.WriteLine($"AC | No image found for {controlNameNoSpaces}");
+            control.IconPath = "images/PowerButton.png";
+        }
+
         return control;
     }
 

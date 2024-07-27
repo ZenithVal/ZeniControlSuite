@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Icons\**" />
-    <Content Remove="Icons\**" />
-    <EmbeddedResource Remove="Icons\**" />
-    <None Remove="Icons\**" />
+    <Compile Remove="Images\**" />
+    <Content Remove="Images\**" />
+    <EmbeddedResource Remove="Images\**" />
+    <None Remove="Images\**" />
   </ItemGroup>
 
   <ItemGroup>

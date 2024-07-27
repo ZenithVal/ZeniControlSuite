@@ -19,6 +19,7 @@ public abstract class Control
     public string Name { get; set; }
     public abstract ControlType Type { get; }
     public List<string> RequiredRoles { get; set; } = new List<string>();
+    public string IconPath { get; set; }
 }
 public class ContTypeButton : Control
 {
