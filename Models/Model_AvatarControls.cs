@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Reflection.Metadata;
 
-namespace ZeniControlSuite.Models.AvatarControls;
+namespace ZeniControlSuite.Models;
 
 public class Avatar
 {
@@ -22,7 +22,7 @@ public abstract class Control
 {
     public string Name { get; set; }
     public abstract ControlType Type { get; }
-    public List<String> RequiredRoles { get; set; } = new List<String>();
+    public List<string> RequiredRoles { get; set; } = new List<string>();
 }
 public class ContTypeButton : Control
 {
@@ -40,7 +40,7 @@ public class ContTypeRadial : Control
 {
     public override ControlType Type => ControlType.Radial;
     public required Parameter Parameter { get; set; }
-    public double SliderValue { get => (double)Parameter.Value; set => Parameter.Value = (float)value;}
+    public double SliderValue { get => (double)Parameter.Value; set => Parameter.Value = (float)value; }
     public float ValueMin { get; set; }
     public float ValueMax { get; set; }
 }

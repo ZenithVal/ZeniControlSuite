@@ -1,8 +1,8 @@
 ﻿@page "/AvatarControls"
-@using Microsoft.AspNetCore.Authorization
-@using ZeniControlSuite.Models.AvatarControls;
-@using MudBlazor.Services
-@using MudBlazor.Utilities
+@    using Microsoft.AspNetCore.Authorization
+@    using ZeniControlSuite.Models.AvatarControls;
+@    using MudBlazor.Services
+@    using MudBlazor.Utilities
 @attribute [Authorize(Roles = "Admin, Avatar")]
 
 <PageTitle>Avatar Controls</PageTitle>
@@ -12,6 +12,7 @@
 
 <br />
 <br />
+
 
 <MudGrid Spacing="3" Justify="Justify.FlexStart">
     @if (!AvatarsService.avatarsLoaded)
@@ -40,6 +41,12 @@
 
                     else if (control is ContTypeToggle contTog)
                     {
+                        string imageSource = "images/" + contTog.Name + ".png";
+                        @if (System.IO.File.Exists(imageSource))
+                        {
+                            <MudImage Src="@imageSource" Width="100" Height="100" />
+                        }
+                        
                         <div style="width: 140px; height: 140px; margin-left:auto; margin-right:auto">
                         @if (contTog.Parameter.Value == contTog.ValueOff)
                         {

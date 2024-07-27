@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ZeniControlSuite.Authentication;
+namespace ZeniControlSuite.Controllers;
 
 [Route("api/[controller]/[action]")]
 public class AccountController : ControllerBase

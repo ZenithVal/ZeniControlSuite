@@ -400,6 +400,6 @@ FodyWeavers.xsd
 # 
 .idea
 
-# Ignore Configs
+# Ignored Folders
 Configs/
-
+Icons/

@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Icons\**" />
+    <Content Remove="Icons\**" />
+    <EmbeddedResource Remove="Icons\**" />
+    <None Remove="Icons\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Components\Panel_Logs - Copy.razor.cs" />
   </ItemGroup>
 
@@ -74,7 +81,6 @@
 
   <ItemGroup>
     <Folder Include="Components\AvatarControls\" />
-    <Folder Include="Icons\" />
   </ItemGroup>
 
 </Project>

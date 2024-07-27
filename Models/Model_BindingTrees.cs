@@ -1,4 +1,4 @@
-﻿namespace ZeniControlSuite.Models.BindingTrees;
+﻿namespace ZeniControlSuite.Models;
 
 public class BindingTree
 {

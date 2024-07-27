@@ -2,7 +2,7 @@
 using Buttplug.Client.Connectors.WebsocketConnector;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using ZeniControlSuite.Models.Intiface;
+using ZeniControlSuite.Models;
 
 namespace ZeniControlSuite.Services;
 

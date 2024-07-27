@@ -2,7 +2,7 @@
 using MudBlazor;
 using Newtonsoft.Json;
 using ZeniControlSuite.Components.Pages;
-using ZeniControlSuite.Models.BindingTrees;
+using ZeniControlSuite.Models;
 
 namespace ZeniControlSuite.Services;
 

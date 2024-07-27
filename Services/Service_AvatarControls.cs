@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using ZeniControlSuite.Models.AvatarControls;
 using ZeniControlSuite.Components.Pages;
+using ZeniControlSuite.Models;
 
 namespace ZeniControlSuite.Services;
 public class Service_AvatarControls : IHostedService

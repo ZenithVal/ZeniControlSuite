@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
-using ZeniControlSuite.Models.Intiface;
+using ZeniControlSuite.Extensions;
+using ZeniControlSuite.Models;
 using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components;

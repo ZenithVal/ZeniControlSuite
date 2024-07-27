@@ -1,4 +1,4 @@
-﻿namespace ZeniControlSuite.Models.Intiface;
+﻿namespace ZeniControlSuite.Models;
 
 public enum PatternType
 {

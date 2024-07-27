@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
-using ZeniControlSuite.Models.AvatarControls;
+using ZeniControlSuite.Extensions;
+using ZeniControlSuite.Models;
 using ZeniControlSuite.Services;
 using static ZeniControlSuite.Services.Service_BindingTrees;
 

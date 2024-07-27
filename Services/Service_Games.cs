@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using ZeniControlSuite.Models.Games;
+using ZeniControlSuite.Models;
 
 namespace ZeniControlSuite.Services;
 

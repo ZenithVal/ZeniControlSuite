@@ -1,5 +1,5 @@
 ﻿using MudBlazor;
-namespace ZeniControlSuite.Models.Games;
+namespace ZeniControlSuite.Models;
 public class Game
 {
     public string Name { get; set; }
