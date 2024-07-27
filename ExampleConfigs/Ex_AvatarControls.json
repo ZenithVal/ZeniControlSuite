@@ -1,7 +1,8 @@
 {
     "GlobalControls": [
+
         {
-            "Name": "Example Button",
+            "Name": "Button",
             "RequiredRoles": [],
             "Type": "Button",
             "Parameter": {
@@ -13,9 +14,10 @@
             "ValueOff": 0.0,
             "ValueOn": 1.0
         },
+
         {
-            "Name": "Example Toggle",
-            "RequiredRoles": [],
+            "Name": "Toggle",
+            "RequiredRoles": [ "" ],
             "Type": "Toggle",
             "Parameter": {
                 "Path": "/avatar/parameters/Toggle",
@@ -26,21 +28,37 @@
             "ValueOff": 0.0,
             "ValueOn": 1.0
         },
+
         {
-            "Name": "Example Radial",
+            "Name": "Toggle w/ Role'",
+            "RequiredRoles": [ "ToggleRole" ],
+            "Type": "Toggle",
+            "Parameter": {
+                "Path": "/avatar/parameters/Toggle",
+                "Type": "Bool",
+                "Value": false,
+                "RequiredRoles": []
+            },
+            "ValueOff": 0.0,
+            "ValueOn": 1.0
+        },
+
+        {
+            "Name": "Radial",
             "RequiredRoles": [],
             "Type": "Radial",
             "Parameter": {
                 "Path": "/avatar/parameters/Radial",
                 "Type": "Float",
-                "Value": 0.0
+                "Value": 1.0
             },
             "ValueMin": 0.0,
             "ValueMax": 1.0
         },
 
+
         {
-            "Name": "Color-Primary",
+            "Name": "Colors - Primary",
             "RequiredRoles": [],
             "Type": "HSV",
             "ParameterHue": {
@@ -61,7 +79,7 @@
             "InvertedBrightness": false
         },
         {
-            "Name": "Color-Secondary",
+            "Name": "Colors - Secondary",
             "RequiredRoles": [],
             "Type": "HSV",
             "ParameterHue": {
@@ -85,15 +103,28 @@
     ],
     "Avatars": [
         {
-            "ID": "avatarIdGoesHere",
-            "Name": "AvatarName",
+            "ID": "avtr_123456notarealID1",
+            "Name": "ZEN 2 | Catsuit",
+            "Controls": [
+            ],
+            "InheritedGlobalControls": [
+                "Toggle",
+                "Radial",
+                "Toggle W/ Role",
+                "Colors - Primary",
+                "Colors - Secondary"
+            ]
+        },
+        {
+            "ID": "avtr_123456notarealID2",
+            "Name": "ZEN 2 | Dress",
             "Controls": [
                 {
-                    "Name": "Test",
-                    "RequiredRoles": [],
-                    "Type": "Button",
+                    "Name": "UniqueToggle",
+                    "RequiredRoles": [ "" ],
+                    "Type": "Toggle",
                     "Parameter": {
-                        "Path": "/avatar/parameters/Test",
+                        "Path": "/avatar/parameters/UniqueToggle",
                         "Type": "Bool",
                         "Value": false,
                         "RequiredRoles": []
@@ -102,7 +133,10 @@
                     "ValueOn": 1.0
                 }
             ],
-            "InheritedGlobalControls": [ "Example Button", "Color-Primary", "Color-Secondary" ]
+            "InheritedGlobalControls": [
+                "Colors - Primary",
+                "Colors - Secondary"
+            ]
         }
     ]
 }
