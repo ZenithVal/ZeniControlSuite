@@ -1,8 +1,4 @@
-﻿using System.Data.Common;
-using System.Drawing;
-using System.Reflection.Metadata;
-
-namespace ZeniControlSuite.Models;
+﻿namespace ZeniControlSuite.Models;
 
 public class Avatar
 {

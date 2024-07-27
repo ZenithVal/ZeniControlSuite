@@ -81,6 +81,7 @@
 
   <ItemGroup>
     <Folder Include="Components\AvatarControls\" />
+    <Folder Include="Extensions\" />
   </ItemGroup>
 
 </Project>

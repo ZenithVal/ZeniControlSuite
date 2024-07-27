@@ -1,4 +1,5 @@
 ﻿using MudBlazor;
+namespace ZeniControlSuite.Models;
 
 public class LogEvent
 {

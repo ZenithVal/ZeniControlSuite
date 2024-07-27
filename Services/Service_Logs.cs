@@ -1,4 +1,5 @@
 ﻿using MudBlazor;
+using ZeniControlSuite.Models;
 
 namespace ZeniControlSuite.Services;
 public class Service_Logs : IHostedService

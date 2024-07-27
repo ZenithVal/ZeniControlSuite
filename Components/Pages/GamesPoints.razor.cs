@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
-using ZeniControlSuite.Extensions;
+using ZeniControlSuite.Authentication;
 using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components.Pages;

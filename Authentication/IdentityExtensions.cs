@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components.Authorization;
 
-namespace ZeniControlSuite.Extensions;
+namespace ZeniControlSuite.Authentication;
 
 public static class IdentityExtensions
 {
