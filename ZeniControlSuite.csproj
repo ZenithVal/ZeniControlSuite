@@ -84,4 +84,10 @@
     <Folder Include="Extensions\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="CoreOSC">
+      <HintPath>Libraries\CoreOSC.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
