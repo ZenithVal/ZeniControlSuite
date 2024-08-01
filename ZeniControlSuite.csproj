@@ -26,6 +26,7 @@
     <Content Remove="Configs\Discord.json" />
     <Content Remove="Configs\DiscordUsers.json" />
     <Content Remove="Configs\Example_AvatarControls.json" />
+    <Content Remove="Configs\OSC.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,6 +67,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Configs\DiscordUsers.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Configs\OSC.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="wwwroot\images\Bindings.png">

@@ -12,6 +12,7 @@ using MudBlazor.Services;
 using Newtonsoft.Json;
 using ZeniControlSuite.Authentication;
 using ZeniControlSuite.Components;
+using ZeniControlSuite.OSC;
 using ZeniControlSuite.Services;
 
 
@@ -66,6 +67,9 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_BindingTre
 
 builder.Services.AddSingleton<Service_AvatarControls>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_AvatarControls>());
+
+builder.Services.AddSingleton<Service_OSC>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_OSC>());
 
 builder.Services.AddSingleton<Service_Intiface>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Intiface>());

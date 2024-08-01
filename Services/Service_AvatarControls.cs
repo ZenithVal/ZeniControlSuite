@@ -44,6 +44,7 @@ public class Service_AvatarControls : IHostedService
     public List<Avatar> avatars = new List<Avatar>();
 
     public bool avatarsLoaded = false;
+    public string selectedAvatarID = "Global";
     public Avatar selectedAvatar = new Avatar();
     //public string selectedAvatarID = "Global";
     #endregion
@@ -265,6 +266,7 @@ public class Service_AvatarControls : IHostedService
         if (avatars.Any(a => a.ID == avatarID))
         {
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == avatarID);
+            selectedAvatarID = avatarID;
             Log($"Selected avatar {selectedAvatar.Name}", Severity.Normal);
 
             InvokeAvatarControlsUpdate();
@@ -276,6 +278,7 @@ public class Service_AvatarControls : IHostedService
 
             Log($"No avatar for {avatarIDTruncated} found", Severity.Warning);
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == "Global");
+            selectedAvatarID = "Global";
             Log($"Selected avatar Global", Severity.Normal);
 
             InvokeAvatarControlsUpdate();
