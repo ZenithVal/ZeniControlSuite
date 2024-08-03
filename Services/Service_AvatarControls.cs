@@ -40,19 +40,15 @@ public class Service_AvatarControls : IHostedService
 
     //===========================================//
     #region Settings/Variables
-    public List<Control> globalControls = new List<Control>();
+    public bool avatarsLoaded = false;
     public List<Avatar> avatars = new List<Avatar>();
 
-    public bool avatarsLoaded = false;
-    public string selectedAvatarID = "Global";
     public Avatar selectedAvatar = new Avatar();
-    //public string selectedAvatarID = "Global";
     #endregion
 
 
     //===========================================//
-    #region Initialization & Avatar Controls
-
+    #region Initialization
     private string validationLog = "";
     private void InitializeAvatarControls()
     {
@@ -78,7 +74,7 @@ public class Service_AvatarControls : IHostedService
     public void ReadAvatarControlsJson(string jsonString)
     {
         avatarsLoaded = false;
-        globalControls.Clear();
+        List<AvatarControl> globalControls = new List<AvatarControl>();
         avatars.Clear();
 
         // Deserialize the JSON string
@@ -95,11 +91,11 @@ public class Service_AvatarControls : IHostedService
         //Sort congrolGroups
         //Any controls with - are grouped. Strip the text before " - " and add the item to the group
 
-
         var globalAvatar = new Avatar {
             ID = "Global",
             Name = "Global",
-            Controls = globalControls
+            Controls = globalControls,
+            Parameters = new Dictionary<string, Parameter>()
         };
         avatars.Add(globalAvatar);
         selectedAvatar = globalAvatar;
@@ -113,7 +109,8 @@ public class Service_AvatarControls : IHostedService
             var avatar = new Avatar {
                 ID = avatarElement.GetProperty("ID").GetString(),
                 Name = avatarElement.GetProperty("Name").GetString(),
-                Controls = new List<Control>()
+                Controls = new List<AvatarControl>(),
+                Parameters = new Dictionary<string, Parameter>()
             };
 
             // Deserialize Avatar Controls
@@ -141,18 +138,61 @@ public class Service_AvatarControls : IHostedService
             avatars.Add(avatar);
         }
 
+        foreach (var avatar in avatars)
+        {
+            CreateAvatarParamList(avatar);
+        }
+
         avatarsLoaded = true;
         InvokeAvatarControlsUpdate();
     }
 
-    private Control DeserializeControl(JsonElement controlElement)
+    private void CreateAvatarParamList(Avatar avatar)
+    {
+        foreach (var control in avatar.Controls)
+        {
+            if (control is ContTypeButton contButton)
+            {
+                AddToParamDictionary(avatar, contButton.Parameter);
+            }
+            else if (control is ContTypeToggle contToggle)
+            {
+                AddToParamDictionary(avatar, contToggle.Parameter);
+            }
+            else if (control is ContTypeRadial contRadial)
+            {
+                AddToParamDictionary(avatar, contRadial.Parameter);
+            }
+            else if (control is ContTypeHSV contHSV)
+            {
+                AddToParamDictionary(avatar, contHSV.ParameterHue);
+                AddToParamDictionary(avatar, contHSV.ParameterSaturation);
+                AddToParamDictionary(avatar, contHSV.ParameterBrightness);
+            }
+        }
+    }
+
+    private void AddToParamDictionary(Avatar avatar, Parameter parameter)
+    {
+        if (!avatar.Parameters.ContainsKey(parameter.Address))
+        {
+            avatar.Parameters.Add(parameter.Address, parameter);
+        }
+        else
+        {
+            Log($"Parameter {parameter.Address} already exists in {avatar.Name}", Severity.Warning);
+        }
+
+    }
+
+    private AvatarControl DeserializeControl(JsonElement controlElement)
     {
         string controlName = controlElement.GetProperty("Name").GetString();
         Console.WriteLine($"AC | Deserializing Control {controlName}");
         validationLog = $"deserializing control type of {controlName}";
 
         var type = controlElement.GetProperty("Type").GetString();
-        Control control;
+        AvatarControl control;
 
         switch (type)
         {
@@ -232,7 +272,7 @@ public class Service_AvatarControls : IHostedService
 
         Console.WriteLine($"AC | Deserializing Param {parameterElement.GetProperty("Path").GetString()}");
         validationLog = $"deserializing param {parameterElement.GetProperty("Path").GetString()}";
-        parameter.Path = parameterElement.GetProperty("Path").GetString();
+        parameter.Address = parameterElement.GetProperty("Path").GetString();
         var type = parameterElement.GetProperty("Type").GetString();
 
         switch (type)
@@ -266,7 +306,6 @@ public class Service_AvatarControls : IHostedService
         if (avatars.Any(a => a.ID == avatarID))
         {
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == avatarID);
-            selectedAvatarID = avatarID;
             Log($"Selected avatar {selectedAvatar.Name}", Severity.Normal);
 
             InvokeAvatarControlsUpdate();
@@ -278,7 +317,6 @@ public class Service_AvatarControls : IHostedService
 
             Log($"No avatar for {avatarIDTruncated} found", Severity.Warning);
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == "Global");
-            selectedAvatarID = "Global";
             Log($"Selected avatar Global", Severity.Normal);
 
             InvokeAvatarControlsUpdate();
@@ -289,10 +327,26 @@ public class Service_AvatarControls : IHostedService
 
     //===========================================//
     #region Helper function
-    public void setParameterValue(Parameter parameter, float value)
+    public void SetParameterValue(Parameter param) //used by AvatarControls. Upddates the param and sends an OSC message out with it
     {
-        //TODO: Send OSC message with new value. Just log for now
-        Log($"Set {parameter.Path} to {value}", Severity.Normal);
+        selectedAvatar.Parameters[param.Address].Value = param.Value;
+        //OSCService.sendOSCParameter(param);
+    }
+
+    public void UpdateParameterValue(Parameter param) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
+    {
+        selectedAvatar.Parameters[param.Address].Value = param.Value;
+
+        if (selectedAvatar.Controls.FirstOrDefault(c => c is ContTypeHSV && (c as ContTypeHSV).ParameterHue.Address == param.Address) is ContTypeHSV contHSV)
+        {
+            contHSV.targetColor = new MudBlazor.Utilities.MudColor(
+                               (double)contHSV.ParameterHue.Value*360,
+                                              (double)contHSV.ParameterSaturation.Value,
+                                                             (double)contHSV.ParameterBrightness.Value, 
+                                                                            0);
+        }
+
+        InvokeAvatarControlsUpdate();
     }
     #endregion
 }

@@ -4,7 +4,8 @@ public class Avatar
 {
     public string ID { get; set; }
     public string Name { get; set; }
-    public List<Control> Controls { get; set; }
+    public List<AvatarControl> Controls { get; set; }
+    public Dictionary<string, Parameter> Parameters { get; set; }
 }
 
 public enum ControlType
@@ -14,26 +15,26 @@ public enum ControlType
     Radial,
     HSV,
 }
-public abstract class Control
+public abstract class AvatarControl
 {
     public string Name { get; set; }
     public abstract ControlType Type { get; }
     public List<string> RequiredRoles { get; set; } = new List<string>();
     public string IconPath { get; set; }
 }
-public class ContTypeButton : Control
+public class ContTypeButton : AvatarControl
 {
     public override ControlType Type => ControlType.Button;
     public required Parameter Parameter { get; set; }
 }
-public class ContTypeToggle : Control
+public class ContTypeToggle : AvatarControl
 {
     public override ControlType Type => ControlType.Toggle;
     public required Parameter Parameter { get; set; }
     public float ValueOff { get; set; }
     public float ValueOn { get; set; }
 }
-public class ContTypeRadial : Control
+public class ContTypeRadial : AvatarControl
 {
     public override ControlType Type => ControlType.Radial;
     public required Parameter Parameter { get; set; }
@@ -41,7 +42,7 @@ public class ContTypeRadial : Control
     public float ValueMin { get; set; }
     public float ValueMax { get; set; }
 }
-public class ContTypeHSV : Control
+public class ContTypeHSV : AvatarControl
 {
     public override ControlType Type => ControlType.HSV;
     public MudBlazor.Utilities.MudColor targetColor { get; set; } = new MudBlazor.Utilities.MudColor(0, 0, 0, 0);
@@ -61,7 +62,7 @@ public enum ParameterType
 
 public class Parameter
 {
-    public string Path { get; set; }
+    public string Address { get; set; }
     public ParameterType Type { get; set; }
-    public float Value { get; set; }
+    public float Value { get; set; } 
 }

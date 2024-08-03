@@ -1,17 +1,19 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using CoreOSC;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Configuration;
 using MudBlazor;
+using ZeniControlSuite.Models;
 using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.OSC;
 
-
 public class Service_OSC : IHostedService
 {
     private readonly Service_Logs LogService;
-    public Service_OSC(Service_Logs serviceLogs) { LogService = serviceLogs; }
+    private readonly Service_AvatarControls AvatarsService;
+    public Service_OSC(Service_Logs serviceLogs, Service_AvatarControls serviceAvatars) { LogService = serviceLogs; AvatarsService = serviceAvatars; }
 
     private void Log(string message, Severity severity = Severity.Normal)
     {
@@ -20,8 +22,8 @@ public class Service_OSC : IHostedService
 
     //===========================================//
     #region HostedService Stuff 
-    public delegate void RequestOSCUpdate();
-    public event RequestOSCUpdate? OnOSCUpdate;
+    //public delegate void RequestOSCUpdate();
+    //public event RequestOSCUpdate? OnOSCUpdate;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -38,6 +40,7 @@ public class Service_OSC : IHostedService
         }
         return Task.CompletedTask;
     }
+    /*    
     public void InvokeOSCUpdate()
     {
         if (OnOSCUpdate != null)
@@ -45,6 +48,7 @@ public class Service_OSC : IHostedService
             OnOSCUpdate.Invoke();
         }
     }
+    */
     #endregion
 
 
@@ -57,12 +61,14 @@ public class Service_OSC : IHostedService
     private UDPSender _sender;
     private CancellationTokenSource _cts;
 
-    private string address = "127.0.0.1";
+    private string IP = "127.0.0.1";
     private int listeningPort = 9001;
     private int sendingPort = 9000;
     private bool OSCQuery = false;
 
     public bool Running { get; private set; } = false;
+
+    #endregion
 
     #region Config Reading
 
@@ -78,7 +84,7 @@ public class Service_OSC : IHostedService
 
         try
         {
-            address = config.GetProperty("IP").GetString() ?? "127.0.0.1";
+            IP = config.GetProperty("IP").GetString() ?? "127.0.0.1";
             listeningPort = config.GetProperty("ListeningPort").GetInt32();
             sendingPort = config.GetProperty("SendingPort").GetInt32();
             OSCQuery = config.GetProperty("OSCQuery").GetBoolean();
@@ -105,6 +111,19 @@ public class Service_OSC : IHostedService
     }
     #endregion
 
+
+    //===========================================//
+    #region OSC Logs
+    public List<OscMessage> OscLogs { get; private set; } = new();
+    private void LogOSC(OscMessage message)
+    {
+        OscLogs.Add(message);
+        if (OscLogs.Count > 100)
+        {
+            OscLogs.RemoveAt(0);
+        }
+    }
+
     #endregion
 
     //===========================================//
@@ -119,7 +138,16 @@ public class Service_OSC : IHostedService
             var messageReceived = (OscMessage)packet;
             if (messageReceived != null)
             {
-                OnOscMessageReceived?.Invoke(new OSCSubscriptionEvent(messageReceived));
+                LogOSC(messageReceived);
+                Console.WriteLine($"OSC Message Received: {messageReceived.Address}/{messageReceived.Arguments[0]}");
+
+                if (AvatarsService.selectedAvatar.Parameters.ContainsKey(messageReceived.Address))
+                {
+                    var parameter = AvatarsService.selectedAvatar.Parameters[messageReceived.Address];
+                    parameter.Value = FormatIncoming(messageReceived.Arguments[0], parameter.Type);
+                    AvatarsService.SetParameterValue(parameter);
+                    AvatarsService.InvokeAvatarControlsUpdate();
+                }
             }
         };
 
@@ -128,7 +156,7 @@ public class Service_OSC : IHostedService
             Log($"Listening on {listeningPort} & Sending on {sendingPort}");
             Console.WriteLine("");
 
-            _sender = new UDPSender(address, sendingPort);
+            _sender = new UDPSender(IP, sendingPort);
             _listener = new UDPListener(listeningPort, callback);
             await Task.Delay(Timeout.Infinite);
         }
@@ -165,11 +193,17 @@ public class Service_OSC : IHostedService
 
     //===========================================//
     #region OSC Stuff
-    public void SendMessage(string address, params object?[]? args)
+    public void sendOSCParameter(Parameter param)
     {
-        if (args == null)
+        var value = FormatOutGoing(param.Value, param.Type);
+
+        if (value == null)
+        {
+            Log($"Error formatting OSC message: {param.Address}", Severity.Error);
             return;
-        var message = new OscMessage(address, args);
+        }
+
+        var message = new OscMessage(param.Address, value);
         try
         {
             _sender.Send(message);
@@ -185,21 +219,34 @@ public class Service_OSC : IHostedService
 
     //===========================================//
     #region Helper Functions
-    public object? FormatValue(object value)
+    public object? FormatOutGoing(float value, ParameterType type)
     {
-        if (value is double dbl)
+        switch (type)
         {
-            return Math.Clamp(dbl, -1, 1);
+            case ParameterType.Bool:
+                return value < 0.5 ? false : true;
+            case ParameterType.Int:
+                return (int)value;
+            case ParameterType.Float:
+                return (float)value;
+            default:
+                return null;
         }
-        else if (value is int i)
+    }
+
+    public float FormatIncoming(object value, ParameterType type)
+    {
+        switch (type)
         {
-            return Math.Clamp(i, -255, 255);
+            case ParameterType.Bool:
+                return (bool)value ? 1 : 0;
+            case ParameterType.Int:
+                return (int)value;
+            case ParameterType.Float:
+                return (float)value;
+            default:
+                return 0;
         }
-        else if (value is bool bol)
-        {
-            return bol ? 1 : 0;
-        }
-        return null;
     }
     #endregion
 

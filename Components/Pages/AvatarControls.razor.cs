@@ -4,7 +4,6 @@ using MudBlazor;
 using ZeniControlSuite.Authentication;
 using ZeniControlSuite.Models;
 using ZeniControlSuite.Services;
-using static ZeniControlSuite.Services.Service_BindingTrees;
 
 namespace ZeniControlSuite.Components.Pages;
 
@@ -52,14 +51,19 @@ public partial class AvatarControls : IDisposable
         {
             control.Parameter.Value = control.ValueOff;
         }
-		AvatarsService.InvokeAvatarControlsUpdate();
 
-        LogService.AddLog(pageName, user, $"toggled {control.Name} set to {control.Parameter.Value}", Severity.Normal);
+		AvatarsService.SetParameterValue(control.Parameter);
+        AvatarsService.InvokeAvatarControlsUpdate();
+
+        LogService.AddLog(pageName, user, $"{control.Name} set to {control.Parameter.Value}", Severity.Normal);
     }
 
 	private void ControlRadialChange(ContTypeRadial control, float value)
 	{
+
 		control.Parameter.Value = value;
+
+        AvatarsService.SetParameterValue(control.Parameter);
         AvatarsService.InvokeAvatarControlsUpdate();
         //LogService.AddLog(pageName, user, $"radial {control.Name} set to {control.Parameter.Value}", Severity.Normal);
     }
@@ -82,6 +86,10 @@ public partial class AvatarControls : IDisposable
         }
         control.ParameterBrightness.Value = Math.Clamp(control.ParameterBrightness.Value, 0, 1);
         
+		AvatarsService.SetParameterValue(control.ParameterHue);
+		AvatarsService.SetParameterValue(control.ParameterSaturation);
+		AvatarsService.SetParameterValue(control.ParameterBrightness);
+
         AvatarsService.InvokeAvatarControlsUpdate();
 		//LogService.AddLog(pageName, user, $"hsv {control.Name} set to {control.ParameterHue.Value}, {control.ParameterSaturation.Value}, {control.ParameterBrightness.Value}", Severity.Normal);
     }

@@ -9,7 +9,7 @@
 
 <PageTitle>Avatar Controls</PageTitle>
 
-<h1 style="text-align: center;">Avatar Controls</h1>
+<h1 style="text-align: center;">Avatar Controls | @AvatarsService.selectedAvatar.Name</h1>
 <MudDivider></MudDivider>
 
 <br />
@@ -27,7 +27,7 @@
             }
             else
             {
-                foreach (Control control in AvatarsService.selectedAvatar.Controls)
+                foreach (AvatarControl control in AvatarsService.selectedAvatar.Controls)
                 {
                     if (!@context.User.IsInRole("Admin"))
                     {
@@ -63,9 +63,10 @@
 
                             else if (control is ContTypeToggle contTog)
                             {
-                                <div style="width: 140px; height: 140px; margin-left:auto; margin-right:auto">
+                                Parameter _Param = AvatarsService.selectedAvatar.Parameters[contTog.Parameter.Address];
 
-                                    @if (contTog.Parameter.Value == contTog.ValueOff)
+                                <div style="width: 140px; height: 140px; margin-left:auto; margin-right:auto">
+                                    @if (_Param.Value == contTog.ValueOff)
                                     {
                                         <MudButton Style="@("width: 100%; height: 100%;")" Variant="Variant.Outlined" Color="Color.Default" OnClick="@(() => ControlTogglePress(contTog))">
                                             <MudImage Src="@control.IconPath" Style="width: 100%; height: 100%;" Alt="Off"></MudImage>
@@ -82,10 +83,12 @@
 
                             else if (control is ContTypeRadial contRad)
                             {
+                                Parameter _Param = AvatarsService.selectedAvatar.Parameters[contRad.Parameter.Address];
+
                                 <MudPaper Style="@("margin-left:auto; margin-right:auto; width: 140px; height: 140px; padding: 8px; opacity: 1.0;")" Class="border-1 border-secondary">
                                     <MudButton Style="@("width: 100%; height: 40px; font-size: 25")" Variant="Variant.Outlined" DropShadow="false" Color="Color.Info">@contRad.Parameter.Value</MudButton>
                                     <div style="height: 10px;" />
-                                    <MudSlider Color="Color.Info" Size="Size.Large" Min="contRad.ValueMin" Max="contRad.ValueMax" Step="0.01f" Value="contRad.Parameter.Value" ValueChanged="@((float value) => ControlRadialChange(contRad, value))" />
+                                    <MudSlider Color="Color.Info" Size="Size.Large" Min="contRad.ValueMin" Max="contRad.ValueMax" Step="0.01f" Value="_Param.Value" ValueChanged="@((float value) => ControlRadialChange(contRad, value))" />
                                 </MudPaper>
                             }
 
