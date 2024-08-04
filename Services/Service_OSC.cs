@@ -118,7 +118,7 @@ public class Service_OSC : IHostedService
     private void LogOSC(OscMessage message)
     {
         OscLogs.Add(message);
-        if (OscLogs.Count > 100)
+        if (OscLogs.Count > 500)
         {
             OscLogs.RemoveAt(0);
         }
@@ -139,7 +139,7 @@ public class Service_OSC : IHostedService
             if (messageReceived != null)
             {
                 LogOSC(messageReceived);
-                Console.WriteLine($"OSC Message Received: {messageReceived.Address}/{messageReceived.Arguments[0]}");
+                //Console.WriteLine($"OSC Message Received: {messageReceived.Address}/{messageReceived.Arguments[0]}");
 
                 if (AvatarsService.selectedAvatar.Parameters.ContainsKey(messageReceived.Address))
                 {

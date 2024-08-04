@@ -91,15 +91,8 @@ public class Service_AvatarControls : IHostedService
 
         //Sort congrolGroups
         //Any controls with - are grouped. Strip the text before " - " and add the item to the group
+        //TODO
 
-        var globalAvatar = new Avatar {
-            ID = "Global",
-            Name = "Global",
-            Controls = globalControls,
-            Parameters = new Dictionary<string, Parameter>()
-        };
-        avatars.Add(globalAvatar);
-        selectedAvatar = globalAvatar;
 
         // Deserialize Avatars
         var avatarsElement = jsonDocument.RootElement.GetProperty("Avatars");
@@ -146,6 +139,21 @@ public class Service_AvatarControls : IHostedService
         {
             CreateAvatarParamList(avatar);
         }
+
+
+
+        //if no avatar Exists with ID Global, create one
+        if (!avatars.Any(a => a.ID == "Global"))
+        {
+            var globalAvatar = new Avatar {
+                ID = "Global",
+                Name = "Global",
+                Controls = globalControls,
+                Parameters = new Dictionary<string, Parameter>()
+            };
+            avatars.Add(globalAvatar);
+        }
+        SelectAvatar("Global");
 
         avatarsLoaded = true;
         InvokeAvatarControlsUpdate();

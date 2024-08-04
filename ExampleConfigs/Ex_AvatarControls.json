@@ -103,6 +103,17 @@
     ],
     "Avatars": [
         {
+            "ID": "Global",
+            "Name": "No Valid Avatar Loaded",
+            "Controls": [
+            ],
+            "InheritedGlobalControls": [
+                "Colors - Primary",
+                "Colors - Secondary"
+            ]
+        },
+
+        {
             "ID": "avtr_123456notarealID1",
             "Name": "ZEN 2 | Catsuit",
             "Controls": [
@@ -115,6 +126,7 @@
                 "Colors - Secondary"
             ]
         },
+
         {
             "ID": "avtr_123456notarealID2",
             "Name": "ZEN 2 | Dress",
@@ -138,5 +150,6 @@
                 "Colors - Secondary"
             ]
         }
+
     ]
 }
