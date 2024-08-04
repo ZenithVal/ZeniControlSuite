@@ -311,6 +311,11 @@ public class Service_AvatarControls : IHostedService
     #region Avatar Functions
     public void SelectAvatar(string avatarID)
     {
+        if (selectedAvatar.ID == avatarID)
+        {
+            return;
+        }
+
         if (avatars.Any(a => a.ID == avatarID))
         {
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == avatarID);
