@@ -9,7 +9,7 @@
 
 <PageTitle>Avatar Controls</PageTitle>
 
-<h1 style="text-align: center;">Avatar Controls | @AvatarsService.selectedAvatar.Name</h1>
+<h1 style="text-align: Left;">Avatar Controls:     @AvatarsService.selectedAvatar.Name </h1>
 <MudDivider></MudDivider>
 
 <br />
@@ -48,9 +48,11 @@
                     }
 
                     <MudItem>
-                        <MudPaper Style="@("width: 200px; height: 270px; padding-top: 10px")" Class="pa-2 mt-2 justify-center align-start">
+                        <MudPaper Style="@("width: 200px; height: 270px; padding-left: 0px; padding-right: 0px; padding-top: 12px;")" Class="mt-2 justify-center align-start">
 
-                            <MudText Typo="Typo.h6" Align="Align.Center">@control.Name</MudText>
+                            <div style="posiition: absolute; width: 100%; height: 32px; background: rgba(0, 0, 0, 0.0)">
+                                <MudText Typo="Typo.h6" Align="Align.Center">@control.Name</MudText>
+                            </div>
 
                             <div style="height: 8px"></div>
 
@@ -83,8 +85,8 @@
                             {
                                 Parameter _Param = AvatarsService.selectedAvatar.Parameters[contRad.Parameter.Address];
 
-                                <MudPaper Style="@("margin-left:auto; margin-right:auto; width: 140px; height: 140px; padding: 8px; opacity: 1.0;")" Class="border-1 border-secondary">
-                                    <MudButton Style="@("width: 100%; height: 40px; font-size: 25")" Variant="Variant.Outlined" DropShadow="false" Color="Color.Info">@contRad.Parameter.Value</MudButton>
+                                <MudPaper Style="@("margin-left:auto; margin-right:auto; width: 140px; height: 140px; padding-left: 16px;  padding-right: 16px; padding-top: 12px; opacity: 1.0;")" Class="border-1 border-secondary">
+                                    <MudButton Style="@("width: 100%; height: 30px; font-size: 30")" Variant="Variant.Outlined" DropShadow="false" Color="Color.Info">@contRad.Parameter.Value</MudButton>
                                     <div style="height: 10px;" />
                                     <MudSlider Color="Color.Info" Size="Size.Large" Min="contRad.ValueMin" Max="contRad.ValueMax" Step="0.01f" Value="_Param.Value" ValueChanged="@((float value) => ControlRadialChange(contRad, value))" />
                                 </MudPaper>
@@ -92,45 +94,35 @@
 
                             else if (control is ContTypeHSV contHSV)
                             {
-                                MudColor mudColorEstimate = EstimateMudColor(contHSV, 1.0f);
+                                MudColor mudColorEstimate = AvatarsService.HSVControlToMudColor(contHSV);
                                 string hexColorEstimate = mudColorEstimate.ToString(MudColorOutputFormats.Hex);
-
-                                string styleBackground = $"position: absolute; width: 100%; height: 100%; background-color: {hexColorEstimate}";
-
                                 Parameter _ParamHue = AvatarsService.selectedAvatar.Parameters[contHSV.ParameterHue.Address];
                                 Parameter _ParamSat = AvatarsService.selectedAvatar.Parameters[contHSV.ParameterSaturation.Address];
                                 Parameter _ParamBri = AvatarsService.selectedAvatar.Parameters[contHSV.ParameterBrightness.Address];
 
-                                <MudPaper Style="@($"margin-left:auto; margin-right:auto; width: 150px; height: 15px; padding-left: 16px; padding-right: 16px; opacity: 1.0; background-color: {hexColorEstimate}")" Class="border-1 border-secondary">
-                                </MudPaper>
+                                
+                                <MudPaper Style="@($"margin-left:auto; margin-right:auto; width: 150px; height: 15px; padding-left: 16px; padding-right: 16px; opacity: 1.0; background-color: {hexColorEstimate}")" Class="border-1 border-secondary"/>
+                                
+                                <div style="width: 100%; padding-left: 28px; padding-right: 28px; background: rgba(0, 0, 0, 0.0)">
+                                    <MudSlider Color="Color.Error" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamHue.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Hue, value))" > Hue: @_ParamHue.Value </MudSlider>
+                                    <MudSlider Color="Color.Info" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamSat.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Saturation, value))"> Saturation: @_ParamSat.Value </MudSlider>
 
-                                <MudPaper Style="@($"margin-left:auto; margin-right:auto; width: 150px; height: 185px; padding-left: 16px;  padding-right: 16px; opacity: 1.0")" Class="border-1 border-secondary">
-                                    <MudSlider Color="Color.Error" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamHue.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Hue, value))" > Hue </MudSlider>
-                                    <MudSlider Color="Color.Info" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamSat.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Saturation, value))"> Saturation </MudSlider>
-                                    <MudSlider Color="Color.Warning" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamBri.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))"> Value </MudSlider>
-                                </MudPaper>
-
-
-                                @* this sometimes gets stuck in a loop, so just gonna comment it out for now
-                                <MudPaper Style="@("margin-left:auto; margin-right:auto; width: 140px; height: 140px; padding: 2px; opacity: 1.0;background-color: " + hex)">
-                                    @for (int i = 0; i < 2; i++) //two of them to cover the whole area
-                                    {
-                                        <MudColorPicker ShowToolbar="true" ShowAlpha="false" ShowModeSwitch="false"
-                                                        ThrottleInterval="100" DragEffect="@true" Elevation="8" Class="fade" Style="@("width: 100%; height 100%")"
-                                                        Label="ColorPicker" PickerVariant="PickerVariant.Inline" ColorPickerMode="ColorPickerMode.HSL" Palette="HSVPallet"
-                                                        Value="contHSV.targetColor" ValueChanged="@((MudBlazor.Utilities.MudColor color) => ControlHSVChange(contHSV, color))" />
-                                    }
-                                </MudPaper> 
-                                *@
+                                    @if (contHSV.InvertedBrightness)
+								    {
+                                        <MudSlider Color="Color.Warning" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="contHSV.InvertedBrightnessValue" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))"> Value: @contHSV.InvertedBrightnessValue </MudSlider>
+								    }
+								    else
+								    {
+                                        <MudSlider Color="Color.Tertiary" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamBri.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))"> Brightness: @_ParamBri.Value </MudSlider>
+								    }
+                                </div>
+                                   
                             }
 
                             else
                             {
                                 <MudText Typo="Typo.caption">Unknown Type</MudText>
                             }
-
-
-
 
                         </MudPaper>
                     </MudItem>

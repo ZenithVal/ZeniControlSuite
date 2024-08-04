@@ -58,6 +58,7 @@ public class ContTypeHSV : AvatarControl
     public required Parameter ParameterSaturation { get; set; }
     public required Parameter ParameterBrightness { get; set; }
     public bool InvertedBrightness { get; set; }
+    public float InvertedBrightnessValue { get; set; }
 }
 
 

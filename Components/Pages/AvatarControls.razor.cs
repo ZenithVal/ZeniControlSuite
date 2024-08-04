@@ -5,7 +5,6 @@ using MudBlazor;
 using MudBlazor.Utilities;
 using ZeniControlSuite.Authentication;
 using ZeniControlSuite.Models;
-using ZeniControlSuite.OSC;
 using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components.Pages;
@@ -92,26 +91,19 @@ public partial class AvatarControls : IDisposable
                 SetParameterValue(control.ParameterSaturation);
                 break;
             case HSVParamValue.Brightness:
-                control.ParameterBrightness.Value = value;
+                if (control.InvertedBrightness)
+                {
+                    control.InvertedBrightnessValue = value;
+                    control.ParameterBrightness.Value = Math.Abs(1 - control.InvertedBrightnessValue);
+                }
+                else
+                {
+                    control.ParameterBrightness.Value = value;
+                }
                 SetParameterValue(control.ParameterBrightness);
                 break;
         }
 	}
-
-    private MudColor EstimateMudColor(ContTypeHSV control, float T)
-    {
-        float H = control.ParameterHue.Value * 360;
-        float S = Math.Clamp(control.ParameterSaturation.Value, 0.001f, 0.999f);
-        float V = Math.Clamp(control.ParameterBrightness.Value, 0.001f, 0.999f);
-
-        //HSV to HSL (HSL Sucks ffs)
-        float L = (2 - S) * V / 2;
-        float S_HSL = S * V / (L < 0.5 ? L * 2 : 2 - L * 2);
-
-        MudColor mudColor = new MudColor(H, S_HSL, L, T);
-
-        return mudColor;
-    }
 
 
     /*	

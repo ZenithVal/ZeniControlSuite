@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using MudBlazor.Utilities;
 using ZeniControlSuite.Components.Pages;
 using ZeniControlSuite.Models;
 
@@ -128,12 +129,15 @@ public class Service_AvatarControls : IHostedService
             {
                 validationLog = $"loading inherited control {controlName.GetString()}";
 
-                var globalControl = globalControls.FirstOrDefault(c => c.GetType().Name == controlName.GetString());
+                //find a global control with the same name
+                var globalControl = globalControls.FirstOrDefault(c => c.Name == controlName.GetString());
+
                 if (globalControl != null)
                 {
                     avatar.Controls.Add(globalControl);
                 }
             }
+
 
             avatars.Add(avatar);
         }
@@ -220,19 +224,15 @@ public class Service_AvatarControls : IHostedService
                     ParameterHue = DeserializeParameter(controlElement.GetProperty("ParameterHue")),
                     ParameterSaturation = DeserializeParameter(controlElement.GetProperty("ParameterSaturation")),
                     ParameterBrightness = DeserializeParameter(controlElement.GetProperty("ParameterBrightness")),
-                    InvertedBrightness = controlElement.GetProperty("InvertedBrightness").GetBoolean()
+                    InvertedBrightness = controlElement.GetProperty("InvertedBrightness").GetBoolean(),
                 };
                 if (control is ContTypeHSV contHSV)
                 {
                     if (contHSV.InvertedBrightness)
                     {
-                        contHSV.ParameterBrightness.Value = 1 - contHSV.ParameterBrightness.Value;
+                        contHSV.InvertedBrightnessValue = Math.Abs(1 - contHSV.ParameterBrightness.Value);
                     }
-                    contHSV.targetColor = new MudBlazor.Utilities.MudColor(
-                        (double)contHSV.ParameterHue.Value*360,
-                        (double)contHSV.ParameterSaturation.Value,
-                        (double)contHSV.ParameterBrightness.Value, 
-                        0);
+                    contHSV.targetColor = HSVControlToMudColor(contHSV);
                 }
                 break;
             default:
@@ -331,6 +331,26 @@ public class Service_AvatarControls : IHostedService
     {
         selectedAvatar.Parameters[param.Address].Value = value;
         InvokeAvatarControlsUpdate();
+    }
+
+    public MudColor HSVControlToMudColor(ContTypeHSV control)
+    {
+        float H = control.ParameterHue.Value * 360;
+        float S = Math.Clamp(control.ParameterSaturation.Value, 0.001f, 0.999f);
+        float V = Math.Clamp(control.ParameterBrightness.Value, 0.001f, 0.999f);
+
+        if (control.InvertedBrightness)
+        {
+            V = Math.Clamp(control.InvertedBrightnessValue, 0.001f, 0.999f);
+        }
+
+        //HSV to HSL (HSL Sucks ffs)
+        float L = (2 - S) * V / 2;
+        float S_HSL = S * V / (L < 0.5 ? L * 2 : 2 - L * 2);
+
+        MudColor mudColor = new MudColor(H, S_HSL, L, 0);
+
+        return mudColor;
     }
     #endregion
 
