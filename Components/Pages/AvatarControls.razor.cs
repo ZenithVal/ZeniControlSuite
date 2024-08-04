@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Drawing;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
+using MudBlazor.Utilities;
 using ZeniControlSuite.Authentication;
 using ZeniControlSuite.Models;
+using ZeniControlSuite.OSC;
 using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components.Pages;
@@ -11,11 +14,13 @@ public partial class AvatarControls : IDisposable
 {
 	public static bool pageEnabled = true;
 
-	[Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
 	[Inject] private Service_Logs LogService { get; set; } = default!;
-	[Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
-	[Inject] private Service_AvatarControls AvatarsService { get; set; } = default!;
+    [Inject] private Service_AvatarControls AvatarsService { get; set; } = default!;
+	[Inject] private Service_OSC OscService { get; set; } = default!;
+
 
 	private string user = "Undefined";
 	private AuthenticationState context;
@@ -40,6 +45,13 @@ public partial class AvatarControls : IDisposable
 		AvatarsService.OnAvatarsUpdate -= OnAvatarsUpdate;
 	}
 
+    public void SetParameterValue(Parameter param) //used by AvatarControls. Upddates the param and sends an OSC message out with it
+    {
+        AvatarsService.selectedAvatar.Parameters[param.Address].Value = param.Value;
+        OscService.sendOSCParameter(param);
+
+        AvatarsService.InvokeAvatarControlsUpdate();
+    }
 
     private void ControlTogglePress(ContTypeToggle control)
     {
@@ -52,8 +64,7 @@ public partial class AvatarControls : IDisposable
             control.Parameter.Value = control.ValueOff;
         }
 
-		AvatarsService.SetParameterValue(control.Parameter);
-        AvatarsService.InvokeAvatarControlsUpdate();
+		SetParameterValue(control.Parameter);
 
         LogService.AddLog(pageName, user, $"{control.Name} set to {control.Parameter.Value}", Severity.Normal);
     }
@@ -63,11 +74,48 @@ public partial class AvatarControls : IDisposable
 
 		control.Parameter.Value = value;
 
-        AvatarsService.SetParameterValue(control.Parameter);
-        AvatarsService.InvokeAvatarControlsUpdate();
+        SetParameterValue(control.Parameter);
         //LogService.AddLog(pageName, user, $"radial {control.Name} set to {control.Parameter.Value}", Severity.Normal);
     }
 
+
+	private void ControlHSVChange(ContTypeHSV control, HSVParamValue param, float value)
+	{
+		switch (param)
+		{
+            case HSVParamValue.Hue:
+                control.ParameterHue.Value = value;
+                SetParameterValue(control.ParameterHue);
+                break;
+            case HSVParamValue.Saturation:
+                control.ParameterSaturation.Value = value;
+                SetParameterValue(control.ParameterSaturation);
+                break;
+            case HSVParamValue.Brightness:
+                control.ParameterBrightness.Value = value;
+                SetParameterValue(control.ParameterBrightness);
+                break;
+        }
+	}
+
+    private MudColor EstimateMudColor(ContTypeHSV control, float T)
+    {
+        float H = control.ParameterHue.Value * 360;
+        float S = Math.Clamp(control.ParameterSaturation.Value, 0.001f, 0.999f);
+        float V = Math.Clamp(control.ParameterBrightness.Value, 0.001f, 0.999f);
+
+        //HSV to HSL (HSL Sucks ffs)
+        float L = (2 - S) * V / 2;
+        float S_HSL = S * V / (L < 0.5 ? L * 2 : 2 - L * 2);
+
+        MudColor mudColor = new MudColor(H, S_HSL, L, T);
+
+        return mudColor;
+    }
+
+
+    /*	
+	//Old HSV control code
 	private void ControlHSVChange(ContTypeHSV control, MudBlazor.Utilities.MudColor targetColor)
 	{
         control.targetColor = targetColor;
@@ -86,15 +134,16 @@ public partial class AvatarControls : IDisposable
         }
         control.ParameterBrightness.Value = Math.Clamp(control.ParameterBrightness.Value, 0, 1);
         
-		AvatarsService.SetParameterValue(control.ParameterHue);
-		AvatarsService.SetParameterValue(control.ParameterSaturation);
-		AvatarsService.SetParameterValue(control.ParameterBrightness);
+		SetParameterValue(control.ParameterHue);
+		SetParameterValue(control.ParameterSaturation);
+		SetParameterValue(control.ParameterBrightness);
 
         AvatarsService.InvokeAvatarControlsUpdate();
 		//LogService.AddLog(pageName, user, $"hsv {control.Name} set to {control.ParameterHue.Value}, {control.ParameterSaturation.Value}, {control.ParameterBrightness.Value}", Severity.Normal);
     }
+	*/
 
-	private void ControlHSVReset(ContTypeHSV control)
+    private void ControlHSVReset(ContTypeHSV control)
 	{
 
     }

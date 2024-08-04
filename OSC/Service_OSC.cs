@@ -53,9 +53,9 @@ public class Service_OSC : IHostedService
 
 
     //===========================================//
-    #region Settings
-    public delegate void OscSubscriptionEventHandler(OSCSubscriptionEvent e);
-    public event OscSubscriptionEventHandler? OnOscMessageReceived;
+    #region OSC Settings
+/*    public delegate void OscSubscriptionEventHandler(OSCSubscriptionEvent e);
+    public event OscSubscriptionEventHandler? OnOscMessageReceived;*/
 
     private UDPListener _listener;
     private UDPSender _sender;
@@ -127,7 +127,7 @@ public class Service_OSC : IHostedService
     #endregion
 
     //===========================================//
-    #region Running Service
+    #region Running OSC service
     private async Task RunOSC(CancellationToken stoppingToken)
     {
         await ValidateOSCConfig();
@@ -144,9 +144,8 @@ public class Service_OSC : IHostedService
                 if (AvatarsService.selectedAvatar.Parameters.ContainsKey(messageReceived.Address))
                 {
                     var parameter = AvatarsService.selectedAvatar.Parameters[messageReceived.Address];
-                    parameter.Value = FormatIncoming(messageReceived.Arguments[0], parameter.Type);
-                    AvatarsService.SetParameterValue(parameter);
-                    AvatarsService.InvokeAvatarControlsUpdate();
+                    float value = FormatIncoming(messageReceived.Arguments[0], parameter.Type);
+                    AvatarsService.UpdateParameterValue(parameter, value);
                 }
             }
         };

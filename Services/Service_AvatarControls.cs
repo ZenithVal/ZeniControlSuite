@@ -327,26 +327,11 @@ public class Service_AvatarControls : IHostedService
 
     //===========================================//
     #region Helper function
-    public void SetParameterValue(Parameter param) //used by AvatarControls. Upddates the param and sends an OSC message out with it
+    public void UpdateParameterValue(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
     {
-        selectedAvatar.Parameters[param.Address].Value = param.Value;
-        //OSCService.sendOSCParameter(param);
-    }
-
-    public void UpdateParameterValue(Parameter param) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
-    {
-        selectedAvatar.Parameters[param.Address].Value = param.Value;
-
-        if (selectedAvatar.Controls.FirstOrDefault(c => c is ContTypeHSV && (c as ContTypeHSV).ParameterHue.Address == param.Address) is ContTypeHSV contHSV)
-        {
-            contHSV.targetColor = new MudBlazor.Utilities.MudColor(
-                               (double)contHSV.ParameterHue.Value*360,
-                                              (double)contHSV.ParameterSaturation.Value,
-                                                             (double)contHSV.ParameterBrightness.Value, 
-                                                                            0);
-        }
-
+        selectedAvatar.Parameters[param.Address].Value = value;
         InvokeAvatarControlsUpdate();
     }
     #endregion
+
 }

@@ -42,6 +42,14 @@ public class ContTypeRadial : AvatarControl
     public float ValueMin { get; set; }
     public float ValueMax { get; set; }
 }
+
+public enum HSVParamValue
+{
+    Hue,
+    Saturation,
+    Brightness
+}
+
 public class ContTypeHSV : AvatarControl
 {
     public override ControlType Type => ControlType.HSV;
