@@ -5,9 +5,8 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Configuration;
 using MudBlazor;
 using ZeniControlSuite.Models;
-using ZeniControlSuite.Services;
 
-namespace ZeniControlSuite.OSC;
+namespace ZeniControlSuite.Services;
 
 public class Service_OSC : IHostedService
 {
@@ -54,8 +53,8 @@ public class Service_OSC : IHostedService
 
     //===========================================//
     #region OSC Settings
-/*    public delegate void OscSubscriptionEventHandler(OSCSubscriptionEvent e);
-    public event OscSubscriptionEventHandler? OnOscMessageReceived;*/
+    /*    public delegate void OscSubscriptionEventHandler(OSCSubscriptionEvent e);
+        public event OscSubscriptionEventHandler? OnOscMessageReceived;*/
 
     private UDPListener _listener;
     private UDPSender _sender;
@@ -100,7 +99,8 @@ public class Service_OSC : IHostedService
     public void CreateDefaultConfig()
     {
         //create a json file from the default config
-        var defaultConfig = new {
+        var defaultConfig = new
+        {
             IP = "127.0.0.1",
             ListingPort = 9001,
             SendingPort = 9000,
@@ -147,6 +147,12 @@ public class Service_OSC : IHostedService
                     float value = FormatIncoming(messageReceived.Arguments[0], parameter.Type);
                     AvatarsService.UpdateParameterValue(parameter, value);
                 }
+
+            if (messageReceived.Address == "/avatar/change")
+            {
+                var avatarID = messageReceived.Arguments[0].ToString();
+                AvatarsService.SelectAvatar(avatarID);
+            }
             }
         };
 
@@ -227,7 +233,7 @@ public class Service_OSC : IHostedService
             case ParameterType.Int:
                 return (int)value;
             case ParameterType.Float:
-                return (float)value;
+                return value;
             default:
                 return null;
         }
