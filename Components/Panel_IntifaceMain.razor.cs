@@ -9,7 +9,7 @@ namespace ZeniControlSuite.Components;
 
 public partial class Panel_IntifaceMain : IDisposable
 {
-    public static bool pageEnabled = true;
+    public static bool pageEnabled = false;
 
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private Service_Logs LogService { get; set; } = default!;
@@ -40,6 +40,7 @@ public partial class Panel_IntifaceMain : IDisposable
 
     public void EnableIntiface()
     {
+        pageEnabled = true;
         IntifaceService.IntifaceStart(LogService);
         LogService.AddLog(pageName, user, "Intiface Starting", Severity.Normal);
     }

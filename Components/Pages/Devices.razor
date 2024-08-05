@@ -12,16 +12,30 @@
     <Authorized>
         @if (@context.User.IsInRole("Admin") || @context.User.IsInRole("Intiface"))
         {
-            <Panel_IntifaceMain/>
+            if (@context.User.IsInRole("Admin"))
+            {
+                <Panel_IntifaceMain />
 
-            <br/>
-            <br/>
 
-            <MudButton Href="Intiface" Variant="Variant.Filled" Color="Color.Primary">Dedicated Page</MudButton>
+                <br /><br /><MudButton Href="Intiface" Variant="Variant.Filled" Color="Color.Primary">Dedicated Page</MudButton>
+            }
+            else 			
+            {
+                if (Panel_IntifaceMain.pageEnabled)
+				{
+                    <Panel_IntifaceMain />
+
+                    <br /><br /><MudButton Href="Intiface" Variant="Variant.Filled" Color="Color.Primary">Dedicated Page</MudButton>
+                }
+                else
+                {
+                    <MudText Typo="Typo.h6" Color="Color.Error">Intiface is not running</MudText>
+                }
+
+			}
+            
+
+
         }
     </Authorized>
 </AuthorizeView>
-
-@code {
-    public static bool pageEnabled = true;
-}
