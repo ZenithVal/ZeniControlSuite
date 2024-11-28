@@ -51,9 +51,59 @@ public class Service_Games : IHostedService
     #region Settings
     public Game gameSelected { get; set; } = new Game();
     public List<Game> gamesList = new List<Game>();
-    public bool AutoGameRunning { get; set; } = false;
     public string localPlayerName { get; set; } = "localPlayer";
     public string remotePlayerName { get; set; } = "remotePlayer";
+    private string AutoGameLogFilePath { get; set; } = "";
+
+    Thread? logWatcherThread = null;
+    public bool AutoGameRunning { get; set; } = false;
+
+    List<string> logIgnoreList = new List<string>() {
+                "[Behaviour]",
+                "Found SDK2",
+                "Found SDK3",
+                "[Network Processing]",
+                "[ITEM ASSIGNMENT POOL]",
+                "[GC]",
+                "[EOSManager]",
+                "[Always]",
+                "[UdonBehaviour]",
+                "Detection :",
+                "Updating avatar",
+                "Measure Human",
+                "[AssetBundleDownloadManager]",
+                "Removing animation",
+                "BoxColliders",
+                "[API]",
+                "Saving Avatar",
+                "Avatar Asset",
+                "avatar cloning",
+                "[VRCInputManager]",
+                "[String Download]",
+                "[Image Download]",
+                "The referenced script",
+                "[QvPen",
+                "Deferring event",
+                "Update rate will",
+                "Soft Data",
+                "Loading asset bundle",
+                "[Video]",
+                "Signature",
+                "DeliveryMode",
+                "AvatarScaling",
+                "NativeProcess",
+                "URL",
+                "Support Index",
+
+                //TON Stuff to ignore
+                "Loaded the mysterious triangle",
+                "OBJECT POOL PlayerHead",
+                "Clearing Items",
+                "Enrage State",
+                "[START]",
+                "stuck! help!",
+                "Hit -"
+            };
     #endregion
 
 
@@ -141,20 +191,112 @@ public class Service_Games : IHostedService
 
     //===========================================//
     #region AutoGames
-    public void AG_Start()
+    public async void AG_Start()
     {
         AutoGameRunning = true;
+        FindMostRecentLogFilePath();
+
+        await Task.Delay(500);
+        try
+        {
+            if (AutoGameLogFilePath == "")
+            {
+                AutoGameRunning = false;
+                return;
+            }
+            logWatcherThread = new Thread(async () => await WatchLogFileAsync(AutoGameLogFilePath));
+            logWatcherThread.Start();
+            AutoGameRunning = true;
+        }
+        catch (Exception ex)
+        {
+            AutoGameRunning = false;
+        }
+
         Update();
     }
 
-    public void AG_Stop()
+    public async void AG_Stop()
     {
         AutoGameRunning = false;
+        logWatcherThread = null;
         Update();
     }
+
+    private void FindMostRecentLogFilePath()
+    {
+        try
+        {
+            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "..", "LocalLow", "VRChat", "VRChat");
+
+            string[] files = Directory.GetFiles(path, "output_log*.txt");
+
+            string mostRecentFile = "";
+            foreach (string file in files)
+            {
+                if (file.CompareTo(mostRecentFile) > 0)
+                {
+                    mostRecentFile = file;
+                }
+            }
+
+            //Write the most recent file name to the console
+            string justFileName = Path.GetFileName(mostRecentFile);
+
+            Log("Found (" + justFileName + ")", Severity.Normal);
+
+            AutoGameLogFilePath = mostRecentFile;
+        }
+        catch (Exception e)
+        {
+            Log("Error finding log file: " + e.Message, Severity.Error);
+            AutoGameLogFilePath = "";
+        }
+        Update();
+    }
+
+
+    private async Task WatchLogFileAsync(string logFilePath)
+    {
+        using (FileStream fs = new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (BufferedStream bs = new BufferedStream(fs))
+        using (StreamReader reader = new StreamReader(bs))
+        {
+            // Catch up to the most recent line in the log file
+            while (!reader.EndOfStream)
+            {
+                await reader.ReadLineAsync();
+                // No need to process this line; just skip to the end
+            }
+
+            //writeConsoleUI($"Reading log files for {selectedGame}", CC.Success);
+
+            while (AutoGameRunning)
+            {
+                string line = await reader.ReadLineAsync();
+
+                if (line == null || line.Length < 34 || !line.Substring(20, 3).Contains("Log") || logIgnoreList.Any(line.Contains))
+                {
+                    await Task.Delay(10);
+                    continue;
+                }
+
+                string logEntry = line.Substring(34);
+                Log(logEntry, Severity.Info);
+
+                await Task.Delay(50);
+            }
+        }
+
+    }
+
+
+
+
     #endregion
 
 
+    //old
     /*
         #region Game Automation
         Thread logWatcherThread = null;
