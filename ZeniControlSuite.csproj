@@ -42,7 +42,6 @@
   <ItemGroup>
     <PackageReference Include="BlazorAnimate" Version="3.0.0" />
     <PackageReference Include="Buttplug" Version="4.0.0" />
-    <PackageReference Include="Buttplug.Client.Connectors.WebsocketConnector" Version="3.0.1" />
     <PackageReference Include="Discord.OAuth2.AspNetCore" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
     <PackageReference Include="MudBlazor" Version="7.15.0" />
@@ -85,6 +84,7 @@
 
   <ItemGroup>
     <Folder Include="Components\AvatarControls\" />
+    <Folder Include="Components\GameControls\" />
     <Folder Include="Extensions\" />
   </ItemGroup>
 
