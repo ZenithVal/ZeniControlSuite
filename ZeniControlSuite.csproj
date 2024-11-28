@@ -41,13 +41,13 @@
 
   <ItemGroup>
     <PackageReference Include="BlazorAnimate" Version="3.0.0" />
-    <PackageReference Include="Buttplug" Version="3.0.1" />
+    <PackageReference Include="Buttplug" Version="4.0.0" />
     <PackageReference Include="Buttplug.Client.Connectors.WebsocketConnector" Version="3.0.1" />
     <PackageReference Include="Discord.OAuth2.AspNetCore" Version="3.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-    <PackageReference Include="MudBlazor" Version="7.5.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="MudBlazor" Version="7.15.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="OpenShock.SDK.CSharp" Version="0.0.25" />
+    <PackageReference Include="OpenShock.SDK.CSharp" Version="0.0.29" />
   </ItemGroup>
 
   <ItemGroup>

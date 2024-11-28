@@ -3,6 +3,7 @@ using Buttplug.Client.Connectors.WebsocketConnector;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using ZeniControlSuite.Models;
+using ButtplugWebsocketConnector = Buttplug.Client.ButtplugWebsocketConnector;
 
 namespace ZeniControlSuite.Services;
 
