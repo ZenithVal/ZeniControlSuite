@@ -191,6 +191,11 @@ public class Service_Games : IHostedService
 
     //===========================================//
     #region AutoGames
+    private void AG_Log(string message, Severity severity)
+    {
+        LogService.AddLog("Service_AutoGames", "System", message, severity, Variant.Outlined);
+    }
+
     public async void AG_Start()
     {
         AutoGameRunning = true;
@@ -213,6 +218,7 @@ public class Service_Games : IHostedService
             AutoGameRunning = false;
         }
 
+        AG_Log($"Log Reading Started for {gameSelected.Name}", Severity.Info);
         Update();
     }
 
@@ -220,6 +226,7 @@ public class Service_Games : IHostedService
     {
         AutoGameRunning = false;
         logWatcherThread = null;
+        AG_Log("Log Reading Stopped", Severity.Info);
         Update();
     }
 
@@ -275,7 +282,13 @@ public class Service_Games : IHostedService
             {
                 string line = await reader.ReadLineAsync();
 
-                if (line == null || line.Length < 34 || !line.Substring(20, 3).Contains("Log") || logIgnoreList.Any(line.Contains))
+                if (line == null || line.Length < 34 || !line.Substring(20, 3).Contains("Log")) //Skip non log lines
+                {
+                    await Task.Delay(10);
+                    continue;
+                }
+
+                if (logIgnoreList.Any(line.Contains)) // filter out ignored lines
                 {
                     await Task.Delay(10);
                     continue;
