@@ -107,12 +107,22 @@ public class Service_AvatarControls : IHostedService
                 Parameters = new Dictionary<string, Parameter>()
             };
 
-            // Deserialize Avatar Controls
             var controlsElement = avatarElement.GetProperty("Controls");
             foreach (var controlElement in controlsElement.EnumerateArray())
             {
-                var control = DeserializeControl(controlElement);
-                avatar.Controls.Add(control);
+                if (controlElement.GetProperty("Type").GetString() == "ToggleCollection")
+                {
+                    var ToggleCollection = DeserializeToggleCollection(controlElement);
+                    foreach (var control in ToggleCollection)
+                    {
+                        avatar.Controls.Add(control);
+                    }
+                }
+                else
+                {
+                    var control = DeserializeControl(controlElement);
+                    avatar.Controls.Add(control);
+                }
             }
 
             // Deserialize Inherited Global Controls
@@ -267,19 +277,62 @@ public class Service_AvatarControls : IHostedService
         }
         else
         {
-            Console.WriteLine($"AC | No image found for {controlNameNoSpaces}");
+            //Console.WriteLine($"AC | No image found for {controlNameNoSpaces}");
             control.IconPath = "images/PowerButton.png";
         }
 
         return control;
     }
 
+    private List<AvatarControl> DeserializeToggleCollection(JsonElement controlElement)
+    {
+        var controls = new List<AvatarControl>();
+
+        var controlName = controlElement.GetProperty("Name").GetString();
+        var prefix = controlElement.GetProperty("Prefix").GetString();
+        var parameters = controlElement.GetProperty("Parameters").EnumerateArray().Select(p => p.GetString()).ToList();
+        var valueOff = controlElement.GetProperty("ValueOff").GetSingle();
+        var valueOn = controlElement.GetProperty("ValueOn").GetSingle();
+
+        validationLog = $"Deserializing toggle collection {controlName}";
+        Console.WriteLine($"AC | {validationLog}");
+
+        foreach (var parameter in parameters)
+        {
+            var control = new ContTypeToggle {
+                Name = controlName + " - " + parameter,
+                RequiredRoles = controlElement.GetProperty("RequiredRoles").EnumerateArray().Select(r => r.GetString()).ToList(),
+                Parameter = new Parameter {
+                    Address = prefix + parameter,
+                    Type = ParameterType.Bool,
+                    Value = valueOff
+                },
+                ValueOff = valueOff,
+                ValueOn = valueOn
+            };
+            Console.WriteLine($"AC | {controlName} - adding {parameter}");
+            string controlNameNoSpaces = controlName.Replace(" ", "");
+            if (File.Exists($"Images/{controlNameNoSpaces}.png"))
+            {
+                Console.WriteLine($"AC | Found image for {controlName}");
+                control.IconPath = $"/api/Images/{controlNameNoSpaces}.png";
+            }
+            else
+            {
+                //Console.WriteLine($"AC | No image found for {controlNameNoSpaces}");
+                control.IconPath = "images/PowerButton.png";
+            }
+            controls.Add(control);
+        }
+
+        return controls;
+    }
+
     private Parameter DeserializeParameter(JsonElement parameterElement)
     {
         var parameter = new Parameter();
-
-        Console.WriteLine($"AC | Deserializing Param {parameterElement.GetProperty("Path").GetString()}");
-        validationLog = $"deserializing param {parameterElement.GetProperty("Path").GetString()}";
+        validationLog = $"Deserializing param {parameterElement.GetProperty("Path").GetString()}";
+        Console.WriteLine($"AC | {validationLog}");
         parameter.Address = parameterElement.GetProperty("Path").GetString();
         var type = parameterElement.GetProperty("Type").GetString();
 
