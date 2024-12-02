@@ -248,7 +248,7 @@ public class Service_OSC : IHostedService
             case ParameterType.Int:
                 return (int)value;
             case ParameterType.Float:
-                return (float)value;
+                return (float)Math.Truncate((float)value * 1000) / 1000;
             default:
                 return 0;
         }
