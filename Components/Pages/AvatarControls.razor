@@ -101,19 +101,20 @@
                                 Parameter _ParamBri = AvatarsService.selectedAvatar.Parameters[contHSV.ParameterBrightness.Address];
 
                                 
-                                <MudPaper Style="@($"margin-left:auto; margin-right:auto; width: 150px; height: 15px; padding-left: 16px; padding-right: 16px; opacity: 1.0; background-color: {hexColorEstimate}")" Class="border-1 border-secondary"/>
+                                <MudPaper Style="@($"margin-left:auto; margin-right:auto; width: 150px; height: 15px; padding-left: 16px; padding-right: 16px; opacity: 1.0; background-color: {hexColorEstimate}")" Class="border-1 border-secondary">
+                                </MudPaper>
                                 
                                 <div style="width: 100%; padding-left: 28px; padding-right: 28px; background: rgba(0, 0, 0, 0.0)">
-                                    <MudSlider Color="Color.Error" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamHue.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Hue, value))" > Hue: @_ParamHue.Value </MudSlider>
-                                    <MudSlider Color="Color.Info" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamSat.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Saturation, value))"> Saturation: @_ParamSat.Value </MudSlider>
+                                    <MudSlider Color="Color.Error" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamHue.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Hue, value))" > Hue: @RoundFloat(_ParamHue.Value) </MudSlider>
+                                    <MudSlider Color="Color.Info" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamSat.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Saturation, value))"> Saturation: @RoundFloat(_ParamSat.Value) </MudSlider>
 
                                     @if (contHSV.InvertedBrightness)
 								    {
-                                        <MudSlider Color="Color.Warning" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="contHSV.InvertedBrightnessValue" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))"> Value: @contHSV.InvertedBrightnessValue </MudSlider>
+                                        <MudSlider Color="Color.Warning" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="contHSV.InvertedBrightnessValue" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))"> Value: @RoundFloat(contHSV.InvertedBrightnessValue) </MudSlider>
 								    }
 								    else
 								    {
-                                        <MudSlider Color="Color.Tertiary" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamBri.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))"> Brightness: @_ParamBri.Value </MudSlider>
+                                        <MudSlider Color="Color.Tertiary" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamBri.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))"> Brightness: @RoundFloat(_ParamBri.Value) </MudSlider>
 								    }
                                 </div>
                                    

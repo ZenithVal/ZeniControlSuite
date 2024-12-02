@@ -396,6 +396,11 @@ public class Service_AvatarControls : IHostedService
     public void UpdateParameterValue(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
     {
         selectedAvatar.Parameters[param.Address].Value = value;
+        if (selectedAvatar.Controls.Any(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address))
+        {
+            var contHSV = selectedAvatar.Controls.FirstOrDefault(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address) as ContTypeHSV;
+            contHSV.InvertedBrightnessValue = Math.Abs(1 - value);
+        }
         InvokeAvatarControlsUpdate();
     }
 

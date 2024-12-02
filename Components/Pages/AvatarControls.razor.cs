@@ -105,6 +105,11 @@ public partial class AvatarControls : IDisposable
         }
 	}
 
+    private float RoundFloat(float value)
+    {
+        return (float)Math.Round(value, 3);
+    }
+
 
     /*	
 	//Old HSV control code
