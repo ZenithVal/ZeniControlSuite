@@ -311,7 +311,7 @@ public class Service_AvatarControls : IHostedService
                 ValueOn = valueOn
             };
             Console.WriteLine($"AC | {controlName} - adding {parameter}");
-            string controlNameNoSpaces = controlName.Replace(" ", "");
+            string controlNameNoSpaces = parameter.Replace(" ", "");
             if (File.Exists($"Images/{controlNameNoSpaces}.png"))
             {
                 Console.WriteLine($"AC | Found image for {controlName}");
