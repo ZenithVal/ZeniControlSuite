@@ -1,18 +1,18 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Nodes;
 using CoreOSC;
-using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Configuration;
 using MudBlazor;
+using ZeniControlSuite.Extensions;
 using ZeniControlSuite.Models;
 
 namespace ZeniControlSuite.Services;
 
 public class Service_OSC : IHostedService
 {
-    private readonly Service_Logs LogService;
-    private readonly Service_AvatarControls AvatarsService;
-    public Service_OSC(Service_Logs serviceLogs, Service_AvatarControls serviceAvatars) { LogService = serviceLogs; AvatarsService = serviceAvatars; }
+	public delegate void OscSubscriptionEventHandler(OscMessage e);
+	public event OscSubscriptionEventHandler? OnOscMessageReceived;
+
+	private readonly Service_Logs LogService;
+    public Service_OSC(Service_Logs serviceLogs ) { LogService = serviceLogs; }
 
     private void Log(string message, Severity severity = Severity.Normal)
     {
@@ -134,24 +134,13 @@ public class Service_OSC : IHostedService
 
         Running = true;
         HandleOscPacket callback = delegate (OscPacket packet)
-        {
+        { 
             var messageReceived = (OscMessage)packet;
             if (messageReceived != null)
             {
                 LogOSC(messageReceived);
                 //Console.WriteLine($"OSC Message Received: {messageReceived.Address}/{messageReceived.Arguments[0]}");
-
-                if (messageReceived.Address == "/avatar/parameter")
-                {
-                    var parameter = AvatarsService.selectedAvatar.Parameters[messageReceived.Address];
-                    float value = FormatIncoming(messageReceived.Arguments[0], parameter.Type);
-                    AvatarsService.UpdateParameterValue(parameter, value);
-                }
-                else if (messageReceived.Address == "/avatar/change")
-                {
-                    var avatarID = messageReceived.Arguments[0].ToString();
-                    AvatarsService.SelectAvatar(avatarID);
-                }
+                OnOscMessageReceived?.Invoke((messageReceived));
             }
         };
 
@@ -192,14 +181,14 @@ public class Service_OSC : IHostedService
         }
     }
 
-    #endregion
+	#endregion
 
 
-    //===========================================//
-    #region OSC Stuff
-    public void sendOSCParameter(Parameter param)
+	//===========================================//
+	#region OSC Stuff
+	public void sendOSCParameter(Parameter param)
     {
-        var value = FormatOutGoing(param.Value, param.Type);
+        var value = OSCExtensions.FormatIncoming(param.Value, param.Type);
 
         if (value == null)
         {
@@ -220,38 +209,5 @@ public class Service_OSC : IHostedService
 
     #endregion
 
-
-    //===========================================//
-    #region Helper Functions
-    public object? FormatOutGoing(float value, ParameterType type)
-    {
-        switch (type)
-        {
-            case ParameterType.Bool:
-                return value < 0.5 ? false : true;
-            case ParameterType.Int:
-                return (int)value;
-            case ParameterType.Float:
-                return value;
-            default:
-                return null;
-        }
-    }
-
-    public float FormatIncoming(object value, ParameterType type)
-    {
-        switch (type)
-        {
-            case ParameterType.Bool:
-                return (bool)value ? 1 : 0;
-            case ParameterType.Int:
-                return (int)value;
-            case ParameterType.Float:
-                return (float)Math.Truncate((float)value * 1000) / 1000;
-            default:
-                return 0;
-        }
-    }
-    #endregion
 
 }

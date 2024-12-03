@@ -1,18 +1,27 @@
 ﻿using System.Text.Json;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using CoreOSC;
 using MudBlazor;
 using MudBlazor.Utilities;
-using ZeniControlSuite.Components.Pages;
+using ZeniControlSuite.Extensions;
 using ZeniControlSuite.Models;
 
 namespace ZeniControlSuite.Services;
+
 public class Service_AvatarControls : IHostedService
 {
     private readonly Service_Logs LogService;
-    [Inject] private Service_Points PointsService { get; set; } = default!;
-    public Service_AvatarControls(Service_Logs serviceLogs) { LogService = serviceLogs; }
-    private void Log(string message, Severity severity)
+    private readonly Service_Points PointsService;
+    private readonly Service_OSC OSCService;
+
+    public Service_AvatarControls(Service_Logs serviceLogs, Service_Points servicePoints, Service_OSC serviceOSC)
+    {
+        LogService = serviceLogs;
+		PointsService = servicePoints;
+		OSCService = serviceOSC;
+        OSCService.OnOscMessageReceived += HandleOSCMessage;
+	}
+
+	private void Log(string message, Severity severity)
     {
         LogService.AddLog("Service_AvatarControls", "System", message, severity, Variant.Outlined);
     }
@@ -120,6 +129,14 @@ public class Service_AvatarControls : IHostedService
                         avatar.Controls.Add(control);
                     }
                 }
+                else if (controlElement.GetProperty("Type").GetString() == "ParameterCollection")
+                {
+                    var ParameterCollection = DeserializeParameterCollection(controlElement);
+                    foreach (var parameter in ParameterCollection)
+                    {
+						avatar.Parameters.Add(parameter.Address, parameter);
+					}
+				}
                 else
                 {
                     var control = DeserializeControl(controlElement);
@@ -153,7 +170,6 @@ public class Service_AvatarControls : IHostedService
         }
 
 
-
         //if no avatar Exists with ID Global, create one
         if (!avatars.Any(a => a.ID == "Global"))
         {
@@ -167,6 +183,20 @@ public class Service_AvatarControls : IHostedService
         }
         SelectAvatar("Global");
 
+        if (!avatars.Any(a => a.ID == "Undefined"))
+        {
+            var undefiinedAvatar = new Avatar {
+                ID = "Undefined",
+                Name = "Undefined",
+                Controls = globalControls,
+                Parameters = new Dictionary<string, Parameter>()
+            };
+            avatars.Add(undefiinedAvatar);
+        }
+        var undefinedAvatar = avatars.FirstOrDefault(a => a.ID == "Undefined");
+
+        StruggleGameSetup();
+
         avatarsLoaded = true;
         InvokeAvatarControlsUpdate();
     }
@@ -177,26 +207,26 @@ public class Service_AvatarControls : IHostedService
         {
             if (control is ContTypeButton contButton)
             {
-                AddToParamDictionary(avatar, contButton.Parameter);
+                AddToParamToDictionary(avatar, contButton.Parameter);
             }
             else if (control is ContTypeToggle contToggle)
             {
-                AddToParamDictionary(avatar, contToggle.Parameter);
+                AddToParamToDictionary(avatar, contToggle.Parameter);
             }
             else if (control is ContTypeRadial contRadial)
             {
-                AddToParamDictionary(avatar, contRadial.Parameter);
+                AddToParamToDictionary(avatar, contRadial.Parameter);
             }
             else if (control is ContTypeHSV contHSV)
             {
-                AddToParamDictionary(avatar, contHSV.ParameterHue);
-                AddToParamDictionary(avatar, contHSV.ParameterSaturation);
-                AddToParamDictionary(avatar, contHSV.ParameterBrightness);
+                AddToParamToDictionary(avatar, contHSV.ParameterHue);
+                AddToParamToDictionary(avatar, contHSV.ParameterSaturation);
+                AddToParamToDictionary(avatar, contHSV.ParameterBrightness);
             }
         }
     }
 
-    private void AddToParamDictionary(Avatar avatar, Parameter parameter)
+    public void AddToParamToDictionary(Avatar avatar, Parameter parameter)
     {
         if (!avatar.Parameters.ContainsKey(parameter.Address))
         {
@@ -328,7 +358,62 @@ public class Service_AvatarControls : IHostedService
         }
 
         return controls;
-    }
+	}
+
+	public List<Parameter> DeserializeParameterCollection(JsonElement controlElement)
+    {
+        var parameters = new List<Parameter>();
+
+		var controlName = controlElement.GetProperty("Name").GetString();
+		var prefix = controlElement.GetProperty("Prefix").GetString();
+
+		validationLog = $"Deserializing parameter collection {controlName}";
+		Console.WriteLine($"AC | {validationLog}");
+
+       
+		var bools = controlElement.GetProperty("Bools").EnumerateArray().Select(p => p.GetString()).ToList();
+		foreach (var parameter in bools)
+        {
+			if (parameter == "") continue;
+			var param = new Parameter {
+				Address = prefix + parameter,
+				Type = ParameterType.Bool,
+				Value = 0
+			};
+			parameters.Add(param);
+		}
+
+        var floats = controlElement.GetProperty("Floats").EnumerateArray().Select(p => p.GetString()).ToList();
+        foreach (var parameter in floats)
+        {
+			if (parameter == "") continue;
+			var param = new Parameter {
+                Address = prefix + parameter,
+				Type = ParameterType.Float,
+				Value = 0.0f
+			};
+			parameters.Add(param);
+		}
+
+        var ints = controlElement.GetProperty("Ints").EnumerateArray().Select(p => p.GetString()).ToList();
+        foreach (var parameter in ints)
+        {
+            if (parameter == "") continue;
+			var param = new Parameter {
+				Address = prefix + parameter,
+				Type = ParameterType.Int,
+				Value = 0
+			};
+			parameters.Add(param);
+		}
+
+        foreach (var parameter in parameters)
+        {
+			Console.WriteLine($"AC | {controlName} - adding {parameter.Address}");
+		}
+
+		return parameters;
+	}
 
     private Parameter DeserializeParameter(JsonElement parameterElement)
     {
@@ -359,23 +444,55 @@ public class Service_AvatarControls : IHostedService
 
         return parameter;
     }
-    #endregion
+	#endregion
 
 
-    //===========================================//
-    #region Avatar Functions
-    public void SelectAvatar(string avatarID)
+	//===========================================//
+	#region Avatar Functions
+	private void HandleOSCMessage(OscMessage messageReceived)
+	{
+		if (selectedAvatar.Parameters.ContainsKey(messageReceived.Address)) //Handle existing Params
+		{
+			var parameter = selectedAvatar.Parameters[messageReceived.Address];
+			float value = OSCExtensions.FormatIncoming(messageReceived.Arguments[0], parameter.Type);
+			HandleAvatarParam(parameter, value);
+		}
+		else if (messageReceived.Address == "/avatar/change")
+		{
+			var avatarID = messageReceived.Arguments[0].ToString();
+			SelectAvatar(avatarID);
+		}
+		else if (StruggleGameSystem && messageReceived.Address.Contains("StruggleGame"))
+		{
+			if (StruggleGameAvatar.Parameters.ContainsKey(messageReceived.Address))
+			{
+				var parameter = StruggleGameAvatar.Parameters[messageReceived.Address];
+				float value = OSCExtensions.FormatIncoming(messageReceived.Arguments[0], parameter.Type);
+				HandleStruggleGameParam(parameter, value);
+			}
+		}
+	}
+
+
+	public void SelectAvatar(string avatarID)
     {
-        if (selectedAvatar.ID == avatarID)
+
+		if (selectedAvatar.ID == avatarID)
         {
-            if (StruggleGameActive) StruggleGameReset();
+            //Usually an avatar reset or something.
             return;
         }
 
-        if (avatars.Any(a => a.ID == avatarID))
+		if (StruggleGameSystem)
+		{
+			StruggleGameSync();
+		}
+
+		if (avatars.Any(a => a.ID == avatarID))
         {
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == avatarID);
             Log($"Selected avatar {selectedAvatar.Name}", Severity.Normal);
+
 
             InvokeAvatarControlsUpdate();
         }
@@ -391,60 +508,92 @@ public class Service_AvatarControls : IHostedService
             InvokeAvatarControlsUpdate();
         }
     }
+
+	public void SetParameterValue(Parameter param) //used by AvatarControls. Upddates the param and sends an OSC message out with it
+	{
+		selectedAvatar.Parameters[param.Address].Value = param.Value;
+		OSCService.sendOSCParameter(param);
+
+		InvokeAvatarControlsUpdate();
+	}
 	#endregion
 
 
 	#region StruggleGame Handling
-	bool StruggleGameActive = false;
-    public void StruggleGameReset()
+	public bool StruggleGameSystem = false;
+    public bool StruggleGameActive = false;
+	public Avatar StruggleGameAvatar = new Avatar();
+    private void StruggleGameSetup()
+    {
+        if (avatars.Any(a => a.ID == "StruggleGame"))
+        {
+            StruggleGameSystem = true;
+            Log("Struggle Game System Enabled", Severity.Info);
+            StruggleGameAvatar = avatars.FirstOrDefault(a => a.ID == "StruggleGame");
+        }
+        else
+        {
+            StruggleGameSystem = false;
+            return;
+        }
+    }
+
+    public void HandleStruggleGameParam(Parameter param, float value)
+    {
+        StruggleGameAvatar.Parameters[param.Address].Value = value;
+
+        if (param.Address.Contains("Active"))
+        {
+            bool ParamActive = value > 0.5;
+			if (ParamActive && !StruggleGameActive)
+            {
+                StruggleGameStart();
+				Log("Struggle Game Started", Severity.Info);
+			}
+			else if (!ParamActive && StruggleGameActive)
+            {
+                StruggleGameEnd();
+				Log("Struggle Game Ended", Severity.Info);
+			}
+		}
+    }
+
+    public void StruggleGameSync()
+    {
+        foreach (var param in StruggleGameAvatar.Parameters)
+        {
+			OSCService.sendOSCParameter(param.Value);
+		}
+    }
+
+    public void StruggleGameStart()
 	{
-		StruggleGameActive = false;
-        PointsService.UpdatePoints(0.5);
-		LogService.AddLog("AvatarPoints", "Avatar OSC", $"Avatar Reset during Struggle Game, added +0.5p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
+		StruggleGameActive = true;
+		PointsService.UpdatePoints(0.25);
+		LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game started, added +0.25p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
 	}
 
 	public void StruggleGameEnd()
 	{
 		StruggleGameActive = false;
 		PointsService.UpdatePoints(-0.25);
-		LogService.AddLog("AvatarPoints", "Avatar OSC", $"Struggle game succeeded, removed 0.25p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
+		LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game succeeded, removed 0.25p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
 	}
 	#endregion
 
 
 	//===========================================//
 	#region Helper function
-	public void UpdateParameterValue(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
+	public void HandleAvatarParam(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
     {
-
-        if (selectedAvatar.Parameters.ContainsKey(param.Address))
+		selectedAvatar.Parameters[param.Address].Value = value;
+        //hsv handling
+        if (selectedAvatar.Controls.Any(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address))
         {
-            selectedAvatar.Parameters[param.Address].Value = value;
-            //hsv handling
-            if (selectedAvatar.Controls.Any(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address))
-            {
-                var contHSV = selectedAvatar.Controls.FirstOrDefault(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address) as ContTypeHSV;
-                contHSV.InvertedBrightnessValue = Math.Abs(1 - value);
-            }
-            InvokeAvatarControlsUpdate();
+            var contHSV = selectedAvatar.Controls.FirstOrDefault(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address) as ContTypeHSV;
+            contHSV.InvertedBrightnessValue = Math.Abs(1 - value);
         }
-        else
-        {
-            if (param.Address == "/avatar/parameters/StruggleGame/Active")
-            {
-                StruggleGameActive = value > 0.5;
-                if (StruggleGameActive)
-                {
-					Log($"Struggle Game Started", Severity.Info);
-				}
-				else
-                {
-					StruggleGameEnd();
-				}
-            }
-
-        }
-
+        InvokeAvatarControlsUpdate();
     }
 
 	public MudColor HSVControlToMudColor(ContTypeHSV control)

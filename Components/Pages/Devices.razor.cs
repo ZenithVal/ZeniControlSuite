@@ -16,6 +16,7 @@ public partial class Devices : IDisposable
 
     private string user = "Undefined";
     private AuthenticationState context;
+
     private string pageName = "Devices";
 
     protected override async Task OnInitializedAsync()

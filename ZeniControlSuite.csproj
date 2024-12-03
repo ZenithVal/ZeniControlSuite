@@ -85,7 +85,6 @@
   <ItemGroup>
     <Folder Include="Components\AvatarControls\" />
     <Folder Include="Components\GameControls\" />
-    <Folder Include="Extensions\" />
   </ItemGroup>
 
   <ItemGroup>

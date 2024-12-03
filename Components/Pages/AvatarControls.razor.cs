@@ -23,6 +23,7 @@ public partial class AvatarControls : IDisposable
 
 	private string user = "Undefined";
 	private AuthenticationState context;
+
 	private readonly string pageName = "Avatar Controls";
 
 	protected override async Task OnInitializedAsync()
@@ -44,14 +45,6 @@ public partial class AvatarControls : IDisposable
 		AvatarsService.OnAvatarsUpdate -= OnAvatarsUpdate;
 	}
 
-    public void SetParameterValue(Parameter param) //used by AvatarControls. Upddates the param and sends an OSC message out with it
-    {
-        AvatarsService.selectedAvatar.Parameters[param.Address].Value = param.Value;
-        OscService.sendOSCParameter(param);
-
-        AvatarsService.InvokeAvatarControlsUpdate();
-    }
-
     private void ControlTogglePress(ContTypeToggle control)
     {
         if (control.Parameter.Value == control.ValueOff)
@@ -63,7 +56,7 @@ public partial class AvatarControls : IDisposable
             control.Parameter.Value = control.ValueOff;
         }
 
-		SetParameterValue(control.Parameter);
+		AvatarsService.SetParameterValue(control.Parameter);
 
         LogService.AddLog(pageName, user, $"{control.Name} set to {control.Parameter.Value}", Severity.Normal);
     }
@@ -73,7 +66,7 @@ public partial class AvatarControls : IDisposable
 
 		control.Parameter.Value = value;
 
-        SetParameterValue(control.Parameter);
+		AvatarsService.SetParameterValue(control.Parameter);
         //LogService.AddLog(pageName, user, $"radial {control.Name} set to {control.Parameter.Value}", Severity.Normal);
     }
 
@@ -84,11 +77,11 @@ public partial class AvatarControls : IDisposable
 		{
             case HSVParamValue.Hue:
                 control.ParameterHue.Value = value;
-                SetParameterValue(control.ParameterHue);
+                AvatarsService.SetParameterValue(control.ParameterHue);
                 break;
             case HSVParamValue.Saturation:
                 control.ParameterSaturation.Value = value;
-                SetParameterValue(control.ParameterSaturation);
+				AvatarsService.SetParameterValue(control.ParameterSaturation);
                 break;
             case HSVParamValue.Brightness:
                 if (control.InvertedBrightness)
@@ -100,7 +93,7 @@ public partial class AvatarControls : IDisposable
                 {
                     control.ParameterBrightness.Value = value;
                 }
-                SetParameterValue(control.ParameterBrightness);
+                AvatarsService.SetParameterValue(control.ParameterBrightness);
                 break;
         }
 	}
