@@ -141,18 +141,17 @@ public class Service_OSC : IHostedService
                 LogOSC(messageReceived);
                 //Console.WriteLine($"OSC Message Received: {messageReceived.Address}/{messageReceived.Arguments[0]}");
 
-                if (AvatarsService.selectedAvatar.Parameters.ContainsKey(messageReceived.Address))
+                if (messageReceived.Address == "/avatar/parameter")
                 {
                     var parameter = AvatarsService.selectedAvatar.Parameters[messageReceived.Address];
                     float value = FormatIncoming(messageReceived.Arguments[0], parameter.Type);
                     AvatarsService.UpdateParameterValue(parameter, value);
                 }
-
-            if (messageReceived.Address == "/avatar/change")
-            {
-                var avatarID = messageReceived.Arguments[0].ToString();
-                AvatarsService.SelectAvatar(avatarID);
-            }
+                else if (messageReceived.Address == "/avatar/change")
+                {
+                    var avatarID = messageReceived.Arguments[0].ToString();
+                    AvatarsService.SelectAvatar(avatarID);
+                }
             }
         };
 

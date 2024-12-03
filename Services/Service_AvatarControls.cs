@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using MudBlazor;
 using MudBlazor.Utilities;
 using ZeniControlSuite.Components.Pages;
@@ -9,6 +10,7 @@ namespace ZeniControlSuite.Services;
 public class Service_AvatarControls : IHostedService
 {
     private readonly Service_Logs LogService;
+    [Inject] private Service_Points PointsService { get; set; } = default!;
     public Service_AvatarControls(Service_Logs serviceLogs) { LogService = serviceLogs; }
     private void Log(string message, Severity severity)
     {
@@ -366,6 +368,7 @@ public class Service_AvatarControls : IHostedService
     {
         if (selectedAvatar.ID == avatarID)
         {
+            if (StruggleGameActive) StruggleGameReset();
             return;
         }
 
@@ -388,23 +391,63 @@ public class Service_AvatarControls : IHostedService
             InvokeAvatarControlsUpdate();
         }
     }
-    #endregion
+	#endregion
 
 
-    //===========================================//
-    #region Helper function
-    public void UpdateParameterValue(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
+	#region StruggleGame Handling
+	bool StruggleGameActive = false;
+    public void StruggleGameReset()
+	{
+		StruggleGameActive = false;
+        PointsService.UpdatePoints(0.5);
+		LogService.AddLog("AvatarPoints", "Avatar OSC", $"Avatar Reset during Struggle Game, added +0.5p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
+	}
+
+	public void StruggleGameEnd()
+	{
+		StruggleGameActive = false;
+		PointsService.UpdatePoints(-0.25);
+		LogService.AddLog("AvatarPoints", "Avatar OSC", $"Struggle game succeeded, removed 0.25p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
+	}
+	#endregion
+
+
+	//===========================================//
+	#region Helper function
+	public void UpdateParameterValue(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
     {
-        selectedAvatar.Parameters[param.Address].Value = value;
-        if (selectedAvatar.Controls.Any(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address))
+
+        if (selectedAvatar.Parameters.ContainsKey(param.Address))
         {
-            var contHSV = selectedAvatar.Controls.FirstOrDefault(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address) as ContTypeHSV;
-            contHSV.InvertedBrightnessValue = Math.Abs(1 - value);
+            selectedAvatar.Parameters[param.Address].Value = value;
+            //hsv handling
+            if (selectedAvatar.Controls.Any(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address))
+            {
+                var contHSV = selectedAvatar.Controls.FirstOrDefault(c => c is ContTypeHSV contHSV && contHSV.InvertedBrightness && contHSV.ParameterBrightness.Address == param.Address) as ContTypeHSV;
+                contHSV.InvertedBrightnessValue = Math.Abs(1 - value);
+            }
+            InvokeAvatarControlsUpdate();
         }
-        InvokeAvatarControlsUpdate();
+        else
+        {
+            if (param.Address == "/avatar/parameters/StruggleGame/Active")
+            {
+                StruggleGameActive = value > 0.5;
+                if (StruggleGameActive)
+                {
+					Log($"Struggle Game Started", Severity.Info);
+				}
+				else
+                {
+					StruggleGameEnd();
+				}
+            }
+
+        }
+
     }
 
-    public MudColor HSVControlToMudColor(ContTypeHSV control)
+	public MudColor HSVControlToMudColor(ContTypeHSV control)
     {
         float H = control.ParameterHue.Value * 360;
         float S = Math.Clamp(control.ParameterSaturation.Value, 0.001f, 0.999f);
