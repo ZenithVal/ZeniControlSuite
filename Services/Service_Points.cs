@@ -39,6 +39,14 @@ public class Service_Points : IHostedService
     public double pointsPartialFlipped { get; private set; } = 100;
     #endregion
 
+    //==
+    #region helpers
+    public string GetSignText(double points)
+    {
+        return points > 0 ? "Added +" : "Removed ";
+    }
+    #endregion
+
 
     //===========================================//
     #region Point Controls
@@ -83,7 +91,6 @@ public class Service_Points : IHostedService
 
         //FractionalScore(pointsTotal);
         pointsTruncated = Math.Truncate(pointsTotal * 100) / 100;
-
         InvokePointsUpdate();
     }
 

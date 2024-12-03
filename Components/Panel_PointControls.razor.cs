@@ -41,7 +41,7 @@ public partial class Panel_PointControls : IDisposable
     private void BtnModPoints(double points)
     {
         PointsService.UpdatePoints(points);
-        string sign = points > 0 ? "Added +" : "Removed ";
+        string sign = PointsService.GetSignText(points);
         LogService.AddLog(pageName, user, $"{sign}{points}p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
     }
 
