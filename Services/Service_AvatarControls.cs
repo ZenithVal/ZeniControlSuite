@@ -479,13 +479,13 @@ public class Service_AvatarControls : IHostedService
 
 		if (selectedAvatar.ID == avatarID)
         {
-            //Usually an avatar reset or something.
+            //Usually an avatar reset or switching worlds.
             return;
         }
 
 		if (StruggleGameSystem)
 		{
-			StruggleGameSync();
+			StruggleGameLastStateSync();
 		}
 
 		if (avatars.Any(a => a.ID == avatarID))
@@ -521,9 +521,11 @@ public class Service_AvatarControls : IHostedService
 
 	#region StruggleGame Handling
 	public bool StruggleGameSystem = false;
-    public bool StruggleGameActive = false;
+	public bool StruggleGameActive = false;
 	public Avatar StruggleGameAvatar = new Avatar();
-    private void StruggleGameSetup()
+
+    List<Parameter> StruggleGameLastState = new List<Parameter>();
+	private void StruggleGameSetup()
     {
         if (avatars.Any(a => a.ID == "StruggleGame"))
         {
@@ -558,19 +560,42 @@ public class Service_AvatarControls : IHostedService
 		}
     }
 
-    public void StruggleGameSync()
+    public void StruggleGameLastStateSync()
     {
-        foreach (var param in StruggleGameAvatar.Parameters)
+        foreach (var param in StruggleGameLastState)
         {
-			OSCService.sendOSCParameter(param.Value);
+            SetParameterValue(param);
 		}
-    }
+	}
 
     public void StruggleGameStart()
 	{
 		StruggleGameActive = true;
 		PointsService.UpdatePoints(0.25);
 		LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game started, added +0.25p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
+        
+        try
+        {
+            foreach (var param in StruggleGameAvatar.Parameters)
+            {
+                if (StruggleGameLastState.Any(p => p.Address == param.Key))
+                {
+					StruggleGameLastState.FirstOrDefault(p => p.Address == param.Key).Value = param.Value.Value;
+				}
+				else
+                {
+					StruggleGameLastState.Add(new Parameter {
+						Address = param.Key,
+						Type = param.Value.Type,
+						Value = param.Value.Value
+					});
+				}
+			}
+		}
+		catch (Exception e)
+        {
+			Console.WriteLine(e.Message);
+		}
 	}
 
 	public void StruggleGameEnd()
