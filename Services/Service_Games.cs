@@ -131,47 +131,53 @@ public class Service_Games : IHostedService
             {
                 string editedLine = line;
                 Typo level = Typo.body1;
-
-                if (editedLine.StartsWith("\t"))
+                try
                 {
-                    editedLine = editedLine.Substring(1);
+                    if (editedLine.StartsWith("\t"))
+                    {
+                        editedLine = editedLine.Substring(1);
+                    }
+
+                    if (editedLine.Contains("URL=="))
+                    {
+                        editedLine = editedLine.Replace("URL== ", "");
+                        string[] parts = editedLine.Split('|');
+                        gamesList.Last().MDLinks.Add(new Game.MDLink { text = parts[0].Trim(), url = parts[1].Trim() });
+                        continue;
+                    }
+
+                    if (editedLine.Contains("H= "))
+                    {
+                        editedLine = editedLine.Replace("H= ", "");
+                        level = Typo.h5;
+                    }
+                    else if (editedLine.Contains("H== "))
+                    {
+                        editedLine = editedLine.Replace("H== ", "");
+                        level = Typo.h6;
+                    }
+
+                    if (editedLine.Contains("AutoGame"))
+                    {
+                        gamesList.Last().AutoGameCapable = true;
+                    }
+
+                    if (editedLine.Contains("=ReadsLogs"))
+                    {
+                        gamesList.Last().AutoGameReadsLogs = true;
+                        continue;
+                    }
                 }
-
-                if (editedLine.Contains("URL=="))
+                catch (Exception e)
                 {
-					editedLine = editedLine.Replace("URL== ", "");
-                    string[] parts = editedLine.Split('|');
-                    gamesList.Last().MDLinks.Add(new Game.MDLink { text = parts[0].Trim(), url = parts[1].Trim() });
-					continue;
-				}
-
-                if (editedLine.Contains("H= "))
-                {
-                    editedLine = editedLine.Replace("H= ", "");
-                    level = Typo.h5;
-                }
-                else if (editedLine.Contains("H== "))
-                {
-                    editedLine = editedLine.Replace("H== ", "");
-                    level = Typo.h6;
-                }
-
-                if (editedLine.Contains("AutoGame"))
-                {
-                    gamesList.Last().AutoGameCapable = true;
-                }
-
-                if (editedLine.Contains("=ReadsLogs"))
-                {
-                    gamesList.Last().AutoGameReadsLogs = true;
-                    continue;
+                    Log(line + " parsing failed: " + e.Message, Severity.Error);
                 }
 
                 editedLine = editedLine.Replace("\t", " ");
                 editedLine = editedLine.Replace("*", " •");
 
                 gamesList.Last().Description.Add(new Game.DescriptionLine { typo = level, text = editedLine });
-            }
+                }
         }
 
         gameSelected = gamesList.First();
