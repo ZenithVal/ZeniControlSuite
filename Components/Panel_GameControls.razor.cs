@@ -12,8 +12,8 @@ public partial class Panel_GameControls : IDisposable
     private string user = "Undefined";
     private string pageName = "GameControls";
 
-    private string localPlayerName = "";
-    private string remotePlayerName = "";
+    private string playerBoundName = "ZenithVal";
+    private string playerEnemyName = "Opponent";
 
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private Service_Logs LogService { get; set; } = default!;
@@ -22,8 +22,8 @@ public partial class Panel_GameControls : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        localPlayerName = GamesService.localPlayerName;
-        remotePlayerName = GamesService.remotePlayerName;
+        playerBoundName = GamesService.playerBoundName;
+        playerEnemyName = GamesService.playerEnemyName;
 
         PointsService.OnPointsUpdate += OnPointsUpdate;
         GamesService.OnGamesUpdate += OnGamesUpdate;
@@ -46,12 +46,12 @@ public partial class Panel_GameControls : IDisposable
     {
         if (GamesService.AutoGameRunning)
         {
-            LogService.AddLog(pageName, user, "Cannot change usernames while autoGame is running", Severity.Error, Variant.Outlined);
+            LogService.AddLog(pageName, user, "Cannot change usernames while autoGame is already running", Severity.Error, Variant.Outlined);
             return;
         }
 
-        GamesService.ChangeNames(localPlayerName, remotePlayerName);
-        LogService.AddLog(pageName, user, $"Usernames changed: {localPlayerName} & {remotePlayerName} ", Severity.Info, Variant.Outlined);
+        GamesService.ChangeNames(playerBoundName, playerEnemyName);
+        LogService.AddLog(pageName, user, $"Usernames changed: {playerBoundName} & {playerEnemyName} ", Severity.Info, Variant.Outlined);
     }
 
     private void AutoGameStart()

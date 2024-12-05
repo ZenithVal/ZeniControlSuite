@@ -10,11 +10,11 @@
 <MudItem  Style="height:500px;overflow-y: auto; overflow-x: clip;">
     <MudGrid Justify="Justify.Center" Style="width: 372px;align-items:center">
         <MudItem xs="6">
-            <MudTextField Label="Local User" @bind-Value="localPlayerName" Variant="Variant.Text" Style="height: 35px"
+            <MudTextField Label="Local User" @bind-Value="playerBoundName" Variant="Variant.Text" Style="height: 35px"
                           Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CloudUpload" OnAdornmentClick="ChangeNames" />
         </MudItem>
         <MudItem xs="6">
-            <MudTextField Label="Remote User" @bind-Value="remotePlayerName" Variant="Variant.Text" Style="height: 35px"
+            <MudTextField Label="Remote User" @bind-Value="playerEnemyName" Variant="Variant.Text" Style="height: 35px"
                           Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CloudUpload" OnAdornmentClick="ChangeNames" />
         </MudItem>
 

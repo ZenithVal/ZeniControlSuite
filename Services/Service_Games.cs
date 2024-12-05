@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
-using MudBlazor;
+﻿using MudBlazor;
+using ZeniControlSuite.Authentication;
 using ZeniControlSuite.Models;
 
 namespace ZeniControlSuite.Services;
@@ -23,6 +23,7 @@ public class Service_Games : IHostedService
         try
         {
             ParseGames();
+            getInitialName();
             Log("Service Started", Severity.Normal);
             Console.WriteLine("");
         }
@@ -51,8 +52,8 @@ public class Service_Games : IHostedService
     #region Settings
     public Game gameSelected { get; set; } = new Game();
     public List<Game> gamesList = new List<Game>();
-    public string localPlayerName { get; set; } = "localPlayer";
-    public string remotePlayerName { get; set; } = "remotePlayer";
+    public string playerBoundName { get; set; } = "localPlayer";
+    public string playerEnemyName { get; set; } = "enemyPlayer";
     private string AutoGameLogFilePath { get; set; } = "";
 
     Thread? logWatcherThread = null;
@@ -136,6 +137,14 @@ public class Service_Games : IHostedService
                     editedLine = editedLine.Substring(1);
                 }
 
+                if (editedLine.Contains("URL=="))
+                {
+					editedLine = editedLine.Replace("URL== ", "");
+                    string[] parts = editedLine.Split('|');
+                    gamesList.Last().MDLinks.Add(new Game.MDLink { text = parts[0].Trim(), url = parts[1].Trim() });
+					continue;
+				}
+
                 if (editedLine.Contains("H= "))
                 {
                     editedLine = editedLine.Replace("H= ", "");
@@ -170,20 +179,35 @@ public class Service_Games : IHostedService
         Game firstGame = gamesList.First();
         gamesList = gamesList.OrderBy(x => x.Name).ToList();
 
+
         gamesList.Remove(firstGame);
         gamesList.Insert(0, firstGame);
 
+
         Update();
+    }
+
+    private void getInitialName()
+    {
+        try
+        {
+            //grabs the first displayname from discord whitelist.
+            playerBoundName = Whitelist.usersToAccept.First().Value.DisplayName;
+        }
+        catch
+        {
+            playerBoundName = "localPlayer";
+        }
     }
     public void ChangeGame(Game game)
     {
         gameSelected = game;
         Update();
     }
-    public void ChangeNames(string local, string remote)
+    public void ChangeNames(string nameBound, string nameEnemy)
     {
-        localPlayerName = local;
-        remotePlayerName = remote;
+        playerBoundName = nameBound;
+        playerEnemyName = nameEnemy;
         Update();
     }
     #endregion

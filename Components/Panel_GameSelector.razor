@@ -3,8 +3,15 @@
 <MudItem>
     @if (!GamesService.AutoGameRunning)
     {
-        <MudSelect Label="Select a game" @bind-Value="localGame" Variant="Variant.Filled" Color="Color.Primary" Style="width: 200px"
-                   ReadOnly="@GamesService.AutoGameRunning" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CloudUpload" OnAdornmentClick="ChangeGame">
+        <MudSelect Label="Selected Game" @bind-Value="localGame" 
+                Variant="Variant.Filled" Color="Color.Primary" 
+                Style="width: 200px"
+                Dense="true"
+                Placeholder="Select a game from dropdown."
+                ReadOnly="@GamesService.AutoGameRunning" 
+                Adornment="Adornment.End" 
+                AdornmentIcon="@Icons.Material.Filled.CloudUpload" 
+                OnAdornmentClick="ChangeGame">
             @foreach (Game game in GamesService.gamesList)
             {
                 <MudSelectItem Value="@game">@game.Name</MudSelectItem>
@@ -19,7 +26,28 @@
     }
 </MudItem>
 
+<MudDivider/>
 <br />
+
+@if (localGame.MDLinks.Count > 0)
+{
+<MudItem>
+    <MudText Typo="Typo.h6">World Links</MudText>
+	@foreach (var MDLink in localGame.MDLinks)
+	{
+        if (MDLink.url == "")
+            {
+			<MudText Typo="Typo.body1">@MDLink.text</MudText>
+		}
+		else
+		{
+			<MudLink Href="@MDLink.url">@MDLink.text</MudLink>
+		}
+	}
+</MudItem>
+<MudDivider />
+<br />
+}
 
 <MudItem Class="ma-0" Style="height:700px;overflow: auto;">
     @foreach (Game.DescriptionLine line in localGame.Description)
@@ -28,10 +56,15 @@
         {
             <br />
         }
-        else if (line.text.Contains("localPlayer") || line.text.Contains("remotePlayer"))
+        else if (line.text.Contains("boundPlayer") || line.text.Contains("enemyPlayer"))
         {
-            string editedline = line.text.Replace("localPlayer", GamesService.localPlayerName).Replace("remotePlayer", GamesService.remotePlayerName);
-            <MudText Typo="line.typo">@editedline</MudText>
+            string editedline = line.text.Replace("boundPlayer", GamesService.playerBoundName).Replace("enemyPlayer", GamesService.playerEnemyName);
+        <MudText Typo="line.typo">@editedline</MudText>
+        }
+        else if (line.typo == Typo.h5)
+        {
+            <MudText Typo="line.typo">@line.text</MudText>
+            <MudDivider />
         }
         else
         {

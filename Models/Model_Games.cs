@@ -4,6 +4,13 @@ public class Game
 {
     public string Name { get; set; }
     public List<DescriptionLine> Description { get; set; } = new List<DescriptionLine>();
+    public List<MDLink> MDLinks { get; set; } = new List<MDLink>();
+
+    public class MDLink
+    {
+		public string text { get; set; } = "";
+		public string url { get; set; } = "";
+	}
 
     public class DescriptionLine
     {
