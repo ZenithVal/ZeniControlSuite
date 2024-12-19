@@ -188,7 +188,7 @@ public class Service_OSC : IHostedService
 	#region OSC Stuff
 	public void sendOSCParameter(Parameter param)
     {
-        var value = OSCExtensions.FormatIncoming(param.Value, param.Type);
+        var value = OSCExtensions.FormatOutGoing(param.Value, param.Type);
 
         if (value == null)
         {
@@ -197,6 +197,7 @@ public class Service_OSC : IHostedService
         }
 
         var message = new OscMessage(param.Address, value);
+        //Log($"Sending OSC message: {message.Address}/{message.Arguments[0]}");
         try
         {
             _sender.Send(message);
