@@ -2,6 +2,7 @@
 using CoreOSC;
 using MudBlazor;
 using MudBlazor.Utilities;
+using OpenShock.SDK.CSharp.Models;
 using ZeniControlSuite.Extensions;
 using ZeniControlSuite.Models;
 
@@ -55,6 +56,13 @@ public class Service_AvatarControls : IHostedService
     public bool avatarsLoaded = false;
     public List<Avatar> avatars = new List<Avatar>();
 
+    public bool avatarSelectEnabled = true;
+    public bool avatarSelectFree = false;
+    public bool avatarTrapped = false;
+
+    public double avatarSelectCostMulti = 1.0;
+
+    public Avatar lastSelectedAvatar = new Avatar();
     public Avatar selectedAvatar = new Avatar();
     #endregion
 
@@ -80,8 +88,6 @@ public class Service_AvatarControls : IHostedService
             InvokeAvatarControlsUpdate();
         }
     }
-    //Error help
-    //The given key was not present in the dictionary = Parameter## was spelled incorrectly ~ EG HSV "PUramterSatAration"
 
     public void ReadAvatarControlsJson(string jsonString)
     {
@@ -114,6 +120,10 @@ public class Service_AvatarControls : IHostedService
             var avatar = new Avatar {
                 ID = avatarElement.GetProperty("ID").GetString(),
                 Name = avatarElement.GetProperty("Name").GetString(),
+                Selectable = avatarElement.GetProperty("Selectable").GetBoolean(),
+                Available = avatarElement.GetProperty("Available").GetBoolean(),
+                Cost = avatarElement.GetProperty("Cost").GetDouble(),
+                Thumbnail = GetAvatarImage(avatarElement.GetProperty("Thumbnail").GetString()),
                 Controls = new List<AvatarControl>(),
                 Parameters = new Dictionary<string, Parameter>()
             };
@@ -199,6 +209,26 @@ public class Service_AvatarControls : IHostedService
 
         avatarsLoaded = true;
         InvokeAvatarControlsUpdate();
+    }
+
+    private string GetAvatarImage(string ThumbnailName)
+    {
+        if (!Directory.Exists("Images"))
+        {
+            Directory.CreateDirectory("Images");
+        }
+
+        if (File.Exists($"Images/Avatars/{ThumbnailName}.png"))
+        {
+            Console.WriteLine($"AC | Found image for {ThumbnailName}");
+            return $"/api/images?imageName="+$"/Avatars/"+$"{ThumbnailName}.png";
+        }
+        else
+        {
+            Console.WriteLine($"AC | No image found for {ThumbnailName}");
+            return "images/AvatarThumbDefault.png";
+        }
+
     }
 
     private void CreateAvatarParamList(Avatar avatar)
@@ -292,26 +322,11 @@ public class Service_AvatarControls : IHostedService
         validationLog = $"deserializing control name of {controlName}";
         control.Name = controlElement.GetProperty("Name").GetString();
 
+        validationLog = $"deserializing control icons of {controlName}";
+        control.Icon = GetImage(controlName);
+
         validationLog = $"deserializing control roles of {controlName}";
         control.RequiredRoles = controlElement.GetProperty("RequiredRoles").EnumerateArray().Select(r => r.GetString()).ToList();
-
-        if (!Directory.Exists("Images"))
-        {
-            Directory.CreateDirectory("Images");
-        }
-
-        //if /api/ImageController/{controlName} exists, set IconPath to that, otherwise leave blank
-        string controlNameNoSpaces = controlName.Replace(" ", "");
-        if (File.Exists($"Images/{controlNameNoSpaces}.png"))
-        {
-            Console.WriteLine($"AC | Found image for {controlName}");
-            control.IconPath = $"/api/Images/{controlNameNoSpaces}.png";
-        }
-        else
-        {
-            //Console.WriteLine($"AC | No image found for {controlNameNoSpaces}");
-            control.IconPath = "images/PowerButton.png";
-        }
 
         return control;
     }
@@ -343,17 +358,8 @@ public class Service_AvatarControls : IHostedService
                 ValueOn = valueOn
             };
             Console.WriteLine($"AC | {controlName} - adding {parameter}");
-            string controlNameNoSpaces = parameter.Replace(" ", "");
-            if (File.Exists($"Images/{controlNameNoSpaces}.png"))
-            {
-                Console.WriteLine($"AC | Found image for {controlName}");
-                control.IconPath = $"/api/Images/{controlNameNoSpaces}.png";
-            }
-            else
-            {
-                //Console.WriteLine($"AC | No image found for {controlNameNoSpaces}");
-                control.IconPath = "images/PowerButton.png";
-            }
+
+            control.Icon = GetImage(parameter);
             controls.Add(control);
         }
 
@@ -522,6 +528,13 @@ public class Service_AvatarControls : IHostedService
 		InvokeAvatarControlsUpdate();
 	}
 
+    public void SwitchAvatar(Avatar avatar) //Sends an OSC paramter to switch the avatar. Used by the UI
+    {
+        OSCService.sendOSCMessage("/avatar/change", avatar.ID);
+        selectedAvatar = avatar;
+        lastSelectedAvatar = selectedAvatar;
+    }
+    #endregion
 
     //===========================================//
     #region StruggleGame Handling
@@ -649,6 +662,27 @@ public class Service_AvatarControls : IHostedService
         MudColor mudColor = new MudColor(H, S_HSL, L, 0);
 
         return mudColor;
+    }
+
+    private string GetImage(string imageName)
+    {
+        if (!Directory.Exists("Images"))
+        {
+            Directory.CreateDirectory("Images");
+        }
+
+        string imageNoSpaces = imageName.Replace(" ", "");
+
+        if (File.Exists($"Images/{imageNoSpaces}.png"))
+        {
+            Console.WriteLine($"AC | Found image for {imageName}");
+            return $"/api/Images/{imageNoSpaces}.png";
+        }
+        else
+        {
+            Console.WriteLine($"AC | No image found for {imageName}");
+            return "images/PowerButton.png";
+        }
     }
     #endregion
 

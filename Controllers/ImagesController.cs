@@ -8,7 +8,7 @@ namespace ZeniControlSuite.Controllers;
 public class ImagesController : ControllerBase
 {
     [HttpGet("{imageName}")]
-    public IActionResult GetImage(string imageName)
+    public IActionResult GetImage([FromQuery] string imageName)
     {
         //Console.WriteLine($"Requested {imageName}");
 
@@ -23,5 +23,4 @@ public class ImagesController : ControllerBase
         var image = System.IO.File.OpenRead(imagePath);
         return File(image, "image/png");
     }
-
 }

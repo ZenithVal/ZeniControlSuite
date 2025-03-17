@@ -208,6 +208,19 @@ public class Service_OSC : IHostedService
         }
     }
 
+    public void sendOSCMessage(string address, object value) //For sending custom OSC messages
+    {
+        var message = new OscMessage(address, value);
+        //Log($"Sending OSC message: {message.Address}/{message.Arguments[0]}");
+        try
+        {
+            _sender.Send(message);
+        }
+        catch (Exception ex)
+        {
+            Log($"Error sending OSC message: {ex.Message}", Severity.Error);
+        }
+    }
     #endregion
 
 

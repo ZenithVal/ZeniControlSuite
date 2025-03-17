@@ -4,6 +4,10 @@ public class Avatar
 {
     public string ID { get; set; }
     public string Name { get; set; }
+    public bool Selectable { get; set; }
+    public bool Available { get; set; }
+    public double Cost { get; set; }
+    public string Thumbnail { get; set; }
     public List<AvatarControl> Controls { get; set; }
     public Dictionary<string, Parameter> Parameters { get; set; }
 }
@@ -20,7 +24,7 @@ public abstract class AvatarControl
     public string Name { get; set; }
     public abstract ControlType Type { get; }
     public List<string> RequiredRoles { get; set; } = new List<string>();
-    public string IconPath { get; set; }
+    public string Icon { get; set; }
 }
 public class ContTypeButton : AvatarControl
 {

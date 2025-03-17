@@ -29,12 +29,24 @@
                         </div>
                     </div>
 
+                    <div style="height: 8px"></div>
+
                     @if (context.User.IsInRole("Admin") || (Pages.AvatarControls.pageEnabled && context.User.IsInRole("Avatar")))
                     {
                         <div class="nav-item px-3">
                             <NavLink class="nav-link" href="AvatarControls">
                                 <MudIcon Icon="@Icons.Material.Filled.WifiTethering"></MudIcon>
                                 <span style="padding: 0 8px;">Avatar Controls</span>
+                            </NavLink>
+                        </div>
+                    }
+
+                    @if (context.User.IsInRole("Admin") || (Pages.AvatarSelect.pageEnabled && context.User.IsInRole("Avatar")))
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="AvatarSelect">
+                                <MudIcon Icon="@Icons.Material.Filled.Colorize"></MudIcon>
+                                <span style="padding: 0 8px;">Avatar Select</span>
                             </NavLink>
                         </div>
                     }
