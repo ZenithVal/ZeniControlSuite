@@ -58,7 +58,6 @@ public class Service_AvatarControls : IHostedService
 
     public bool avatarSelectEnabled = true;
     public bool avatarSelectFree = false;
-    public bool avatarTrapped = false;
 
     public double avatarSelectCostMulti = 1.0;
 
@@ -217,11 +216,15 @@ public class Service_AvatarControls : IHostedService
         {
             Directory.CreateDirectory("Images");
         }
+        if (!Directory.Exists("Images/Avatars"))
+        {
+            Directory.CreateDirectory("Images/Avatars");
+        }
 
         if (File.Exists($"Images/Avatars/{ThumbnailName}.png"))
         {
             Console.WriteLine($"AC | Found image for {ThumbnailName}");
-            return $"/api/images?imageName="+$"/Avatars/"+$"{ThumbnailName}.png";
+            return $"/api/Images/Avatars/{ThumbnailName}.png";
         }
         else
         {
@@ -323,7 +326,7 @@ public class Service_AvatarControls : IHostedService
         control.Name = controlElement.GetProperty("Name").GetString();
 
         validationLog = $"deserializing control icons of {controlName}";
-        control.Icon = GetImage(controlName);
+        control.Icon = GetControlImage(controlName);
 
         validationLog = $"deserializing control roles of {controlName}";
         control.RequiredRoles = controlElement.GetProperty("RequiredRoles").EnumerateArray().Select(r => r.GetString()).ToList();
@@ -359,7 +362,7 @@ public class Service_AvatarControls : IHostedService
             };
             Console.WriteLine($"AC | {controlName} - adding {parameter}");
 
-            control.Icon = GetImage(parameter);
+            control.Icon = GetControlImage(parameter);
             controls.Add(control);
         }
 
@@ -450,12 +453,37 @@ public class Service_AvatarControls : IHostedService
 
         return parameter;
     }
-	#endregion
+
+    private string GetControlImage(string imageName)
+    {
+        if (!Directory.Exists("Images"))
+        {
+            Directory.CreateDirectory("Images");
+        }
+        if (!Directory.Exists("Images/Controls"))
+        {
+            Directory.CreateDirectory("Images/Controls");
+        }
+
+        string imageNoSpaces = imageName.Replace(" ", "");
+
+        if (File.Exists($"Images/Controls/{imageNoSpaces}.png"))
+        {
+            Console.WriteLine($"AC | Found image for {imageName}");
+            return $"/api/Images/Controls/{imageNoSpaces}.png";
+        }
+        else
+        {
+            Console.WriteLine($"AC | No image found for {imageName}");
+            return "images/PowerButton.png";
+        }
+    }
+    #endregion
 
 
-	//===========================================//
-	#region Avatar Functions
-	private void HandleOSCMessage(OscMessage messageReceived)
+    //===========================================//
+    #region Avatar Functions
+    private void HandleOSCMessage(OscMessage messageReceived)
 	{
 		if (selectedAvatar.Parameters.ContainsKey(messageReceived.Address)) //Handle existing Params
 		{
@@ -489,16 +517,15 @@ public class Service_AvatarControls : IHostedService
             return;
         }
 
-		if (StruggleGameSystem)
-		{
-			StruggleGameResync();
-		}
+        HandleStruggleGame();
+
 
 		if (avatars.Any(a => a.ID == avatarID))
         {
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == avatarID);
             Log($"Selected avatar {selectedAvatar.Name}", Severity.Normal);
 
+            HandleTrappedSwitch();
 
             InvokeAvatarControlsUpdate();
         }
@@ -535,6 +562,70 @@ public class Service_AvatarControls : IHostedService
         lastSelectedAvatar = selectedAvatar;
     }
     #endregion
+
+    //===========================================//
+    #region Avatar Trap
+    public bool Trapped = false;
+    public DateTime TrapEndTime = DateTime.Now;
+    public bool TrapTimerRunning = false;
+
+    private void HandleTrappedSwitch()
+    {
+        if (!Trapped) return;
+
+        Log($"Avatar switched while trapped, returning to {lastSelectedAvatar.Name}", Severity.Warning);
+        SwitchAvatar(lastSelectedAvatar);
+    }
+
+    public void TrapAvatar()
+    {
+        if (!TrapTimerRunning)
+        {
+            Trapped = true;
+            TrapEndTime = DateTime.Now.AddMinutes(15);
+            Log("Avatar Trapped", Severity.Normal);
+            TrappedAwait();
+        }
+        else
+        {
+            TrapTimerUpdate(1);
+
+        }
+        InvokeAvatarControlsUpdate();
+    }
+
+    public void TrapTimerUpdate(int minutes)
+    {
+        TrapEndTime = TrapEndTime.AddMinutes(minutes);
+        Log($"Trap Timer updated by {minutes} minutes", Severity.Normal);
+
+        if (DateTime.Now > TrapEndTime)
+        {
+            Trapped = false;
+            Log("Avatar Trap Ended", Severity.Normal);
+        }
+        InvokeAvatarControlsUpdate();
+    }
+
+    private async Task TrappedAwait()
+    {
+        TrapTimerRunning = true;
+        while (Trapped)
+        {
+            if (DateTime.Now > TrapEndTime)
+            {
+                Trapped = false;
+                Log("Avatar Trap Ended", Severity.Normal);
+            }
+            await Task.Delay(10000);
+        }
+        TrapTimerRunning = false;
+        InvokeAvatarControlsUpdate();
+    }
+
+
+    #endregion
+
 
     //===========================================//
     #region StruggleGame Handling
@@ -583,8 +674,10 @@ public class Service_AvatarControls : IHostedService
 		}
     }
 
-    public void StruggleGameResync()
+    public void HandleStruggleGame()
     {
+        if (!StruggleGameActive) return;
+
         foreach (var param in StruggleGameLastState)
         {
             SetParameterValue(param);
@@ -662,27 +755,6 @@ public class Service_AvatarControls : IHostedService
         MudColor mudColor = new MudColor(H, S_HSL, L, 0);
 
         return mudColor;
-    }
-
-    private string GetImage(string imageName)
-    {
-        if (!Directory.Exists("Images"))
-        {
-            Directory.CreateDirectory("Images");
-        }
-
-        string imageNoSpaces = imageName.Replace(" ", "");
-
-        if (File.Exists($"Images/{imageNoSpaces}.png"))
-        {
-            Console.WriteLine($"AC | Found image for {imageName}");
-            return $"/api/Images/{imageNoSpaces}.png";
-        }
-        else
-        {
-            Console.WriteLine($"AC | No image found for {imageName}");
-            return "images/PowerButton.png";
-        }
     }
     #endregion
 
