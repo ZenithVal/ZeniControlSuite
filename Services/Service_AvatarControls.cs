@@ -181,7 +181,7 @@ public class Service_AvatarControls : IHostedService
             };
             avatars.Add(globalAvatar);
         }
-        SelectAvatar("Global");
+        HandleAvatarChange("Global");
 
         if (!avatars.Any(a => a.ID == "Undefined"))
         {
@@ -460,7 +460,7 @@ public class Service_AvatarControls : IHostedService
 		else if (messageReceived.Address == "/avatar/change")
 		{
 			var avatarID = messageReceived.Arguments[0].ToString();
-			SelectAvatar(avatarID);
+			HandleAvatarChange(avatarID);
 		}
 		else if (StruggleGameSystem && messageReceived.Address.Contains("StruggleGame"))
 		{
@@ -474,7 +474,7 @@ public class Service_AvatarControls : IHostedService
 	}
 
 
-	public void SelectAvatar(string avatarID)
+	public void HandleAvatarChange(string avatarID)
     {
 
 		if (selectedAvatar.ID == avatarID)
@@ -485,7 +485,7 @@ public class Service_AvatarControls : IHostedService
 
 		if (StruggleGameSystem)
 		{
-			StruggleGameLastStateSync();
+			StruggleGameResync();
 		}
 
 		if (avatars.Any(a => a.ID == avatarID))
@@ -511,16 +511,21 @@ public class Service_AvatarControls : IHostedService
 
 	public void SetParameterValue(Parameter param) //used by AvatarControls. Upddates the param and sends an OSC message out with it
 	{
-		selectedAvatar.Parameters[param.Address].Value = param.Value;
+        if (!selectedAvatar.Parameters.ContainsKey(param.Address))
+        {
+            Log($"Parameter {param.Address} not found in {selectedAvatar.Name}", Severity.Warning);
+            return;
+        }
+        selectedAvatar.Parameters[param.Address].Value = param.Value;
 		OSCService.sendOSCParameter(param);
 
 		InvokeAvatarControlsUpdate();
 	}
-	#endregion
 
 
-	#region StruggleGame Handling
-	public bool StruggleGameSystem = false;
+    //===========================================//
+    #region StruggleGame Handling
+    public bool StruggleGameSystem = false;
 	public bool StruggleGameActive = false;
 	public Avatar StruggleGameAvatar = new Avatar();
 
@@ -542,6 +547,11 @@ public class Service_AvatarControls : IHostedService
 
     public void HandleStruggleGameParam(Parameter param, float value)
     {
+        if (!StruggleGameAvatar.Parameters.ContainsKey(param.Address))
+        {
+            Log($"Parameter {param.Address} not found in StruggleGame", Severity.Warning);
+            return;
+        }
         StruggleGameAvatar.Parameters[param.Address].Value = value;
 
         if (param.Address.Contains("Active"))
@@ -560,7 +570,7 @@ public class Service_AvatarControls : IHostedService
 		}
     }
 
-    public void StruggleGameLastStateSync()
+    public void StruggleGameResync()
     {
         foreach (var param in StruggleGameLastState)
         {
