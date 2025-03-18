@@ -145,7 +145,7 @@ public class Service_Games : IHostedService
                     {
                         editedLine = editedLine.Replace("URL== ", "");
                         string[] parts = editedLine.Split('|');
-                        gamesList.Last().WorldLunks.Add(new Game.MDLink { text = parts[0].Trim(), url = parts[1].Trim() });
+                        gamesList.Last().WorldLinks.Add(new Game.MDLink { text = parts[0].Trim(), url = parts[1].Trim() });
                         continue;
                     }
 

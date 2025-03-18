@@ -3,7 +3,7 @@ namespace ZeniControlSuite.Models;
 public class Game
 {
     public string Name { get; set; }
-    public List<MDLink> WorldLunks { get; set; } = new List<MDLink>();
+    public List<MDLink> WorldLinks { get; set; } = new List<MDLink>();
     public List<DescriptionLine> Description { get; set; } = new List<DescriptionLine>();
 
     public class MDLink

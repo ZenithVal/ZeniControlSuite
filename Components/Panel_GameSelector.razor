@@ -29,11 +29,11 @@
 <MudDivider/>
 <br />
 
-@if (localGame.WorldLunks.Count > 0)
+@if (localGame.WorldLinks.Count > 0)
 {
 <MudItem>
     <MudText Typo="Typo.h6">World Links</MudText>
-	@foreach (var MDLink in localGame.WorldLunks)
+	@foreach (var MDLink in localGame.WorldLinks)
 	{
         if (MDLink.url == "")
         {
