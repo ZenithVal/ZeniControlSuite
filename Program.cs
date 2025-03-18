@@ -64,8 +64,8 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Points>())
 builder.Services.AddSingleton<Service_BindingTrees>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_BindingTrees>());
 
-builder.Services.AddSingleton<Service_AvatarControls>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_AvatarControls>());
+builder.Services.AddSingleton<Service_Avatars>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Avatars>());
 
 builder.Services.AddSingleton<Service_OSC>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_OSC>());

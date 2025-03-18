@@ -120,11 +120,14 @@ public class Service_Games : IHostedService
         }
         string[] lines = File.ReadAllLines(ini);
 
+        bool inAutoGameLines = false;
+
         foreach (string line in lines)
         {
             if (line.StartsWith("["))
             {
                 gamesList.Add(new Game { Name = line.Replace("[", "").Replace("]", ""), Description = new List<Game.DescriptionLine>() });
+                inAutoGameLines = false;
                 Console.WriteLine("GS | Adding Game " + line.Replace("[", "").Replace("]", ""));
             }
             else
@@ -142,7 +145,7 @@ public class Service_Games : IHostedService
                     {
                         editedLine = editedLine.Replace("URL== ", "");
                         string[] parts = editedLine.Split('|');
-                        gamesList.Last().MDLinks.Add(new Game.MDLink { text = parts[0].Trim(), url = parts[1].Trim() });
+                        gamesList.Last().WorldLunks.Add(new Game.MDLink { text = parts[0].Trim(), url = parts[1].Trim() });
                         continue;
                     }
 
@@ -159,6 +162,7 @@ public class Service_Games : IHostedService
 
                     if (editedLine.Contains("AutoGame"))
                     {
+                        inAutoGameLines = true;
                         gamesList.Last().AutoGameCapable = true;
                     }
 
@@ -176,7 +180,14 @@ public class Service_Games : IHostedService
                 editedLine = editedLine.Replace("\t", " ");
                 editedLine = editedLine.Replace("*", " •");
 
-                gamesList.Last().Description.Add(new Game.DescriptionLine { typo = level, text = editedLine });
+                if (inAutoGameLines)
+                {
+                    gamesList.Last().AutoGameDescription.Add(new Game.DescriptionLine { typo = level, text = editedLine });
+                }
+                else
+                {
+                    gamesList.Last().Description.Add(new Game.DescriptionLine { typo = level, text = editedLine });
+                }
                 }
         }
 

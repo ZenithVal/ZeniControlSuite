@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using CoreOSC;
+using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using MudBlazor.Utilities;
 using OpenShock.SDK.CSharp.Models;
@@ -8,13 +9,13 @@ using ZeniControlSuite.Models;
 
 namespace ZeniControlSuite.Services;
 
-public class Service_AvatarControls : IHostedService
+public class Service_Avatars : IHostedService
 {
     private readonly Service_Logs LogService;
     private readonly Service_Points PointsService;
     private readonly Service_OSC OSCService;
 
-    public Service_AvatarControls(Service_Logs serviceLogs, Service_Points servicePoints, Service_OSC serviceOSC)
+    public Service_Avatars(Service_Logs serviceLogs, Service_Points servicePoints, Service_OSC serviceOSC)
     {
         LogService = serviceLogs;
 		PointsService = servicePoints;
@@ -22,9 +23,14 @@ public class Service_AvatarControls : IHostedService
         OSCService.OnOscMessageReceived += HandleOSCMessage;
 	}
 
-	private void Log(string message, Severity severity)
+	private void LogControls(string message, Severity severity)
     {
-        LogService.AddLog("Service_AvatarControls", "System", message, severity, Variant.Outlined);
+        LogService.AddLog("Service_Avatars/Controls", "System", message, severity, Variant.Outlined);
+    }
+
+    private void LogAvatars(string message, Severity severity)
+    {
+        LogService.AddLog("Service_Avatars/Switch", "System", message, severity, Variant.Outlined);
     }
 
     //===========================================//
@@ -75,13 +81,13 @@ public class Service_AvatarControls : IHostedService
         {
             var jsonString = File.ReadAllText("Configs/AvatarControls.json");
             ReadAvatarControlsJson(jsonString);
-            Log("Service Started", Severity.Normal);
+            LogControls("Service Started", Severity.Normal);
             Console.WriteLine("");
             InvokeAvatarControlsUpdate();
         }
         catch (Exception e)
         {
-            Log($"AvatarControls.json parsing failed during {validationLog}", Severity.Error);
+            LogControls($"AvatarControls.json parsing failed during {validationLog}", Severity.Error);
             Console.WriteLine(e.Message);
             avatarsLoaded = false;
             InvokeAvatarControlsUpdate();
@@ -267,7 +273,7 @@ public class Service_AvatarControls : IHostedService
         }
         else
         {
-            Log($"Parameter {parameter.Address} already exists in {avatar.Name}", Severity.Warning);
+            LogControls($"Parameter {parameter.Address} already exists in {avatar.Name}", Severity.Warning);
         }
 
     }
@@ -447,7 +453,7 @@ public class Service_AvatarControls : IHostedService
                 parameter.Value = parameterElement.GetProperty("Value").GetSingle();
                 break;
             default:
-                Log("Unknown parameter type", Severity.Error);
+                LogControls("Unknown parameter type", Severity.Error);
                 throw new InvalidOperationException("Unknown parameter type");
         }
 
@@ -523,7 +529,7 @@ public class Service_AvatarControls : IHostedService
 		if (avatars.Any(a => a.ID == avatarID))
         {
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == avatarID);
-            Log($"Selected avatar {selectedAvatar.Name}", Severity.Normal);
+            LogAvatars($"Avatar switched to {selectedAvatar.Name} in VRChat", Severity.Normal);
 
             HandleTrappedSwitch();
 
@@ -534,9 +540,9 @@ public class Service_AvatarControls : IHostedService
             //tuncate avatarID to 13 characters for log
             string avatarIDTruncated = avatarID.Length > 13 ? avatarID.Substring(0, 13) : avatarID;
 
-            Log($"No avatar for {avatarIDTruncated} found", Severity.Warning);
+            LogAvatars($"No avatar for {avatarIDTruncated} found", Severity.Normal);
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == "Global");
-            Log($"Selected avatar Global", Severity.Normal);
+            LogAvatars($"Selected avatar Global", Severity.Normal);
 
             InvokeAvatarControlsUpdate();
         }
@@ -546,7 +552,7 @@ public class Service_AvatarControls : IHostedService
 	{
         if (!selectedAvatar.Parameters.ContainsKey(param.Address))
         {
-            Log($"Parameter {param.Address} not found in {selectedAvatar.Name}", Severity.Warning);
+            LogControls($"Parameter {param.Address} not found in {selectedAvatar.Name}", Severity.Warning);
             return;
         }
         selectedAvatar.Parameters[param.Address].Value = param.Value;
@@ -558,6 +564,7 @@ public class Service_AvatarControls : IHostedService
     public void SwitchAvatar(Avatar avatar) //Sends an OSC paramter to switch the avatar. Used by the UI
     {
         OSCService.sendOSCMessage("/avatar/change", avatar.ID);
+        LogAvatars($"Switching Avatar to {avatar.Name}", Severity.Info);
         selectedAvatar = avatar;
         lastSelectedAvatar = selectedAvatar;
     }
@@ -573,7 +580,7 @@ public class Service_AvatarControls : IHostedService
     {
         if (!Trapped) return;
 
-        Log($"Avatar switched while trapped, returning to {lastSelectedAvatar.Name}", Severity.Warning);
+		LogAvatars($"Avatar changed while trapped, returning to {lastSelectedAvatar.Name}", Severity.Warning);
         SwitchAvatar(lastSelectedAvatar);
     }
 
@@ -583,7 +590,7 @@ public class Service_AvatarControls : IHostedService
         {
             Trapped = true;
             TrapEndTime = DateTime.Now.AddMinutes(15);
-            Log("Avatar Trapped", Severity.Normal);
+            LogAvatars("Avatar Trapped", Severity.Normal);
             TrappedAwait();
         }
         else
@@ -597,14 +604,14 @@ public class Service_AvatarControls : IHostedService
     public void TrapTimerUpdate(int minutes)
     {
         TrapEndTime = TrapEndTime.AddMinutes(minutes);
-        Log($"Trap Timer updated by {minutes} minutes", Severity.Normal);
+        LogAvatars($"Trap Timer updated by {minutes} minutes", Severity.Info);
 
-        if (DateTime.Now > TrapEndTime)
-        {
-            Trapped = false;
-            Log("Avatar Trap Ended", Severity.Normal);
-        }
-        InvokeAvatarControlsUpdate();
+		if (DateTime.Now > TrapEndTime && Trapped)
+		{
+			Trapped = false;
+			LogAvatars("Avatar Trap Ended", Severity.Warning);
+		}
+		InvokeAvatarControlsUpdate();
     }
 
     private async Task TrappedAwait()
@@ -612,11 +619,11 @@ public class Service_AvatarControls : IHostedService
         TrapTimerRunning = true;
         while (Trapped)
         {
-            if (DateTime.Now > TrapEndTime)
+            if (DateTime.Now > TrapEndTime && Trapped)
             {
-                Trapped = false;
-                Log("Avatar Trap Ended", Severity.Normal);
-            }
+				Trapped = false;
+				LogAvatars("Avatar Trap Ended", Severity.Warning);
+			}
             await Task.Delay(10000);
         }
         TrapTimerRunning = false;
@@ -639,7 +646,7 @@ public class Service_AvatarControls : IHostedService
         if (avatars.Any(a => a.ID == "StruggleGame"))
         {
             StruggleGameSystem = true;
-            Log("Struggle Game System Enabled", Severity.Info);
+            LogControls("Struggle Game System Enabled", Severity.Info);
             StruggleGameAvatar = avatars.FirstOrDefault(a => a.ID == "StruggleGame");
         }
         else
@@ -653,7 +660,7 @@ public class Service_AvatarControls : IHostedService
     {
         if (!StruggleGameAvatar.Parameters.ContainsKey(param.Address))
         {
-            Log($"Parameter {param.Address} not found in StruggleGame", Severity.Warning);
+            LogControls($"Parameter {param.Address} not found in StruggleGame", Severity.Warning);
             return;
         }
         StruggleGameAvatar.Parameters[param.Address].Value = value;
@@ -664,12 +671,12 @@ public class Service_AvatarControls : IHostedService
 			if (ParamActive && !StruggleGameActive)
             {
                 StruggleGameStart();
-				Log("Struggle Game Started", Severity.Info);
+				LogControls("Struggle Game Started", Severity.Info);
 			}
 			else if (!ParamActive && StruggleGameActive)
             {
                 StruggleGameEnd();
-				Log("Struggle Game Ended", Severity.Info);
+				LogControls("Struggle Game Ended", Severity.Info);
 			}
 		}
     }

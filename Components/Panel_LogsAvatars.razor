@@ -1,0 +1,15 @@
+﻿@using ZeniControlSuite.Models;
+
+@* Logs, but just limited to Avatars/Switch *@
+
+<MudItem>
+	<MudText Typo="Typo.h6">Logs</MudText>
+</MudItem>
+
+@foreach (LogEvent logevent in LogService.logEvents.OrderByDescending(e => e.time))
+{
+	if (logevent.source.StartsWith("Service_Avatars/Switch"))
+	{
+		<MudAlert Dense="true" Severity="@logevent.severity">@logevent.message</MudAlert>
+	}
+}

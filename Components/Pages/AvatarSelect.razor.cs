@@ -15,8 +15,9 @@ public partial class AvatarSelect : IDisposable
 
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private Service_Logs LogService { get; set; } = default!;
-    [Inject] private Service_AvatarControls AvatarsService { get; set; } = default!;
+    [Inject] private Service_Avatars AvatarsService { get; set; } = default!;
     [Inject] private Service_Points PointsService { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
 
     private string user = "Undefined";
@@ -47,6 +48,12 @@ public partial class AvatarSelect : IDisposable
         AvatarsService.OnAvatarsUpdate -= OnAvatarsUpdate;
     }
 
+    private void Log(string message, Severity severity)
+    {
+        LogService.AddLog(pageName, user, message, severity);
+        Snackbar.Add(message, severity);
+    }
+
     bool adminPanelExpand = false;
     private void ToggleAdminPanel()
     {
@@ -56,7 +63,7 @@ public partial class AvatarSelect : IDisposable
     private void SelectAvatar(Avatar avatar)
     {
         AvatarsService.SwitchAvatar(avatar);
-        LogService.AddLog(pageName, user, $"Selected {avatar.Name}", Severity.Normal);
+        Log($"Selected {avatar.Name}", Severity.Normal);
     }
 
     private void PurchaseAvatar(Avatar avatar)
@@ -64,11 +71,11 @@ public partial class AvatarSelect : IDisposable
         if (AvatarsService.selectedAvatar != avatar)
         {
             AvatarsService.SwitchAvatar(avatar);
-            LogService.AddLog(pageName, user, $"Bought Select {avatar.Name}", Severity.Normal);
+            Log($"Bought Select {avatar.Name}", Severity.Normal);
         }
         else
         {
-            LogService.AddLog(pageName, user, $"Already Selected {avatar.Name}, increasing trap timer", Severity.Normal);
+            Log($"Already Selected {avatar.Name}, increasing trap timer", Severity.Normal);
         }
         
         //AvatarsService.TrapAvatar();
@@ -85,7 +92,7 @@ public partial class AvatarSelect : IDisposable
         {
             AvatarsService.TrapTimerUpdate(15);
         }
-        LogService.AddLog(pageName, user, $"Trap Timer Increased", Severity.Normal);
+        Log($"Trap Timer Increased", Severity.Normal);
 
         PointsService.UpdatePoints(-2);
     }
@@ -93,7 +100,7 @@ public partial class AvatarSelect : IDisposable
     private void DecreaseTrapTimer()
     {
         AvatarsService.TrapTimerUpdate(-15);
-        LogService.AddLog(pageName, user, $"Trap Timer Decreased", Severity.Normal);
+        Log($"Trap Timer Decreased", Severity.Normal);
 
         PointsService.UpdatePoints(2);
     }

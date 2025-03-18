@@ -17,7 +17,7 @@ public partial class AvatarControls : IDisposable
 	[Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
-    [Inject] private Service_AvatarControls AvatarsService { get; set; } = default!;
+    [Inject] private Service_Avatars AvatarsService { get; set; } = default!;
 	[Inject] private Service_OSC OscService { get; set; } = default!;
 
 
