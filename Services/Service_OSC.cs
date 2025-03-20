@@ -53,8 +53,6 @@ public class Service_OSC : IHostedService
 
     //===========================================//
     #region OSC Settings
-    /*    public delegate void OscSubscriptionEventHandler(OSCSubscriptionEvent e);
-        public event OscSubscriptionEventHandler? OnOscMessageReceived;*/
 
     private UDPListener _listener;
     private UDPSender _sender;
@@ -66,12 +64,12 @@ public class Service_OSC : IHostedService
     private bool OSCQuery = false;
 
     public bool Running { get; private set; } = false;
+	#endregion
 
-    #endregion
 
-    #region Config Reading
-
-    public Task ValidateOSCConfig()
+	//===========================================//
+	#region Initialization
+	public Task InitializeOSCConfig()
     {
         if (!File.Exists("Configs/OSC.json"))
         {
@@ -87,6 +85,7 @@ public class Service_OSC : IHostedService
             listeningPort = config.GetProperty("ListeningPort").GetInt32();
             sendingPort = config.GetProperty("SendingPort").GetInt32();
             OSCQuery = config.GetProperty("OSCQuery").GetBoolean();
+
         }
         catch (Exception ex)
         {
@@ -130,7 +129,7 @@ public class Service_OSC : IHostedService
     #region Running OSC service
     private async Task RunOSC(CancellationToken stoppingToken)
     {
-        await ValidateOSCConfig();
+        await InitializeOSCConfig();
 
         Running = true;
         HandleOscPacket callback = delegate (OscPacket packet)

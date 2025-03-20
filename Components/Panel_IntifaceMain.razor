@@ -3,7 +3,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using ZeniControlSuite.Authentication
-@using ZeniControlSuite.Models
+@using ZeniControlSuite.Models.Intiface
 @attribute [Authorize(Roles = "Admin, Intiface")]
 
 <AuthorizeView>
@@ -17,7 +17,7 @@
             <MudItem xs="4">
                 @if (@context.User.IsInRole("LocalHost"))
                 {
-                    <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@(IntifaceService.IntifaceEnabled)" OnClick="EnableIntiface">Enable Intiface</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@(IntifaceService.IntifaceRunning)" OnClick="EnableIntiface">Enable Intiface</MudButton>
                 }
                 else
                 {
@@ -28,11 +28,11 @@
             <MudItem xs="4">
                 @if (IntifaceService.FullStop)
                 {
-                    <MudButton Disabled="@(!IntifaceService.IntifaceEnabled)" Variant="Variant.Outlined" Color="Color.Primary" OnClick="PowerFullStop">STOPPED</MudButton>
+                    <MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Outlined" Color="Color.Primary" OnClick="PowerFullStop">STOPPED</MudButton>
                 }
                 else
                 {
-                    <MudButton Disabled="@(!IntifaceService.IntifaceEnabled)" Variant="Variant.Filled" Color="Color.Error" OnClick="PowerFullStop">Full Stop</MudButton>
+                    <MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Filled" Color="Color.Error" OnClick="PowerFullStop">Full Stop</MudButton>
                 }
             </MudItem>
 
@@ -98,7 +98,7 @@
 
 
                         <MudItem xs="12">
-                            <MudSlider Vertical="false" Color="Color.Tertiary" Variant="Variant.Filled" Size="Size.Large" Min="0.0" Max="1.0" Step="0.05" @bind-Value="@IntifaceService.PowerInput">Multiplier</MudSlider>
+                            <MudSlider Vertical="false" Color="Color.Tertiary" Variant="Variant.Filled" Size="Size.Large" Min="0.0" Max="1.0" Step="0.05" @bind-Value="@IntifaceService.PatternPowerMulti">Multiplier</MudSlider>
                         </MudItem>
 
 

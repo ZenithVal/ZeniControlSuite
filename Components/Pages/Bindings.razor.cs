@@ -144,7 +144,7 @@ public partial class Bindings : IDisposable
 
             if (PointsService.pointsTotal < binding.PointValue)
             {
-                Log($"Can't add ({binding.Name}) ~ Need {binding.PointValue}p", Severity.Warning);
+                Log($"Can't add ({binding.Name}) ~ Need {binding.PointValue}✦", Severity.Warning);
                 return;
             }
 
@@ -159,7 +159,7 @@ public partial class Bindings : IDisposable
             binding.isOwned = true;
             binding.isBuyable = false;
             PointsService.UpdatePoints(-binding.PointValue);
-            Log($"Added ({binding.Name}) for {binding.PointValue}p", Severity.Success);
+            Log($"Added ({binding.Name}) for {binding.PointValue}✦", Severity.Success);
             BindingTreesService.CheckBindingRelations();
 
             //Check if it's a consumable item and there's one available
@@ -283,7 +283,7 @@ public partial class Bindings : IDisposable
             binding.isSellable = false;
             binding.isBuyable = true;
             PointsService.UpdatePoints(binding.PointValue);
-            Log($"Removed {binding.Name} ~ Refunded {binding.PointValue}p", Severity.Normal);
+            Log($"Removed {binding.Name} ~ Refunded {binding.PointValue}✦", Severity.Normal);
             BindingTreesService.CheckBindingRelations();
 
             //if it's got prereqs and this is the only item that has it as a prereq, set isPrereqLocked to false for those items

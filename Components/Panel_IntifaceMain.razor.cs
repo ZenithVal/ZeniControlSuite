@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using ZeniControlSuite.Authentication;
-using ZeniControlSuite.Models;
+using ZeniControlSuite.Models.Intiface;
 using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components;
@@ -62,7 +62,7 @@ public partial class Panel_IntifaceMain : IDisposable
         IntifaceService.PatRandomOnTimeMax = 2.0;
         IntifaceService.PatRandomPowerMin = 0.1;
         IntifaceService.PatRandomPowerMax = 1.0;
-        IntifaceService.PowerInput = 0.2;
+        IntifaceService.PatternPowerMulti = 0.2;
         InvokeAsync(StateHasChanged);
     }
 
@@ -147,7 +147,16 @@ public partial class Panel_IntifaceMain : IDisposable
         IntifaceService.PatUseRandomPower = PatUseRandomPower;
         IntifaceService.PatRandomPowerMin = PatRandomPowerMin;
         IntifaceService.PatRandomPowerMax = PatRandomPowerMax;
-        IntifaceService.PowerInput = PowerInput;
+        IntifaceService.PatternPowerMulti = PowerInput;
+
+		if (PatternType == PatternType.None)
+		{
+			IntifaceService.UsePattern = false;
+		}
+		else
+		{
+			IntifaceService.UsePattern = true;
+		}
 
         LogService.AddLog(pageName, user, "Control Preset Applied", Severity.Normal);
         InvokeAsync(StateHasChanged);

@@ -1,14 +1,37 @@
-﻿using Buttplug.Client;
+﻿using System.ComponentModel;
+using System.Text.Json;
+using Buttplug.Client;
+using CoreOSC;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+using ZeniControlSuite.Extensions;
 using ZeniControlSuite.Models;
+using ZeniControlSuite.Models.Intiface;
 
 namespace ZeniControlSuite.Services;
 
 public class Service_Intiface : IHostedService, IDisposable
 {
-    [Inject] private Service_Logs LogService { get; set; } = default!;
-    private void Log(string message, Severity severity)
+	private readonly Service_Logs LogService;
+	private readonly Service_OSC OSCService;
+
+	public Service_Intiface(Service_Logs serviceLogs, Service_OSC serviceOSC)
+	{
+		LogService = serviceLogs;
+		OSCService = serviceOSC;
+		OSCService.OnOscMessageReceived += HandleOSCMessage;
+		_client.DeviceAdded += HandleDeviceAdded;
+		_client.DeviceRemoved += HandleDeviceRemoved;
+	}
+	public void Dispose()
+	{
+		_client.Dispose();
+		OSCService.OnOscMessageReceived -= HandleOSCMessage;
+		_client.DeviceAdded -= HandleDeviceAdded;
+		_client.DeviceRemoved -= HandleDeviceRemoved;
+	}
+
+	private void Log(string message, Severity severity)
     {
         LogService.AddLog("Service_Intiface", "System", message, severity, Variant.Outlined);
     }
@@ -16,12 +39,17 @@ public class Service_Intiface : IHostedService, IDisposable
     //===========================================//
     #region HostedService Stuff 
     public delegate void RequestControlUpdate();
-    public event Service_Intiface.RequestControlUpdate? OnIntifaceControlsUpdate;
+    public event RequestControlUpdate? OnIntifaceControlsUpdate;
 
     public delegate void RequestReadoutUpdate();
-    public event Service_Intiface.RequestReadoutUpdate? OnIntifaceReadoutUpdate;
-    public Task StartAsync(CancellationToken cancellationToken)
+    public event RequestReadoutUpdate? OnIntifaceReadoutUpdate;
+
+    public delegate void RequestHapticsUpdate();
+    public event RequestHapticsUpdate? OnIntifaceHapticsUpdate;
+
+	public Task StartAsync(CancellationToken cancellationToken)
     {
+        InitializeIntifaceConfig();
         return Task.CompletedTask;
     }
 
@@ -29,6 +57,13 @@ public class Service_Intiface : IHostedService, IDisposable
     {
         return Task.CompletedTask;
     }
+
+	public void InvokeIntifaceUpdate()
+    {
+        InvokeControlUpdate();
+        InvokeReadoutUpdate();
+        InvokeHapticsUpdate();
+	}
 
     public void InvokeControlUpdate()
     {
@@ -45,63 +80,209 @@ public class Service_Intiface : IHostedService, IDisposable
             OnIntifaceReadoutUpdate?.Invoke();
         }
     }
-    #endregion
+
+    public void InvokeHapticsUpdate()
+    {
+		if (OnIntifaceHapticsUpdate != null)
+        {
+			OnIntifaceHapticsUpdate?.Invoke();
+		}
+	}
+	#endregion
 
 
-    //===========================================//
-    #region Settings
-    private ButtplugClient _client = new ButtplugClient("ZeniControlSuite");
+	//===========================================//
+	#region Main Settings
+	private ButtplugClient _client = new ButtplugClient("ZeniControlSuite");
 
+    private string IntifaceServerAddress { get; set; } = "ws://localhost:16261";
     public bool IntifaceEnabled { get; set; } = false;
-    public bool IntifaceConnected { get; private set; } = false;
+    public bool IntifaceRunning { get; set; } = false;
+	public bool IntifaceConnected { get; private set; } = false;
     public bool DeviceConnected { get; private set; } = false;
-
+    public List <Device> Devices { get; set; } = new List<Device>();
 
     public double PowerOutput { get; set; } = 0.0;
     public double PowerOutputPrevious { get; set; } = 0.0;
-    public double PowerInput { get; set; } = 1.0;
-    public double Power = 0.0;
     public double PowerSpike { get; set; } = 0.0;
     public bool FullStop { get; set; } = false;
 
-    public bool UsePattern { get; set; } = false;
-    public bool PatternRunning { get; private set; } = false;
-    public bool PatUseRandomPower { get; set; } = false;
+    public bool OSCEnabled { get; set; } = false;
 
-    public PatternType PatternType { get; set; } = PatternType.Wave;
-    public List<PatternType> GetPatternTypes => Enum.GetValues<PatternType>().ToList();
+    private Parameter OutputParam = new Parameter("/ZCS_Intiface_Output", ParameterType.Float, 0.0f);
+	#endregion
 
-    public double PatSpeedClimb = 2.0;
-    public double PatSpeedDrop = 3.0;
 
-    public double PatRandomOffTimeMin = 0.5; //time in seconds to wait before turning on
-    public double PatRandomOffTimeMax = 2.0;
-    public double PatRandomOnTimeMin = 0.5; //time in seconds to wait before turning off
-    public double PatRandomOnTimeMax = 2.0;
+	//==================//
+	#region Haptic Settings
+	public bool HapticsEnabled { get; set; } = false;
+	public double HapticPower { get; set; } = 0.0;
+	public List<HapticInput> HapticInputs { get; set; } = new List<HapticInput>();
+    private Dictionary<string, Parameter> HapticParameters = new Dictionary<string, Parameter>();
+	#endregion
 
-    public PatternState PatState = PatternState.Up;
-    public double PatPowerGoal = 0.0;
-    public double PatRandomPowerMin = 0.1;
-    public double PatRandomPowerMax = 1.0;
 
-    public Service_Intiface(IServiceProvider services)
+	//==================//
+	#region Pattern Settings
+
+	public bool UsePattern { get; set; } = false;
+	public bool PatternRunning { get; private set; } = false;
+	public bool PatUseRandomPower { get; set; } = false;
+
+
+	public double PatternPower = 0.0;
+	public double PatternPowerMulti { get; set; } = 1.0;
+
+	public PatternType PatternType { get; set; } = PatternType.Wave;
+	public List<PatternType> GetPatternTypes => Enum.GetValues<PatternType>().ToList();
+
+	public double PatSpeedClimb = 2.0;
+	public double PatSpeedDrop = 3.0;
+
+	public double PatRandomOffTimeMin = 0.5; //time in seconds to wait before turning on
+	public double PatRandomOffTimeMax = 2.0;
+	public double PatRandomOnTimeMin = 0.5; //time in seconds to wait before turning off
+	public double PatRandomOnTimeMax = 2.0;
+
+	public PatternState PatState = PatternState.Up;
+	public double PatPowerGoal = 0.0;
+	public double PatRandomPowerMin = 0.1;
+	public double PatRandomPowerMax = 1.0;
+	#endregion
+
+
+	//===========================================//
+	#region Intialization
+	private string validationLog = "";
+    private void ValidationLog(string message)
     {
-        LogService = services.GetRequiredService<Service_Logs>();
-        _client.DeviceAdded += HandleDeviceAdded;
-        _client.DeviceRemoved += HandleDeviceRemoved;
-    }
-    public void Dispose()
+		validationLog = message;
+		Console.WriteLine($"Intiface | {validationLog}");
+	}
+
+	private void InitializeIntifaceConfig()
     {
-        _client.Dispose();
-        _client.DeviceAdded -= HandleDeviceAdded;
-        _client.DeviceRemoved -= HandleDeviceRemoved;
+		if (!File.Exists("Configs/Intiface.json"))
+		{
+			Log("Intiface config file not found.", Severity.Info);
+            IntifaceEnabled = false;
+            return;
+		}
+
+		try
+		{
+			var jsonString = File.ReadAllText("Configs/Intiface.json");
+			ReadIntifaceJson(jsonString);
+			Log("Service Started", Severity.Normal);
+			Console.WriteLine("");
+		}
+		catch (Exception e)
+		{
+			Log($"AvatarControls.json parsing failed during {validationLog}", Severity.Error);
+			Console.WriteLine(e.Message);
+			IntifaceEnabled = false;
+		}
+
+		InvokeIntifaceUpdate();
+	}
+
+    private void ReadIntifaceJson(string jsonString)
+    {
+        if (IntifaceRunning)
+        {
+			return;
+		}
+
+        ValidationLog("Reading Intiface Core Config");
+        
+        var config = JsonSerializer.Deserialize<JsonElement>(jsonString);
+        IntifaceEnabled = config.GetProperty("IntifaceEnabled").GetBoolean();
+		IntifaceServerAddress = config.GetProperty("IntifaceServerAddress").GetString();
+
+        OSCEnabled = config.GetProperty("OSCEnabled").GetBoolean();
+        HapticsEnabled = config.GetProperty("HapticsEnabled").GetBoolean();
+
+        var devices = config.GetProperty("Devices");
+        foreach (var device in devices.EnumerateArray())
+        {
+            Devices.Add(DeserializeDevices(device));
+        }
+
+		if (HapticsEnabled)
+        {
+			var hapticInputs = config.GetProperty("HapticInputs");
+            foreach (var hapticInput in hapticInputs.EnumerateArray())
+            {
+				HapticInputs.Add(DeserializeHapticInputs(hapticInput));
+			}
+        }
     }
-    #endregion
 
 
-    //===========================================//
-    #region Device Scanning and Connection
-    private async Task ScanForDevices()
+	private Device DeserializeDevices(JsonElement _device)
+	{
+        ValidationLog($"Deserializing Device {_device.GetProperty("Name").GetString()}");
+
+        var device = new Device();
+		device.Name = _device.GetProperty("Name").GetString();
+		device.DisplayName = _device.GetProperty("DisplayName").GetString();
+		device.Enabled = _device.GetProperty("Enabled").GetBoolean();
+        device.Connected = false;
+
+		return device;
+	}
+
+	private HapticInput DeserializeHapticInputs(JsonElement _hapticInput)
+	{
+        ValidationLog($"Deserializing Haptic Input {_hapticInput.GetProperty("Parameter").GetString()}");
+
+        //Gotta construct the param first
+        var parameter = DeserializeParamter(_hapticInput.GetProperty("Parameter"));
+
+        float min = _hapticInput.GetProperty("Min").GetSingle();
+        float max = _hapticInput.GetProperty("Max").GetSingle();
+        float exponent = _hapticInput.GetProperty("Exponent").GetSingle();
+		float multiplier = _hapticInput.GetProperty("Multiplier").GetSingle();
+		float influence = _hapticInput.GetProperty("Influence").GetSingle();
+
+        var hapticInput = new HapticInput() {
+			Parameter = parameter,
+			Min = min,
+			Max = max,
+			Exponent = exponent,
+			Influence = influence
+		};
+
+        HapticParameters.Add(parameter.Address, parameter);
+
+		return hapticInput;
+	}
+
+    private Parameter DeserializeParamter(JsonElement _parameter)
+    {
+        var paramList = _parameter.EnumerateArray().ToList();
+		var parameter = new Parameter();
+
+		parameter.Address = paramList[0].GetString();
+
+		var type = paramList[1].GetString();
+		if (type == "Bool")
+		{
+			parameter.Type = ParameterType.Bool;
+		}
+		else if (type == "Float")
+		{
+			parameter.Type = ParameterType.Float;
+		}
+
+		return parameter;
+	}
+	#endregion
+
+
+	//===========================================//
+	#region Device Scanning and Connection
+	private async Task ScanForDevices()
     {
         Log("Scanning for devices", Severity.Info);
         await _client.StartScanningAsync();
@@ -127,19 +308,27 @@ public class Service_Intiface : IHostedService, IDisposable
 
 
     //===========================================//
-    #region Intiface Control
+    #region Intiface 
     public async Task IntifaceStart(Service_Logs logService)
     {
-        if (IntifaceEnabled)
+        if (!IntifaceEnabled)
         {
+            Log("Intiface not enabled, skipped start request", Severity.Info);
+			return;
+		}
+        
+        if (IntifaceRunning)
+        {
+            Log("Intiface already running, skipped start request", Severity.Warning);
             return;
         }
+
         try
         {
             Log("Intiface Starting", Severity.Info);
-            await _client.ConnectAsync(new ButtplugWebsocketConnector(new Uri("ws://localhost:16261")));
+            await _client.ConnectAsync(new ButtplugWebsocketConnector(new Uri(IntifaceServerAddress)));
             await ScanForDevices();
-            IntifaceEnabled = true;
+            IntifaceRunning = true;
 
             Log("Intiface Connected", Severity.Info);
             DeviceHeartbeatTimer();
@@ -149,7 +338,7 @@ public class Service_Intiface : IHostedService, IDisposable
         catch (Exception e)
         {
             Log("Intiface failed: " + e.Message, Severity.Error);
-            IntifaceEnabled = false;
+            IntifaceRunning = false;
             InvokeControlUpdate();
         }
     }
@@ -162,91 +351,33 @@ public class Service_Intiface : IHostedService, IDisposable
         timer.Enabled = true;
     }
 
-    private async Task DeviceLoop()
+	private async Task DeviceLoop()
     {
-        if (!PatternRunning)
+        if (UsePattern && !PatternRunning)
         {
             PatternRunning = true;
             DevicePattern();
         }
+		else if (!UsePattern)
+		{
 
-        if (!FullStop)
+		}
+
+		if (HapticsEnabled)
+		{
+			await IntifaceHapticCalc();
+		}
+
+        if (FullStop)
         {
-            PowerOutput = Math.Clamp((Power * PowerInput) + PowerSpike, 0.0, 1.0);
-        }
+			PowerOutput = 0.0;
+		}
         else
         {
-            PowerOutput = 0.0;
+			PowerOutput = Math.Clamp((PatternPower * PatternPowerMulti) + PowerSpike + HapticPower, 0.0, 1.0);
         }
 
         await DeviceControl();
-    }
-
-    private async Task DevicePattern()
-    {
-        PatState = 0;
-        PatPowerGoal = PowerInput;
-
-        if (PatUseRandomPower)
-        {
-            PatPowerGoal = new Random().NextDouble() * (PatRandomPowerMax - PatRandomPowerMin) + PatRandomPowerMin;
-        }
-
-        Power = 0.0;
-        switch (PatternType)
-        {
-            case PatternType.None:
-                while (PatternType == PatternType.None)
-                {
-                    Power = PowerInput;
-                    await Task.Delay(200);
-                }
-                break;
-
-            case PatternType.Pulse:
-                Power = PatPowerGoal;
-                await DelayRandom(PatRandomOnTimeMin, PatRandomOnTimeMax);
-                await Task.Delay(50);
-                Power = PatRandomPowerMin;
-                break;
-
-            case PatternType.Wave:
-                //states= 0: Up, 1: Down
-                while (PatternType == PatternType.Wave && PatState == PatternState.Up)
-                {
-                    Power += (0.01 * PatSpeedClimb) * PatPowerGoal;
-
-                    if (Power > 0.99 * PatPowerGoal)
-                    {
-                        PatState = PatternState.Down;
-
-                    }
-                    await Task.Delay(50);
-                }
-                Power = PatPowerGoal;
-                await DelayRandom(PatRandomOnTimeMin, PatRandomOnTimeMax);
-
-                while (PatternType == PatternType.Wave && PatState == PatternState.Down)
-                {
-                    Power -= (0.01 * PatSpeedDrop) * PatPowerGoal;
-
-                    if (Power < 0.01 + PatRandomPowerMin)
-                    {
-                        PatState = PatternState.Up;
-                    }
-
-                    await Task.Delay(50);
-                }
-                Power = 0.0 + PatRandomPowerMin;
-
-                break;
-
-            default:
-                break;
-        }
-        await DelayRandom(PatRandomOffTimeMin, PatRandomOffTimeMax);
-
-        PatternRunning = false;
     }
 
     public async Task DeviceControl()
@@ -261,19 +392,125 @@ public class Service_Intiface : IHostedService, IDisposable
             }
         }
     }
-    #endregion
+	#endregion
 
 
-    //===========================================//
-    #region Idk yet
-    public decimal CreateSineWave(double freq, double amplitude, double offset)
-    {
-        DateTime currentTime = DateTime.Now;
-        var time = currentTime.TimeOfDay.TotalSeconds; // Current time in seconds
-        return (decimal)((amplitude * Math.Sin(2 * Math.PI * freq * time)) + offset);
-    }
+	//===========================================//
+	#region Patterns
+	private async Task DevicePattern()
+	{
+		PatState = 0;
+		PatPowerGoal = PatternPowerMulti;
 
-    private async Task DelayRandom(double min, double max)
+		if (PatUseRandomPower)
+		{
+			PatPowerGoal = new Random().NextDouble() * (PatRandomPowerMax - PatRandomPowerMin) + PatRandomPowerMin;
+		}
+
+		PatternPower = 0.0;
+		switch (PatternType)
+		{
+			case PatternType.None:
+				while (PatternType == PatternType.None)
+				{
+					PatternPower = PatternPowerMulti;
+					await Task.Delay(200);
+				}
+				break;
+
+			case PatternType.Pulse:
+				PatternPower = PatPowerGoal;
+				await DelayRandom(PatRandomOnTimeMin, PatRandomOnTimeMax);
+				await Task.Delay(50);
+				PatternPower = PatRandomPowerMin;
+				break;
+
+			case PatternType.Wave:
+				//states= 0: Up, 1: Down
+				while (PatternType == PatternType.Wave && PatState == PatternState.Up)
+				{
+					PatternPower += (0.01 * PatSpeedClimb) * PatPowerGoal;
+
+					if (PatternPower > 0.99 * PatPowerGoal)
+					{
+						PatState = PatternState.Down;
+
+					}
+					await Task.Delay(50);
+				}
+				PatternPower = PatPowerGoal;
+				await DelayRandom(PatRandomOnTimeMin, PatRandomOnTimeMax);
+
+				while (PatternType == PatternType.Wave && PatState == PatternState.Down)
+				{
+					PatternPower -= (0.01 * PatSpeedDrop) * PatPowerGoal;
+
+					if (PatternPower < 0.01 + PatRandomPowerMin)
+					{
+						PatState = PatternState.Up;
+					}
+
+					await Task.Delay(50);
+				}
+				PatternPower = 0.0 + PatRandomPowerMin;
+
+				break;
+
+			default:
+				break;
+		}
+		await DelayRandom(PatRandomOffTimeMin, PatRandomOffTimeMax);
+
+		PatternRunning = false;
+	}
+	#endregion
+
+
+	//===========================================//
+	#region Haptics
+	private void HandleOSCMessage(OscMessage messageReceived)
+	{
+        if (HapticParameters.ContainsKey(messageReceived.Address))
+        {
+			var parameter = HapticParameters[messageReceived.Address];
+			float value = OSCExtensions.FormatIncoming(messageReceived.Arguments[0], parameter.Type);
+            HandleHapticParam(parameter, value);
+		}
+	}
+	private void HandleHapticParam(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
+	{
+		HapticParameters[param.Address].Value = value;
+	}
+
+	public async Task IntifaceHapticCalc()
+	{
+        var newHapticPower = 0.0f;
+        foreach (var HI in HapticInputs)
+        {
+            float value = 0.0f;
+            switch (HI.Parameter.Type)
+            {
+				case ParameterType.Float:
+                    //Min Max, then exponent, then multiplier, then influence
+					value = (HI.Parameter.Value - HI.Min) / (HI.Max - HI.Min);
+					value = (float)Math.Pow(value, HI.Exponent);
+					value *= HI.Multiplier * HI.Influence;
+					break;
+				case ParameterType.Bool:
+					value = HI.Parameter.Value * HI.Multiplier * HI.Influence;
+					break;
+			}
+            newHapticPower += value;
+		}
+        HapticPower = newHapticPower;
+		InvokeHapticsUpdate();
+	}
+	#endregion
+
+
+	//===========================================//
+	#region Helpful
+	private async Task DelayRandom(double min, double max)
     {
         double delay = new Random().NextDouble() * (max - min) + min;
         await Task.Delay((int)(delay * 1000));

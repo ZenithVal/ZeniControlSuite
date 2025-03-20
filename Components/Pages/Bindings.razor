@@ -79,14 +79,14 @@
                                 if (!binding.CanBeLocked)
                                 {
                                     <div Class="bg-transparent" Style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
-                                        <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Info">Sell - $@binding.PointValue</MudText>
+                                        <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Info">Sell - @binding.PointValue✦</MudText>
                                         <MudButton Variant="Variant.Text" Style="position: absolute; width: 100%; height: 100%;" OnClick="@(() => SellBinding(binding))" Color="Color.Info"></MudButton>
                                     </div>
                                 }
                                 else
                                 {
                                     <div Class="bg-transparent" Style="position: absolute; left: 0; top: 0; width: 50%; height: 100%;">
-                                            <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Info">Sell - $@binding.PointValue</MudText>
+                                            <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Info">Sell - @binding.PointValue✦</MudText>
                                             <MudButton Variant="Variant.Text" Style="position: absolute; width: 100%; height: 100%;" OnClick="@(() => SellBinding(binding))" Color="Color.Info"></MudButton>
                                     </div>
                                 }
@@ -97,7 +97,7 @@
                             if (binding.ConsumableCount != -1)
                             {
                                 <div Class="bg-transparent" Style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
-                                    <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Success">Add $@binding.PointValue (@binding.ConsumableCount left)</MudText>
+                                    <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Success">Add - @binding.PointValue✦ (@binding.ConsumableCount left)</MudText>
                                     <MudButton Variant="Variant.Text" Style="position: absolute; width: 100%; height: 100%;" Disabled="(binding.ConsumableCount < 1)" OnClick="@(() => BuyBinding(binding))" Color="Color.Success"></MudButton>
                                 </div>
                             }
@@ -106,22 +106,21 @@
                                 if (!binding.isSubPrereqMet)
                                 {
                                     <div Class="bg-transparent" Style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
-                                        <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button">Buy - $@binding.PointValue</MudText>
+                                        <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button">Buy - @binding.PointValue✦</MudText>
                                     </div>
                                 }
                                 else
                                 {
                                     <div Class="bg-transparent" Style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
-                                        <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Warning">Buy - $@binding.PointValue</MudText>
+                                        <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Warning">Buy - @binding.PointValue✦</MudText>
                                         <MudButton Variant="Variant.Text" Style="position: absolute; width: 100%; height: 100%;" OnClick="@(() => BuyBinding(binding))" Color="Color.Warning"></MudButton>
                                     </div>
                                 }
 							}
-
 							else
 							{
                                 <div Class="bg-transparent" Style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
-                                    <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Success">Buy - $@binding.PointValue</MudText>
+                                    <MudText Style="position: absolute; top: 50%; left: 12%; font-size: larger;" Align="Align.Left" Typo="Typo.button" Color="Color.Success">Buy - @binding.PointValue✦</MudText>
                                     <MudButton Variant="Variant.Text" Style="position: absolute; width: 100%; height: 100%;" OnClick="@(() => BuyBinding(binding))" Color="Color.Success"></MudButton>
                                 </div>
 							}
@@ -152,7 +151,7 @@
                 <div Class="bg-transparent" Style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
                     @if (BindingTreesService.padlocks.OwnedUsed < @BindingTreesService.padlocks.Limit)
                     {
-                        <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Primary">Buy - $@BindingTreesService.padlocks.Cost</MudText>
+                        <MudText Style="position: absolute; top: 50%; left: 12%;" Align="Align.Left" Typo="Typo.button" Color="Color.Primary">Buy - @BindingTreesService.padlocks.Cost✦</MudText>
                         <MudButton Variant="Variant.Text" Style="position: absolute; width: 100%; height: 100%;" OnClick="@(() => BuyPadlock())" Color="Color.Primary"></MudButton>
                     }
                     else

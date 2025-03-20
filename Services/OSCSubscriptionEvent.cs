@@ -2,14 +2,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Nodes;
 
-namespace ZeniControlSuite.Services
+namespace ZeniControlSuite.Services;
+
+public class OSCSubscriptionEvent : EventArgs
 {
-	public class OSCSubscriptionEvent : EventArgs
+	public OSCSubscriptionEvent(OscMessage message)
 	{
-		public OSCSubscriptionEvent(OscMessage message)
-		{
-			Message = message;
-		}
-		public OscMessage Message { get; private set; }
+		Message = message;
 	}
+	public OscMessage Message { get; private set; }
 }

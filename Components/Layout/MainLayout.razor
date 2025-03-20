@@ -1,7 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
 
-<MudThemeProvider IsDarkMode=true/>
+<MudThemeProvider Theme="ZeniTheme" IsDarkMode=true />
 <MudPopoverProvider />
 <MudDialogProvider/>
 <MudSnackbarProvider/>
@@ -37,3 +37,12 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+
+@code {
+    MudTheme ZeniTheme = new MudTheme() {
+            PaletteDark = new PaletteDark() {
+                Primary = Colors.Blue.Darken1,
+            },
+        };
+}
