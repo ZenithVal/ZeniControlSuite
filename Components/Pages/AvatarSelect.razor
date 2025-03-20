@@ -19,10 +19,10 @@
         @if (@context.User.IsInRole("Admin")) 
         {
             <div style="display: flex">
-                <MudPaper Style="width: 400px; padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px; background-color:transparent">
+                <MudPaper Style="width: 370px; padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px; background-color:transparent">
                     <MudPaper Class="bg-transparent" Style="display: flex; flex-direction: row; align-items: center;">
                         <MudButton Variant="Variant.Outlined" Style="text-transform:none"  OnClick="ToggleAdminPanel">@(adminPanelExpand ? "Admin (Collapse)" : "Admin (Expand)")</MudButton>
-                        <MudButton Variant="Variant.Outlined" Style="text-transform:none" Color="Color.Success" >Points: @PointsService.pointsTruncated</MudButton>
+                        <MudButton Variant="Variant.Outlined" Style="text-transform:none" Color="Color.Success">Points: @PointsService.pointsTruncated✦</MudButton>
                     </MudPaper>
                     <MudCollapse Expanded="adminPanelExpand">
                         <MudSwitch @bind-Value="AvatarsService.avatarSelectEnabled" Label="Avatar Select Allowed" Color="Color.Info" />
@@ -36,7 +36,7 @@
                     string EndTime = AvatarsService.TrapEndTime.ToString("HH:mm");
                     bool canAffordAddTime = PointsService.pointsTotal >= 2;
 
-                    <MudPaper Style="width: 540px; height:65px; padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px; display: flex; flex-direction: row;">
+                    <MudPaper Style="width: 740px; height:65px; padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px; display: flex; flex-direction: row; background-color:transparent">
                         <MudAlert Dense="true" Variant="Variant.Outlined" Severity="Severity.Error">Avatar locked until @EndTime</MudAlert>
                         <MudButton Variant="Variant.Filled" Style="text-transform:none" Color="Color.Success" Disabled="!canAffordAddTime" OnClick="IncreaseTrapTimer">Add Time - 2⭐</MudButton>
                         <MudButton Variant="Variant.Filled" Style="text-transform:none" Color="Color.Dark" OnClick="DecreaseTrapTimer">Remove Time + 2⭐</MudButton>
@@ -99,7 +99,7 @@
                                         else
                                         {
                                             bool canAffordAddTime = PointsService.pointsTotal >= 2;
-                                            <MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Primary" Disabled="!canAffordAddTime" OnClick="@(() => { IncreaseTrapTimer(); })">Lock Avatar - 2⭐</MudButton>
+                                            <MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Secondary" Disabled="!canAffordAddTime" OnClick="@(() => { IncreaseTrapTimer(); })">Lock Avatar - 2⭐</MudButton>
                                         }
 
                                     }
