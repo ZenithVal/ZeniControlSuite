@@ -193,11 +193,11 @@ public class Service_Intiface : IHostedService, IDisposable
 			return;
 		}
 
-        ValidationLog("Reading Intiface Core Config");
+        ValidationLog("reading Intiface Core Config");
         
         var config = JsonSerializer.Deserialize<JsonElement>(jsonString);
         IntifaceEnabled = config.GetProperty("IntifaceEnabled").GetBoolean();
-		IntifaceServerAddress = config.GetProperty("IntifaceServerAddress").GetString();
+		IntifaceServerAddress = config.GetProperty("IntifaceServer").GetString();
 
         OSCEnabled = config.GetProperty("OSCEnabled").GetBoolean();
         HapticsEnabled = config.GetProperty("HapticsEnabled").GetBoolean();
@@ -205,21 +205,22 @@ public class Service_Intiface : IHostedService, IDisposable
         var devices = config.GetProperty("Devices");
         foreach (var device in devices.EnumerateArray())
         {
-            Devices.Add(DeserializeDevices(device));
+            Devices.Add(DeserializeDevice(device));
         }
 
 		if (HapticsEnabled)
         {
-			var hapticInputs = config.GetProperty("HapticInputs");
-            foreach (var hapticInput in hapticInputs.EnumerateArray())
+			var hapticsElement = config.GetProperty("HapticInputs");
+            foreach (var hapticElement in hapticsElement.EnumerateArray())
             {
-				HapticInputs.Add(DeserializeHapticInputs(hapticInput));
+				HapticInput hapticInput = DeserializeHapticInput(hapticElement);
+				HapticInputs.Add(hapticInput);
 			}
         }
     }
 
 
-	private Device DeserializeDevices(JsonElement _device)
+	private Device DeserializeDevice(JsonElement _device)
 	{
         ValidationLog($"Deserializing Device {_device.GetProperty("Name").GetString()}");
 
@@ -232,15 +233,17 @@ public class Service_Intiface : IHostedService, IDisposable
 		return device;
 	}
 
-	private HapticInput DeserializeHapticInputs(JsonElement _hapticInput)
+	private HapticInput DeserializeHapticInput(JsonElement _hapticInput)
 	{
-        ValidationLog($"Deserializing Haptic Input {_hapticInput.GetProperty("Parameter").GetString()}");
-
+		validationLog = $"Deserializing Parameter... ";
         //Gotta construct the param first
         var parameter = DeserializeParamter(_hapticInput.GetProperty("Parameter"));
+		ValidationLog($"Deserializing Haptic Input {parameter.Address}");
 
-        float min = _hapticInput.GetProperty("Min").GetSingle();
-        float max = _hapticInput.GetProperty("Max").GetSingle();
+		var minMax = _hapticInput.GetProperty("MinMax").EnumerateArray().ToList();
+
+        float min = minMax[0].GetSingle();
+        float max = minMax[1].GetSingle();
         float exponent = _hapticInput.GetProperty("Exponent").GetSingle();
 		float multiplier = _hapticInput.GetProperty("Multiplier").GetSingle();
 		float influence = _hapticInput.GetProperty("Influence").GetSingle();
@@ -263,7 +266,7 @@ public class Service_Intiface : IHostedService, IDisposable
         var paramList = _parameter.EnumerateArray().ToList();
 		var parameter = new Parameter();
 
-		parameter.Address = paramList[0].GetString();
+		parameter.Address = "/avatar/parameters/" + paramList[0].GetString();
 
 		var type = paramList[1].GetString();
 		if (type == "Bool")
@@ -360,8 +363,8 @@ public class Service_Intiface : IHostedService, IDisposable
         }
 		else if (!UsePattern)
 		{
-
-		}
+			PatternPower = 1.0;
+        }
 
 		if (HapticsEnabled)
 		{
@@ -388,6 +391,11 @@ public class Service_Intiface : IHostedService, IDisposable
             if (TriggerWithinTolerance(PowerOutput - PowerOutputPrevious))
             {
                 PowerOutputPrevious = PowerOutput;
+				if (OSCEnabled) 
+				{
+					OutputParam.Value = (float)PowerOutput;
+					OSCService.sendOSCParameter(OutputParam);
+				}
                 InvokeReadoutUpdate();
             }
         }
@@ -515,6 +523,8 @@ public class Service_Intiface : IHostedService, IDisposable
         double delay = new Random().NextDouble() * (max - min) + min;
         await Task.Delay((int)(delay * 1000));
     }
+
+	//Change if the difference if bigger than the tolerance
     private bool TriggerWithinTolerance(double value, double tolerance = 0.03)
     {
         return value > tolerance || value < -tolerance;
