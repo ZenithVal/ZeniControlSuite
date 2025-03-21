@@ -99,9 +99,8 @@ public class Service_Intiface : IHostedService, IDisposable
     public bool IntifaceEnabled { get; set; } = false;
     public bool IntifaceRunning { get; set; } = false;
     public bool IntifaceConnected { get; private set; } = false;
-    public bool DeviceScanning { get; private set; } = false;
     public bool DeviceConnected { get; private set; } = false;
-    public int DeviceCount => IntifaceClient.Devices.Length;
+    public int ConnectedDeviceCount => IntifaceClient.Devices.Length;
     public List<IntifaceDevice> ConfigedDevices { get; set; } = new List<IntifaceDevice>();
 
     public double PowerOutput { get; set; } = 0.0;
@@ -134,7 +133,7 @@ public class Service_Intiface : IHostedService, IDisposable
     //==================//
     #region Pattern Settings
 
-    public bool PatternsEnabled { get; set; } = false;
+    public bool PatternsEnabled { get; set; } = true;
     private bool PatternRunning { get; set; } = false;
     public bool PatUseRandomPower { get; set; } = false;
 
@@ -145,7 +144,9 @@ public class Service_Intiface : IHostedService, IDisposable
     public double PatternPower = 0.0;
     public double PatternPowerMulti { get; set; } = 0.0;
 
-    public double PatternPowerPointMulti = 0.25;
+	public double PatternExponent = 1.0;
+
+	public double PatternPowerPointMulti = 0.25;
 
     public int PatternIndex {
         get { return (int)PatternType; }
@@ -302,12 +303,13 @@ public class Service_Intiface : IHostedService, IDisposable
 
         return parameter;
     }
-    #endregion
+	#endregion
 
 
-    //===========================================//
-    #region Device Scanning and Connection
-    public async Task StartScanning()
+	//===========================================//
+	#region Device Scanning and Connection
+	public bool DeviceScanning { get; private set; } = false;
+	public async Task StartScanning()
     {
         DeviceScanning = true;
         InvokeControlUpdate();
@@ -337,8 +339,26 @@ public class Service_Intiface : IHostedService, IDisposable
 
         DevicePowerSpike($"{aArgs.Device.Name} Connected", 0.0, 0.3, 600);
 
-        InvokeControlUpdate();
-    }
+		InvokeControlUpdate();
+
+/*        if (!scannerTimeoutRunning)
+        {
+			ScannerTimeout();
+		}*/
+	}
+
+/*    bool scannerTimeoutRunning = false;
+    private async Task ScannerTimeout()
+    {
+        scannerTimeoutRunning = true;
+		await Task.Delay(60000);
+		if (DeviceScanning)
+        {
+            StopScanning();
+            scannerTimeoutRunning = false;
+		}
+	}*/
+
     private void HandleDeviceRemoved(object? _, DeviceRemovedEventArgs aArgs)
     {
         Log("Device Removed: " + aArgs.Device.Name, Severity.Info);
@@ -347,7 +367,17 @@ public class Service_Intiface : IHostedService, IDisposable
         {
             ConfigedDevices.Find(x => x.Name == aArgs.Device.Name).Connected = false;
         }
+
+/*        if (ConnectedDeviceCount < 1)
+        {
+            DeviceConnected = false;
+            if (!DeviceScanning)
+            {
+                StartScanning();
+            }
+		}*/
     }
+
     #endregion
 
 
@@ -466,7 +496,7 @@ public class Service_Intiface : IHostedService, IDisposable
             {
                 IntifaceHapticCalc();
             }
-            PowerOutput = Math.Clamp((PatternPower * PatternPowerMulti) + PowerSpike + HapticPower, 0.0, 1.0);
+            PowerOutput = Math.Clamp(Math.Pow((PatternPower * PatternPowerMulti), PatternExponent) + PowerSpike + HapticPower, 0.0, 1.0);
             if (IntifacePointsEnabled)
             {
                 PowerOutput *= PatternPowerPointMulti;
@@ -558,7 +588,6 @@ public class Service_Intiface : IHostedService, IDisposable
                     if (PatternPower > 0.99 * PatPowerGoal)
                     {
                         PatState = PatternState.Down;
-
                     }
                     await Task.Delay(50);
                 }

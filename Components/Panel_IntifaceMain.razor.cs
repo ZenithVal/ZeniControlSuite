@@ -83,6 +83,19 @@ public partial class Panel_IntifaceMain : IDisposable
         adminPanelExpand = !adminPanelExpand;
     }
 
+    bool patternPanelExpand = true;
+    private void TogglePatternPanel()
+    {
+		patternPanelExpand = !patternPanelExpand;
+	}
+
+    bool hapticPanelExpand = true;
+    private void ToggleHapticPanel()
+    {
+		hapticPanelExpand = !hapticPanelExpand;
+
+	}
+
     public void PowerFullStop()
     {
         IntifaceService.FullStop = !IntifaceService.FullStop;
