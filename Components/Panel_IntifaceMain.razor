@@ -34,7 +34,7 @@
 							}
 							<MudSpacer />
 						}
-						@if (IntifaceService.ControlPointsEnabled)
+						@if (IntifaceService.IntifacePointsEnabled)
 						{
 							<MudButton Variant="Variant.Outlined" Style="width: 120pxpx; text-transform:none" Color="Color.Success">Points: @PointsService.pointsDisplay</MudButton>
 						}
@@ -51,10 +51,10 @@
 										<MudButton Variant="Variant.Filled" Color="Color.Error" Style="text-transform:none" Disabled="!IntifaceService.IntifaceRunning">Stop Intifiace</MudButton>
 									}
 									<MudSwitch @bind-Value="IntifaceService.ControlEnabled" Label="Controls" Color="Color.Info" />
-									<MudSwitch @bind-Value="IntifaceService.ControlPointsEnabled" Label="Points Usage" Color="Color.Warning" />
+									<MudSwitch @bind-Value="IntifaceService.IntifacePointsEnabled" Label="Points Usage" Color="Color.Warning" />
 									<MudSwitch @bind-Value="IntifaceService.PatternsEnabled" Label="Patterns" Color="Color.Error" />
 									<MudSwitch @bind-Value="IntifaceService.PatternPointsUnlocked" Label="Patterns Unlocked" Color="Color.Warning" />
-									<MudNumericField @bind-Value="IntifaceService.PatternPointMultiLimit" Label="Avatar Cost Multiplier" Color="Color.Warning" Step="0.25" Min="1.0" />
+									<MudNumericField @bind-Value="IntifaceService.PatternPowerPointMulti" Label="Avatar Cost Multiplier" Color="Color.Warning" Step="0.25" Min="1.0" />
 								</MudItem>
 								<MudItem xs="7">
 									@if (context.User.IsInRole("LocalHost"))
@@ -79,7 +79,6 @@
 										<div style="height: 4px" />
 										<MudPaper Outlined Style="width:260px; height:200px; background-color:transparent">
 											<div id="unique_id_scroll_section" class="ma-0" style="height:200px;overflow-x: hidden;overflow-y: auto;">
-
 												@foreach (IntifaceDevice device in IntifaceService.ConfigedDevices)
 												{
 													<MudItem Style="height:60px; padding-left: 8px; padding-top: 4px;">
@@ -89,15 +88,15 @@
 															<MudText Style="position: relative; left: 28px; top: -48px" Typo="Typo.body1">Connected</MudText>
 														</MudItem>
 														@* Leaving this off atm, pain to deal with disabling devices.
-											<MudItem Style="height: 60px; position: relative; left: 0px; top: 0px">
-											<MudCheckBox Style="position: relative; left: -10px; top: -14px" @bind-Value="device.Enabled" Color="Color.Info" />
-											<MudText Style="position: relative; left: 28px; top: -48px" Typo="Typo.body1">Enabled</MudText>
-											</MudItem>
-											<MudItem Style="height: 60px; position: relative; left: 90px; top: -60px">
-											<MudCheckBox Style="position: relative; left: -10px; top: -14px" Disabled="true" @bind-Value="@device.Connected" Color="Color.Success" />
-											<MudText Style="position: relative; left: 28px; top: -48px" Typo="Typo.body1">Connected</MudText>
-											</MudItem>
-											*@
+														<MudItem Style="height: 60px; position: relative; left: 0px; top: 0px">
+														<MudCheckBox Style="position: relative; left: -10px; top: -14px" @bind-Value="device.Enabled" Color="Color.Info" />
+														<MudText Style="position: relative; left: 28px; top: -48px" Typo="Typo.body1">Enabled</MudText>
+														</MudItem>
+														<MudItem Style="height: 60px; position: relative; left: 90px; top: -60px">
+														<MudCheckBox Style="position: relative; left: -10px; top: -14px" Disabled="true" @bind-Value="@device.Connected" Color="Color.Success" />
+														<MudText Style="position: relative; left: 28px; top: -48px" Typo="Typo.body1">Connected</MudText>
+														</MudItem>
+														*@
 													</MudItem>
 												}
 											</div>
@@ -114,15 +113,15 @@
 				<MudGrid>
 					<MudItem xs="11">
 						<MudGrid>
-							<MudItem xs="8">
-								<MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Filled" Style="width: 250px;"
+							<MudItem xs="12">
+								<MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Filled" Style="width: 100%;"
 										   Color="@(IntifaceService.FullStop ? Color.Primary : Color.Error )"
 										   OnClick="PowerFullStop">
 									@(IntifaceService.FullStop ? "Stopped" : "Full Stop")
 								</MudButton>
 							</MudItem>
 
-							<MudItem xs="9">
+							<MudItem xs="8">
 								<MudSelect Label="Pattern" @bind-Value="@IntifaceService.PatternType" Variant="Variant.Outlined">
 									@foreach (var pattern in Enum.GetValues<PatternType>().ToList())
 									{
@@ -131,14 +130,13 @@
 								</MudSelect>
 							</MudItem>
 
-							<MudItem xs="2">
-								<MudMenu Label="Presets" Variant="Variant.Outlined">
-									@foreach (var preset in Enum.GetValues<ControlPreset>().ToList())
-									{
-										<MudMenuItem @onclick="() => ApplyControlPreset(preset)">@preset.ToString()</MudMenuItem>
-									}
-								</MudMenu>
-							</MudItem>
+							<MudCarousel Class="mud-width-full" Style="height:200px;" ShowArrows="true" ShowBullets="true" EnableSwipeGesture="false" AutoCycle="false" TData="object">
+								<MudCarouselItem Transition="Transition.Slide" Color="@Color.Primary">
+									<div class="d-flex" style="height:100%">
+										<MudIcon Class="mx-auto my-auto" Icon="@Icons.Custom.Brands.MudBlazor" Size="@Size.Large" />
+									</div>
+								</MudCarouselItem>
+							</MudCarousel>
 
 							@* Values that only appear if the patType is Wave*@
 							@if (IntifaceService.PatternType == PatternType.Wave)
@@ -192,7 +190,6 @@
 					</MudItem>
 
 					<Panel_IntifaceReadout />
-
 				</MudGrid>
 			</MudPaper>
 

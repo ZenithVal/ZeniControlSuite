@@ -120,6 +120,7 @@ public class Service_Intiface : IHostedService, IDisposable
     #region Haptic Settings
     public bool HapticsEnabled { get; set; } = false;
     public double HapticPower { get; set; } = 0.0;
+    public double HapticMultiplier { get; set; } = 1.0;
     private bool HapticCalcRunning { get; set; } = false;
     public List<HapticInput> HapticInputs { get; set; } = new List<HapticInput>();
     private Dictionary<string, Parameter> HapticParameters = new Dictionary<string, Parameter>();
@@ -134,13 +135,13 @@ public class Service_Intiface : IHostedService, IDisposable
     public bool PatUseRandomPower { get; set; } = false;
 
 
-    public bool ControlPointsEnabled { get; set; } = false;
+    public bool IntifacePointsEnabled { get; set; } = false;
     public bool PatternPointsUnlocked { get; set; } = false;
-
-    public double PatternPointMultiLimit = 0.25;
 
     public double PatternPower = 0.0;
     public double PatternPowerMulti { get; set; } = 0.0;
+
+    public double PatternPowerPointMulti = 0.25;
 
     public PatternType PatternType { get; set; } = PatternType.Wave;
     public List<PatternType> GetPatternTypes => Enum.GetValues<PatternType>().ToList();
@@ -343,7 +344,7 @@ public class Service_Intiface : IHostedService, IDisposable
 
 
     //===========================================//
-    #region Intiface 
+    #region Intiface Running
     public async Task IntifaceStart()
     {
         if (!IntifaceEnabled)
@@ -457,11 +458,14 @@ public class Service_Intiface : IHostedService, IDisposable
                 IntifaceHapticCalc();
             }
             PowerOutput = Math.Clamp((PatternPower * PatternPowerMulti) + PowerSpike + HapticPower, 0.0, 1.0);
+            if (IntifacePointsEnabled)
+            {
+                PowerOutput *= PatternPowerPointMulti;
+            }
         }
 
         await DeviceControl();
     }
-
 
     public async Task DeviceControl()
     {
@@ -481,73 +485,27 @@ public class Service_Intiface : IHostedService, IDisposable
                     OutputParam.Value = (float)PowerOutput;
                     OSCService.sendOSCParameter(OutputParam);
                 }
+                if (HapticsEnabled)
+                {
+                    InvokeHapticsUpdate();
+                }
                 InvokeReadoutUpdate();
             }
         }
     }
-    #endregion
 
-
-
-    //===========================================//
-    #region Power Spike
-    private async void DevicePowerSpike(string source, double powerMin, double powerMax, int onTime,
-        PatternType type = PatternType.None, int offTime = 100, int loops = 1, double speedClimb = 0.3, double speedDrop = 6.0)
+    private void HandleOSCMessage(OscMessage messageReceived)
     {
-        Log(source + ": Power Spike", Severity.Info);
-        int keyID = PowerSpikes.Count + 1;
-        PowerSpikes.Add(keyID, 0.0);
-
-        PatternState patState = PatternState.Up;
-
-        for (int i = 0; i < loops; i++)
+        //Console.WriteLine($"OSC Message Received: {messageReceived.Address} {messageReceived.Arguments[0]}");
+        if (HapticParameters.ContainsKey(messageReceived.Address))
         {
-            switch (type)
-            {
-                case PatternType.None:
-                    PowerSpikes[keyID] = powerMax;
-                    await Task.Delay(onTime);
-                    break;
-
-                case PatternType.Pulse:
-                    PowerSpikes[keyID] = powerMax;
-                    await Task.Delay(onTime);
-                    PowerSpikes[keyID] = powerMin;
-                    await Task.Delay(offTime);
-                    break;
-
-                case PatternType.Wave:
-                    while (patState == PatternState.Up)
-                    {
-                        PowerSpikes[keyID] += (0.01 * speedClimb) * powerMax;
-
-                        if (PowerSpikes[keyID] > 0.99 * powerMax)
-                        {
-                            PatState = PatternState.Down;
-                        }
-                        await Task.Delay(50);
-                    }
-                    PowerSpikes[keyID] = powerMax;
-                    await Task.Delay(onTime);
-                    while (patState == PatternState.Down)
-                    {
-                        PowerSpikes[keyID] -= (0.01 * speedDrop) * powerMax;
-
-                        if (PowerSpikes[keyID] < 0.01 + powerMin)
-                        {
-                            PatState = PatternState.Up;
-                        }
-                        await Task.Delay(50);
-                    }
-                    PowerSpikes[keyID] = 0.0 + powerMin;
-                    await Task.Delay(offTime);
-                    break;
-            }
+            var parameter = HapticParameters[messageReceived.Address];
+            float value = OSCExtensions.FormatIncoming(messageReceived.Arguments[0], parameter.Type);
+            HandleHapticParam(parameter, value);
         }
-
-        PowerSpikes.Remove(keyID);
     }
     #endregion
+
 
     //===========================================//
     #region Patterns
@@ -622,16 +580,6 @@ public class Service_Intiface : IHostedService, IDisposable
 
     //===========================================//
     #region Haptics
-    private void HandleOSCMessage(OscMessage messageReceived)
-    {
-        Console.WriteLine($"OSC Message Received: {messageReceived.Address} {messageReceived.Arguments[0]}");
-        if (HapticParameters.ContainsKey(messageReceived.Address))
-        {
-            var parameter = HapticParameters[messageReceived.Address];
-            float value = OSCExtensions.FormatIncoming(messageReceived.Arguments[0], parameter.Type);
-            HandleHapticParam(parameter, value);
-        }
-    }
     private void HandleHapticParam(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
     {
         var hapticInput = HapticInputs.Find(x => x.Parameter.Address == param.Address);
@@ -663,9 +611,69 @@ public class Service_Intiface : IHostedService, IDisposable
                     break;
             }
         }
-        HapticPower = newHapticPower;
+        HapticPower = newHapticPower * HapticMultiplier;
         HapticCalcRunning = false;
-        InvokeHapticsUpdate();
+    }
+    #endregion
+
+
+    //===========================================//
+    #region Power Spike
+    private async void DevicePowerSpike(string source, double powerMin, double powerMax, int onTime,
+        PatternType type = PatternType.None, int offTime = 100, int loops = 1, double speedClimb = 0.3, double speedDrop = 6.0)
+    {
+        Log(source + ": Power Spike", Severity.Info);
+        int keyID = PowerSpikes.Count + 1;
+        PowerSpikes.Add(keyID, 0.0);
+
+        PatternState patState = PatternState.Up;
+
+        for (int i = 0; i < loops; i++)
+        {
+            switch (type)
+            {
+                case PatternType.None:
+                    PowerSpikes[keyID] = powerMax;
+                    await Task.Delay(onTime);
+                    break;
+
+                case PatternType.Pulse:
+                    PowerSpikes[keyID] = powerMax;
+                    await Task.Delay(onTime);
+                    PowerSpikes[keyID] = powerMin;
+                    await Task.Delay(offTime);
+                    break;
+
+                case PatternType.Wave:
+                    while (patState == PatternState.Up)
+                    {
+                        PowerSpikes[keyID] += (0.01 * speedClimb) * powerMax;
+
+                        if (PowerSpikes[keyID] > 0.99 * powerMax)
+                        {
+                            PatState = PatternState.Down;
+                        }
+                        await Task.Delay(50);
+                    }
+                    PowerSpikes[keyID] = powerMax;
+                    await Task.Delay(onTime);
+                    while (patState == PatternState.Down)
+                    {
+                        PowerSpikes[keyID] -= (0.01 * speedDrop) * powerMax;
+
+                        if (PowerSpikes[keyID] < 0.01 + powerMin)
+                        {
+                            PatState = PatternState.Up;
+                        }
+                        await Task.Delay(50);
+                    }
+                    PowerSpikes[keyID] = 0.0 + powerMin;
+                    await Task.Delay(offTime);
+                    break;
+            }
+        }
+
+        PowerSpikes.Remove(keyID);
     }
     #endregion
 
