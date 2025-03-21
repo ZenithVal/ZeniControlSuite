@@ -117,7 +117,8 @@ public class Service_Intiface : IHostedService, IDisposable
 	#region Haptic Settings
 	public bool HapticsEnabled { get; set; } = false;
 	public double HapticPower { get; set; } = 0.0;
-	public List<HapticInput> HapticInputs { get; set; } = new List<HapticInput>();
+    private bool HapticCalcRunning { get; set; } = false;
+    public List<HapticInput> HapticInputs { get; set; } = new List<HapticInput>();
     private Dictionary<string, Parameter> HapticParameters = new Dictionary<string, Parameter>();
 	#endregion
 
@@ -126,7 +127,7 @@ public class Service_Intiface : IHostedService, IDisposable
 	#region Pattern Settings
 
 	public bool UsePattern { get; set; } = false;
-	public bool PatternRunning { get; private set; } = false;
+	private bool PatternRunning { get; set; } = false;
 	public bool PatUseRandomPower { get; set; } = false;
 
 
@@ -253,6 +254,7 @@ public class Service_Intiface : IHostedService, IDisposable
 			Min = min,
 			Max = max,
 			Exponent = exponent,
+			Multiplier = multiplier,
 			Influence = influence
 		};
 
@@ -348,7 +350,7 @@ public class Service_Intiface : IHostedService, IDisposable
 
     private void DeviceHeartbeatTimer()
     {
-        var timer = new System.Timers.Timer(100);
+        var timer = new System.Timers.Timer(500);
         timer.Elapsed += async (sender, e) => await DeviceLoop();
         timer.AutoReset = true;
         timer.Enabled = true;
@@ -366,9 +368,9 @@ public class Service_Intiface : IHostedService, IDisposable
 			PatternPower = 1.0;
         }
 
-		if (HapticsEnabled)
+		if (HapticsEnabled && !HapticCalcRunning)
 		{
-			await IntifaceHapticCalc();
+			IntifaceHapticCalc();
 		}
 
         if (FullStop)
@@ -478,7 +480,8 @@ public class Service_Intiface : IHostedService, IDisposable
 	#region Haptics
 	private void HandleOSCMessage(OscMessage messageReceived)
 	{
-        if (HapticParameters.ContainsKey(messageReceived.Address))
+        Console.WriteLine($"OSC Message Received: {messageReceived.Address} {messageReceived.Arguments[0]}");
+		if (HapticParameters.ContainsKey(messageReceived.Address))
         {
 			var parameter = HapticParameters[messageReceived.Address];
 			float value = OSCExtensions.FormatIncoming(messageReceived.Arguments[0], parameter.Type);
@@ -487,15 +490,20 @@ public class Service_Intiface : IHostedService, IDisposable
 	}
 	private void HandleHapticParam(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
 	{
-		HapticParameters[param.Address].Value = value;
+		var hapticInput = HapticInputs.Find(x => x.Parameter.Address == param.Address);
+		if (hapticInput != null)
+		{
+            hapticInput.Parameter.Value = value;
+        }
 	}
 
 	public async Task IntifaceHapticCalc()
 	{
+		HapticCalcRunning = true;
         var newHapticPower = 0.0f;
         foreach (var HI in HapticInputs)
         {
-            float value = 0.0f;
+			float value = 0.0f;
             switch (HI.Parameter.Type)
             {
 				case ParameterType.Float:
@@ -503,14 +511,16 @@ public class Service_Intiface : IHostedService, IDisposable
 					value = (HI.Parameter.Value - HI.Min) / (HI.Max - HI.Min);
 					value = (float)Math.Pow(value, HI.Exponent);
 					value *= HI.Multiplier * HI.Influence;
+					newHapticPower += value;
 					break;
 				case ParameterType.Bool:
 					value = HI.Parameter.Value * HI.Multiplier * HI.Influence;
+					newHapticPower += value;
 					break;
 			}
-            newHapticPower += value;
 		}
         HapticPower = newHapticPower;
+		HapticCalcRunning = false;
 		InvokeHapticsUpdate();
 	}
 	#endregion
