@@ -114,52 +114,42 @@
 					<MudItem xs="11">
 						<MudGrid>
 							<MudItem xs="12">
-								<div style="display: flex">
-									<MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Filled" Style="width: 75%;"
-											   Color="@(IntifaceService.FullStop ? Color.Primary : Color.Error )"
-											   OnClick="PowerFullStop">
-										@(IntifaceService.FullStop ? "Stopped" : "Full Stop")
-									</MudButton>
-									<MudSpacer />
-									<MudMenu Label="Presets" Variant="Variant.Outlined" Style="width: 18%;">
-										@foreach (var preset in Enum.GetValues<ControlPreset>().ToList())
-										{
-											<MudMenuItem @onclick="() => ApplyControlPreset(preset)">@preset.ToString()</MudMenuItem>
-										}
-									</MudMenu>
-								</div>
+								<MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Filled" Style="width: 100%;"
+											Color="@(IntifaceService.FullStop ? Color.Primary : Color.Error )"
+											OnClick="PowerFullStop">
+									@(IntifaceService.FullStop ? "Stopped" : "Full Stop")
+								</MudButton>
 							</MudItem>
 
-							<MudItem xs="12">
-								<MudSelect Label="Pattern" @bind-Value="@IntifaceService.PatternType" Variant="Variant.Outlined">
+							<MudItem xs="9">
+								<MudSelect Label="Pattern" @bind-Value="@IntifaceService.PatternType" Variant="Variant.Filled" Style="background-color:darkgrey">
 									@foreach (var pattern in Enum.GetValues<PatternType>().ToList())
 									{
 										<MudSelectItem Value="@pattern">@pattern.ToString()</MudSelectItem>
 									}
 								</MudSelect>
 							</MudItem>
-
-							@* TODO				
-							<MudItem xs="12">
-								<MudCarousel @bind-SelectedIndex="@IntifaceService.PatternIndex"  Style="height:150px;" ShowArrows="true" ShowBullets="true" EnableSwipeGesture="false" AutoCycle="false" TData="object">
-									<MudCarouselItem Transition="Transition.None" Color="@Color.Primary">
-									</MudCarouselItem>
-									<MudCarouselItem Transition="Transition.None" Color="@Color.Primary">
-									</MudCarouselItem>
-									<MudCarouselItem Transition="Transition.None" Color="@Color.Primary">
-									</MudCarouselItem>
-								</MudCarousel>
-							</MudItem> 
-							*@
+							<MudItem xs="3">
+								<MudMenu Label="Presets" Variant="Variant.Outlined" Style="width: 100%;">
+									@foreach (var preset in Enum.GetValues<ControlPreset>().ToList())
+									{
+										<MudMenuItem @onclick="() => ApplyControlPreset(preset)">@preset.ToString()</MudMenuItem>
+									}
+								</MudMenu>
+							</MudItem>
 
 							@* Values that only appear if the patType is Wave*@
 							@if (IntifaceService.PatternType == PatternType.Wave)
 							{
-								<MudItem xs="6">
+								<MudItem xs="4">
 									<MudNumericField @bind-Value="@IntifaceService.PatSpeedClimb" Label="Climb Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.2" Format="N1" />
 								</MudItem>
 
-								<MudItem xs="6">
+								<MudItem xs="4">
+									<MudNumericField @bind-Value="@IntifaceService.PatSpeedClimb" Label="Exponent" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.2" Format="N1" />
+								</MudItem>
+
+								<MudItem xs="4">
 									<MudNumericField @bind-Value="@IntifaceService.PatSpeedDrop" Label="Drop Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.2" Format="N1" />
 								</MudItem>
 							}
