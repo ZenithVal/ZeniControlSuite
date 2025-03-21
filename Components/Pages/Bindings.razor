@@ -11,7 +11,7 @@
 
 @* Information *@
 <MudPaper Class="bg-transparent" Style="display: flex; flex-direction: row; align-items: center;">
-    <MudAlert Dense="true" Variant="Variant.Outlined" Severity="Severity.Success">Points: @PointsService.pointsTruncated✦</MudAlert>
+    <MudAlert Dense="true" Variant="Variant.Outlined" Severity="Severity.Success">Points: @PointsService.pointsDisplay</MudAlert>
     <MudAlert Dense="true" Severity="@BindingTreesService.lastLogSeverity">Last Event: @BindingTreesService.lastLog </MudAlert>
     <MudAlert Dense="true" Severity="Severity.Info">@hoverBindingDescription </MudAlert>
 </MudPaper>
@@ -151,8 +151,8 @@
                 <div Class="bg-transparent" Style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
                     @if (BindingTreesService.padlocks.OwnedUsed < @BindingTreesService.padlocks.Limit)
                     {
-                        <MudText Style="position: absolute; top: 46%; left: 11%; text-transform:none; font-size: larger;" Align="Align.Left" Typo="Typo.button" Color="Color.Primary">Buy - @BindingTreesService.padlocks.Cost✦</MudText>
-                        <MudButton Variant="Variant.Text" Style="position: absolute; width: 100%; height: 100%;" OnClick="@(() => BuyPadlock())" Color="Color.Primary"></MudButton>
+                        <MudText Style="position: absolute; top: 46%; left: 11%; text-transform:none; font-size: larger;" Align="Align.Left" Typo="Typo.button" Color="Color.Info">Buy - @BindingTreesService.padlocks.Cost✦</MudText>
+                        <MudButton Variant="Variant.Text" Style="position: absolute; width: 100%; height: 100%;" OnClick="@(() => BuyPadlock())" Color="Color.Info"></MudButton>
                     }
                     else
                     {

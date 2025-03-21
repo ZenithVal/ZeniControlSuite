@@ -31,8 +31,7 @@ public partial class Bindings : IDisposable
 
         var context = await AuthProvider.GetAuthenticationStateAsync();
         user = context.GetUserName();
-        LogService.AddLog(pageName, user, "PageLoad", Severity.Normal);
-
+        Log("PageLoad", Severity.Normal);
     }
 
     protected override void OnParametersSet()

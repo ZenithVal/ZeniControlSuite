@@ -91,46 +91,45 @@ public class Service_Points : IHostedService
 
         //FractionalScore(pointsTotal);
         pointsTruncated = Math.Truncate(pointsTotal * 100) / 100;
+        pointsDisplay =  $"{pointsTruncated}✦";
+        //PointsDisplayCalc();
+
         InvokePointsUpdate();
     }
 
-    public void FractionalScore(double value)
+    public void PointsDisplayCalc()
     {
-        //cut off everything after the hundreths place, do not round.
-        value = Math.Truncate(value * 100) / 100;
+        double remainder = pointsTruncated;
 
-        int wholeNumber = 0;
+		int wholeNumber = 0;
         int denominator = 1;
-        //double rounded = 0.0;
 
-        wholeNumber = (int)Math.Floor(value);
-        value -= wholeNumber;
+        wholeNumber = (int)Math.Floor(remainder);
+        remainder -= wholeNumber;
 
-        if (value == 0.0)
+        if (remainder == 0.0)
         {
             denominator = 1;
         }
-        else if (value % 0.25 < 0.01)
+        else if (remainder % 0.25 < 0.01)
         {
-            value = (int)(1 * Math.Floor(value / 0.25));
+            remainder = (int)(1 * Math.Floor(remainder / 0.25));
             denominator = 4;
         }
-        else if (value % 0.33 < 0.01)
+        else if (remainder % 0.33 < 0.01)
         {
-            value = (int)(1 * Math.Floor(value / 0.33));
+            remainder = (int)(1 * Math.Floor(remainder / 0.33));
             denominator = 3;
         }
 
         if (denominator == 1)
         {
-            pointsDisplay = $"{wholeNumber}";
+            pointsDisplay = $"{wholeNumber}⭐";
         }
         else
         {
-            pointsDisplay = $"{wholeNumber} & {value}/{denominator}";
+            pointsDisplay = $"{wholeNumber} & {remainder}/{denominator}⭐";
         }
-
-
     }
 
     public void InvokePointsUpdate()

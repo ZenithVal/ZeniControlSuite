@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using ZeniControlSuite.Extensions;
 using ZeniControlSuite.Models;
-using ZeniControlSuite.Models.Intiface;
 
 namespace ZeniControlSuite.Services;
 
@@ -20,15 +19,15 @@ public class Service_Intiface : IHostedService, IDisposable
 		LogService = serviceLogs;
 		OSCService = serviceOSC;
 		OSCService.OnOscMessageReceived += HandleOSCMessage;
-		_client.DeviceAdded += HandleDeviceAdded;
-		_client.DeviceRemoved += HandleDeviceRemoved;
+		IntifaceClient.DeviceAdded += HandleDeviceAdded;
+		IntifaceClient.DeviceRemoved += HandleDeviceRemoved;
 	}
 	public void Dispose()
 	{
-		_client.Dispose();
+		IntifaceClient.Dispose();
 		OSCService.OnOscMessageReceived -= HandleOSCMessage;
-		_client.DeviceAdded -= HandleDeviceAdded;
-		_client.DeviceRemoved -= HandleDeviceRemoved;
+		IntifaceClient.DeviceAdded -= HandleDeviceAdded;
+		IntifaceClient.DeviceRemoved -= HandleDeviceRemoved;
 	}
 
 	private void Log(string message, Severity severity)
@@ -93,23 +92,29 @@ public class Service_Intiface : IHostedService, IDisposable
 
 	//===========================================//
 	#region Main Settings
-	private ButtplugClient _client = new ButtplugClient("ZeniControlSuite");
-
+	private ButtplugClient IntifaceClient = new ButtplugClient("ZeniControlSuite");
     private string IntifaceServerAddress { get; set; } = "ws://localhost:16261";
     public bool IntifaceEnabled { get; set; } = false;
     public bool IntifaceRunning { get; set; } = false;
 	public bool IntifaceConnected { get; private set; } = false;
+	public bool DeviceScanning { get; private set; } = false;
     public bool DeviceConnected { get; private set; } = false;
-    public List <Device> Devices { get; set; } = new List<Device>();
+	public int DeviceCount => IntifaceClient.Devices.Length;
+    public List <IntifaceDevice> ConfigedDevices { get; set; } = new List<IntifaceDevice>();
 
     public double PowerOutput { get; set; } = 0.0;
     public double PowerOutputPrevious { get; set; } = 0.0;
-    public double PowerSpike { get; set; } = 0.0;
+
+	public double PowerSpike = 0.0;
+	public Dictionary<int, double> PowerSpikes = new Dictionary<int, double>();
+
     public bool FullStop { get; set; } = false;
 
     public bool OSCEnabled { get; set; } = false;
 
     private Parameter OutputParam = new Parameter("/ZCS_Intiface_Output", ParameterType.Float, 0.0f);
+
+	public bool ControlEnabled { get; set; } = true;
 	#endregion
 
 
@@ -126,13 +131,18 @@ public class Service_Intiface : IHostedService, IDisposable
 	//==================//
 	#region Pattern Settings
 
-	public bool UsePattern { get; set; } = false;
+	public bool PatternsEnabled { get; set; } = false;
 	private bool PatternRunning { get; set; } = false;
 	public bool PatUseRandomPower { get; set; } = false;
 
 
+	public bool ControlPointsEnabled { get; set; } = false;
+	public bool PatternPointsUnlocked { get; set; } = false;
+
+	public double PatternPointMultiLimit = 0.25;
+
 	public double PatternPower = 0.0;
-	public double PatternPowerMulti { get; set; } = 1.0;
+	public double PatternPowerMulti { get; set; } = 0.0;
 
 	public PatternType PatternType { get; set; } = PatternType.Wave;
 	public List<PatternType> GetPatternTypes => Enum.GetValues<PatternType>().ToList();
@@ -203,10 +213,13 @@ public class Service_Intiface : IHostedService, IDisposable
         OSCEnabled = config.GetProperty("OSCEnabled").GetBoolean();
         HapticsEnabled = config.GetProperty("HapticsEnabled").GetBoolean();
 
+        OutputParam.Address = "/avatar/parameters/"+config.GetProperty("OSCOutput").GetString();
+
+
         var devices = config.GetProperty("Devices");
         foreach (var device in devices.EnumerateArray())
         {
-            Devices.Add(DeserializeDevice(device));
+            ConfigedDevices.Add(DeserializeDevice(device));
         }
 
 		if (HapticsEnabled)
@@ -221,11 +234,11 @@ public class Service_Intiface : IHostedService, IDisposable
     }
 
 
-	private Device DeserializeDevice(JsonElement _device)
+	private IntifaceDevice DeserializeDevice(JsonElement _device)
 	{
         ValidationLog($"Deserializing Device {_device.GetProperty("Name").GetString()}");
 
-        var device = new Device();
+        var device = new IntifaceDevice();
 		device.Name = _device.GetProperty("Name").GetString();
 		device.DisplayName = _device.GetProperty("DisplayName").GetString();
 		device.Enabled = _device.GetProperty("Enabled").GetBoolean();
@@ -287,42 +300,60 @@ public class Service_Intiface : IHostedService, IDisposable
 
 	//===========================================//
 	#region Device Scanning and Connection
-	private async Task ScanForDevices()
+	public async Task StartScanning()
     {
-        Log("Scanning for devices", Severity.Info);
-        await _client.StartScanningAsync();
-
-        while (DeviceConnected == false)
-        {
-            await Task.Delay(500);
-        }
-
-        await _client.StopScanningAsync();
+        DeviceScanning = true;
+		InvokeControlUpdate();
+		Log("Scanning for devices", Severity.Info);
+        IntifaceClient.StartScanningAsync();
     }
+
+	public async Task StopScanning()
+	{
+		DeviceScanning = false;
+		InvokeControlUpdate();
+        Log("Stopping device scan", Severity.Info);
+        IntifaceClient.StopScanningAsync();
+    }
+
     private void HandleDeviceAdded(object? _, DeviceAddedEventArgs aArgs)
     {
         Log("Device Added: " + aArgs.Device.Name, Severity.Info);
-        DeviceConnected = true;
+		if (!ConfigedDevices.Exists(x => x.Name == aArgs.Device.Name))
+		{
+			ConfigedDevices.Add(new IntifaceDevice() { Name = aArgs.Device.Name, DisplayName = aArgs.Device.Name, Enabled = true, Connected = true });
+		}
+		else
+		{
+			ConfigedDevices.Find(x => x.Name == aArgs.Device.Name).Connected = true;
+		}
+
+		DevicePowerSpike($"{aArgs.Device.Name} Connected", 0.0, 0.3, 600);
+
+		InvokeControlUpdate();
     }
     private void HandleDeviceRemoved(object? _, DeviceRemovedEventArgs aArgs)
     {
         Log("Device Removed: " + aArgs.Device.Name, Severity.Info);
-        DeviceConnected = false;
+
+		if (ConfigedDevices.Exists(x => x.Name == aArgs.Device.Name))
+		{
+			ConfigedDevices.Find(x => x.Name == aArgs.Device.Name).Connected = false;
+		}
     }
     #endregion
 
 
     //===========================================//
     #region Intiface 
-    public async Task IntifaceStart(Service_Logs logService)
+    public async Task IntifaceStart()
     {
         if (!IntifaceEnabled)
         {
             Log("Intiface not enabled, skipped start request", Severity.Info);
 			return;
 		}
-        
-        if (IntifaceRunning)
+        else if (IntifaceRunning)
         {
             Log("Intiface already running, skipped start request", Severity.Warning);
             return;
@@ -330,66 +361,120 @@ public class Service_Intiface : IHostedService, IDisposable
 
         try
         {
-            Log("Intiface Starting", Severity.Info);
-            await _client.ConnectAsync(new ButtplugWebsocketConnector(new Uri(IntifaceServerAddress)));
-            await ScanForDevices();
             IntifaceRunning = true;
+            InvokeControlUpdate();
+            Log("Intiface Starting", Severity.Info);
+            await IntifaceClient.ConnectAsync(new ButtplugWebsocketConnector(new Uri(IntifaceServerAddress)));
+            await StartScanning();
+
+			IntifaceConnected = true;
 
             Log("Intiface Connected", Severity.Info);
             DeviceHeartbeatTimer();
-
-            InvokeControlUpdate();
         }
         catch (Exception e)
         {
             Log("Intiface failed: " + e.Message, Severity.Error);
             IntifaceRunning = false;
-            InvokeControlUpdate();
+			IntifaceConnected = false;
         }
+        InvokeControlUpdate();
     }
 
-    private void DeviceHeartbeatTimer()
+	public async Task IntifaceStop()
+	{
+        if (!IntifaceRunning)
+		{
+            Log("Intiface not running, skipped stop request", Severity.Warning);
+            return;
+        }
+
+        try
+		{
+            Log("Intiface Stopping", Severity.Info);
+            await IntifaceClient.DisconnectAsync();
+            IntifaceRunning = false;
+            IntifaceConnected = false;
+			if (deviceLoopTimer != null)
+			{
+				deviceLoopTimer.Stop();
+			}
+            Log("Intiface Stopped", Severity.Info);
+        }
+        catch (Exception e)
+		{
+            Log("Intiface Stop Failed: " + e.Message, Severity.Error);
+        }
+        InvokeControlUpdate();
+    }
+
+	private void IntifaceClient_Disconnected(object? sender, EventArgs e)
+	{
+        Log("Intiface Disconnected", Severity.Info);
+        IntifaceConnected = false;
+        InvokeControlUpdate();
+    }
+
+	System.Timers.Timer deviceLoopTimer;
+	private void DeviceHeartbeatTimer() //Runs Device control loop
     {
-        var timer = new System.Timers.Timer(500);
-        timer.Elapsed += async (sender, e) => await DeviceLoop();
-        timer.AutoReset = true;
-        timer.Enabled = true;
+		deviceLoopTimer = new System.Timers.Timer(100);
+		deviceLoopTimer.Elapsed += async (sender, e) => await DeviceLoop();
+		deviceLoopTimer.AutoReset = true;
+		deviceLoopTimer.Enabled = true;
     }
 
 	private async Task DeviceLoop()
     {
-        if (UsePattern && !PatternRunning)
-        {
-            PatternRunning = true;
-            DevicePattern();
-        }
-		else if (!UsePattern)
-		{
-			PatternPower = 1.0;
-        }
-
-		if (HapticsEnabled && !HapticCalcRunning)
-		{
-			IntifaceHapticCalc();
-		}
-
         if (FullStop)
         {
 			PowerOutput = 0.0;
 		}
         else
         {
+			if (PatternsEnabled && !PatternRunning)
+			{
+				PatternRunning = true;
+				DevicePattern();
+			}
+			else if (!PatternsEnabled)
+			{
+				PatternPower = 1.0;
+			}
+
+			if (PowerSpikes.Count != 0) 
+			{
+				foreach (var spike in PowerSpikes) //is if the spike gets removed while this is running it'll break. Shouldn't happen... right?
+				{
+					PowerSpike += spike.Value;
+				}
+			}
+			else
+			{
+				PowerSpike = 0.0;
+			}
+
+			if (HapticsEnabled && !HapticCalcRunning)
+			{
+				IntifaceHapticCalc();
+			}
 			PowerOutput = Math.Clamp((PatternPower * PatternPowerMulti) + PowerSpike + HapticPower, 0.0, 1.0);
         }
 
-        await DeviceControl();
+		await DeviceControl();
     }
 
-    public async Task DeviceControl()
+
+	public async Task DeviceControl()
     {
-        foreach (var device in _client.Devices)
+        foreach (var device in IntifaceClient.Devices)
         {
-            await device.VibrateAsync(PowerOutput);
+			/*if (ConfigedDevices.Find(x => x.Name == device.Name).Enabled == false)
+			{
+				continue;
+			}*/
+
+			await device.VibrateAsync(PowerOutput);
             if (TriggerWithinTolerance(PowerOutput - PowerOutputPrevious))
             {
                 PowerOutputPrevious = PowerOutput;
@@ -404,6 +489,67 @@ public class Service_Intiface : IHostedService, IDisposable
     }
 	#endregion
 
+
+
+	//===========================================//
+	#region Power Spike
+	private async void DevicePowerSpike(string source, double powerMin, double powerMax, int onTime, 
+		PatternType type = PatternType.None, int offTime = 100, int loops = 1, double speedClimb = 0.3, double speedDrop = 6.0)
+	{
+		Log(source+": Power Spike", Severity.Info);
+		int keyID = PowerSpikes.Count+1;
+		PowerSpikes.Add(keyID, 0.0);
+
+		PatternState patState = PatternState.Up;
+
+		for (int i = 0; i < loops; i++)
+		{
+			switch (type)
+			{
+				case PatternType.None:
+					PowerSpikes[keyID] = powerMax;
+					await Task.Delay(onTime);
+					break;
+
+				case PatternType.Pulse:
+					PowerSpikes[keyID] = powerMax;
+					await Task.Delay(onTime);
+					PowerSpikes[keyID] = powerMin;
+					await Task.Delay(offTime);
+					break;
+
+				case PatternType.Wave:
+					while (patState == PatternState.Up)
+					{
+						PowerSpikes[keyID] += (0.01 * speedClimb) * powerMax;
+
+						if (PowerSpikes[keyID] > 0.99 * powerMax)
+						{
+							PatState = PatternState.Down;
+						}
+						await Task.Delay(50);
+					}
+					PowerSpikes[keyID] = powerMax;
+					await Task.Delay(onTime);
+					while (patState == PatternState.Down)
+					{
+						PowerSpikes[keyID] -= (0.01 * speedDrop) * powerMax;
+
+						if (PowerSpikes[keyID] < 0.01 + powerMin)
+						{
+							PatState = PatternState.Up;
+						}
+						await Task.Delay(50);
+					}
+					PowerSpikes[keyID] = 0.0 + powerMin;
+					await Task.Delay(offTime);
+					break;
+			}
+		}
+
+		PowerSpikes.Remove(keyID);
+	}
+	#endregion
 
 	//===========================================//
 	#region Patterns

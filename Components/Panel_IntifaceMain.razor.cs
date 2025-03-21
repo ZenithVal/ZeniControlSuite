@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Buttplug.Core.Messages;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using ZeniControlSuite.Authentication;
-using ZeniControlSuite.Models.Intiface;
+using ZeniControlSuite.Models;
 using ZeniControlSuite.Services;
 
 namespace ZeniControlSuite.Components;
@@ -13,6 +14,7 @@ public partial class Panel_IntifaceMain : IDisposable
 
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
     [Inject] private Service_Logs LogService { get; set; } = default!;
+    [Inject] private Service_Points PointsService { get; set; } = default!;
     [Inject] private Service_Intiface IntifaceService { get; set; } = default!;
 
     private string user = "Undefined";
@@ -21,11 +23,12 @@ public partial class Panel_IntifaceMain : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        PointsService.OnPointsUpdate += OnPointsUpdate;
         IntifaceService.OnIntifaceControlsUpdate += OnIntifaceControlsUpdate;
 
         var context = await AuthProvider.GetAuthenticationStateAsync();
         user = context.GetUserName();
-        LogService.AddLog(pageName, user, "PageLoad", Severity.Normal);
+        Log("PageLoad", Severity.Normal);
     }
 
     private void OnIntifaceControlsUpdate()
@@ -33,22 +36,58 @@ public partial class Panel_IntifaceMain : IDisposable
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnPointsUpdate()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
+        PointsService.OnPointsUpdate -= OnPointsUpdate;
         IntifaceService.OnIntifaceControlsUpdate -= OnIntifaceControlsUpdate;
     }
 
-    public void EnableIntiface()
+    private void Log(string message, Severity severity)
     {
-        pageEnabled = true;
-        IntifaceService.IntifaceStart(LogService);
-        LogService.AddLog(pageName, user, "Intiface Starting", Severity.Normal);
+        LogService.AddLog(pageName, user, message, severity);
+    }
+
+    public void StartIntiface()
+    {
+        IntifaceService.IntifaceStart();
+        Log("Intiface Starting", Severity.Normal);
+    }
+
+    public void StopIntiface()
+    {
+        IntifaceService.IntifaceStop();
+        Log("Intiface Stopping", Severity.Normal);
+    }
+
+    public void ToggleDeviceScanning()
+    {
+        if (!IntifaceService.DeviceScanning)
+        {
+            IntifaceService.StartScanning();
+			Log("Device Scanning Started", Severity.Normal);
+		}
+		else
+        {
+            IntifaceService.StopScanning();
+			Log("Device Scanning Stopped", Severity.Normal);
+		}
+    }
+
+    bool adminPanelExpand = false;
+    private void ToggleAdminPanel()
+    {
+        adminPanelExpand = !adminPanelExpand;
     }
 
     public void PowerFullStop()
     {
         IntifaceService.FullStop = !IntifaceService.FullStop;
-        LogService.AddLog(pageName, user, "Full Stop: " + IntifaceService.FullStop, Severity.Normal);
+        Log("Full Stop: " + IntifaceService.FullStop, Severity.Normal);
     }
 
     public void ResetControlValues()
@@ -151,11 +190,11 @@ public partial class Panel_IntifaceMain : IDisposable
 
 		if (PatternType == PatternType.None)
 		{
-			IntifaceService.UsePattern = false;
+			IntifaceService.PatternsEnabled = false;
 		}
 		else
 		{
-			IntifaceService.UsePattern = true;
+			IntifaceService.PatternsEnabled = true;
 		}
 
         LogService.AddLog(pageName, user, "Control Preset Applied", Severity.Normal);

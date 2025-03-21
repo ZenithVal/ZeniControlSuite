@@ -529,7 +529,7 @@ public class Service_Avatars : IHostedService
 		if (avatars.Any(a => a.ID == avatarID))
         {
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == avatarID);
-            LogAvatars($"Avatar switched to {selectedAvatar.Name} in VRChat", Severity.Normal);
+            LogAvatars($"Avatar {selectedAvatar.Name} loaded", Severity.Normal);
 
             HandleTrappedSwitch();
 

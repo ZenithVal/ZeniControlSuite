@@ -30,6 +30,7 @@ public partial class AvatarSelect : IDisposable
 
         var context = await AuthProvider.GetAuthenticationStateAsync();
         user = context.GetUserName();
+        Log("PageLoad", Severity.Normal);
     }
 
     private void OnPointsUpdate()

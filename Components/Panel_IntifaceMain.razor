@@ -3,113 +3,200 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using ZeniControlSuite.Authentication
-@using ZeniControlSuite.Models.Intiface
+@using ZeniControlSuite.Models
 @attribute [Authorize(Roles = "Admin, Intiface")]
 
 <AuthorizeView>
-    <Authorized>
+	<Authorized>
 
-        <MudItem>
-            <MudText Typo="Typo.h6">Intiface</MudText>
-        </MudItem>
+		<MudPaper Outlined Style="width: 600px; padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px; background-color:transparent;">
 
-        <MudGrid Justify="Justify.Center" Style="width: 600px">
-            <MudItem xs="4">
-                @if (@context.User.IsInRole("LocalHost"))
-                {
-                    <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="@(IntifaceService.IntifaceRunning)" OnClick="EnableIntiface">Enable Intiface</MudButton>
-                }
-                else
-                {
-                    <MudButton Variant="Variant.Filled" Color="Color.Success" Disabled="true">LocalHost Only</MudButton>
-                }
-            </MudItem>
+			<MudItem>
+				<MudText Typo="Typo.h6">Intiface</MudText>
+			</MudItem>
 
-            <MudItem xs="4">
-                @if (IntifaceService.FullStop)
-                {
-                    <MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Outlined" Color="Color.Primary" OnClick="PowerFullStop">STOPPED</MudButton>
-                }
-                else
-                {
-                    <MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Filled" Color="Color.Error" OnClick="PowerFullStop">Full Stop</MudButton>
-                }
-            </MudItem>
+			<MudDivider />
 
-            <MudItem xs="4">
-                <MudMenu Label="Presets" Variant="Variant.Outlined">
-                    @foreach (var preset in Enum.GetValues<ControlPreset>().ToList())
-                    {
-                        <MudMenuItem @onclick="() => ApplyControlPreset(preset)">@preset.ToString()</MudMenuItem>
-                    }
-                </MudMenu>
-            </MudItem>
+			<div style="display: flex">
+				<MudPaper Style="width: 100%; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 8px; background-color:transparent">
+					<MudPaper Outlined Class="bg-transparent" Style="display: flex; flex-direction: row; align-items: center; padding-left: 8px; padding-bottom: 8px; padding-top: 6px;">
+						@if (@context.User.IsInRole("Admin"))
+						{
+							<MudButton Variant="Variant.Outlined" Style="width: 150px; text-transform:none" OnClick="ToggleAdminPanel">@(adminPanelExpand ? "Admin (Collapse)" : "Admin (Expand)")</MudButton>
+							<MudSpacer />
+						}
+						@if (context.User.IsInRole("LocalHost"))
+						{
+							<MudButton Variant="Variant.Filled" Color="Color.Success" Style="text-transform:none" Disabled="IntifaceService.IntifaceRunning" OnClick="StartIntiface">Start Intiface</MudButton>
+							@if (IntifaceService.IntifaceRunning && !IntifaceService.IntifaceConnected)
+							{
+								<MudProgressCircular Color="Color.Success" Indeterminate="true" />
+							}
+							<MudSpacer />
+						}
+						@if (IntifaceService.ControlPointsEnabled)
+						{
+							<MudButton Variant="Variant.Outlined" Style="width: 120pxpx; text-transform:none" Color="Color.Success">Points: @PointsService.pointsDisplay</MudButton>
+						}
+						<MudSpacer />
+					</MudPaper>
+					@if (@context.User.IsInRole("Admin"))
+					{
+						<MudCollapse Expanded="adminPanelExpand" Style="width: 100%; padding-left: 8px; padding-right: 8px; padding-top: 8px;">
+							<MudDivider /><div style="height: 4px" />
+							<MudGrid>
+								<MudItem xs="5">
+									@if (context.User.IsInRole("LocalHost"))
+									{
+										<MudButton Variant="Variant.Filled" Color="Color.Error" Style="text-transform:none" Disabled="!IntifaceService.IntifaceRunning">Stop Intifiace</MudButton>
+									}
+									<MudSwitch @bind-Value="IntifaceService.ControlEnabled" Label="Controls" Color="Color.Info" />
+									<MudSwitch @bind-Value="IntifaceService.ControlPointsEnabled" Label="Points Usage" Color="Color.Warning" />
+									<MudSwitch @bind-Value="IntifaceService.PatternsEnabled" Label="Patterns" Color="Color.Error" />
+									<MudSwitch @bind-Value="IntifaceService.PatternPointsUnlocked" Label="Patterns Unlocked" Color="Color.Warning" />
+									<MudNumericField @bind-Value="IntifaceService.PatternPointMultiLimit" Label="Avatar Cost Multiplier" Color="Color.Warning" Step="0.25" Min="1.0" />
+								</MudItem>
+								<MudItem xs="7">
+									@if (context.User.IsInRole("LocalHost"))
+									{
+										<div style="display: flex; height: 36.5px; width:260px;">
+											<MudButton Variant="Variant.Filled" Disabled="!IntifaceService.IntifaceConnected" Style="text-transform:none; Width: 210px"
+													   Color="@(IntifaceService.DeviceScanning ? Color.Primary : Color.Secondary )"
+													   OnClick="ToggleDeviceScanning">
+												@(IntifaceService.DeviceScanning ? "Stop Scanning" : "Scan for Devices")
+											</MudButton>
+											<MudButton Variant="Variant.Filled" Style="text-transform:none; width: 30px" Color="@(IntifaceService.DeviceCount > 0 ? Color.Secondary : Color.Surface )">
+												@if (IntifaceService.DeviceScanning)
+												{
+													<MudProgressCircular Style="left: 10px" Color="Color.Primary" Indeterminate="true" />
+												}
+												else
+												{
+													<MudText Typo="Typo.body1">@IntifaceService.DeviceCount</MudText>
+												}
+											</MudButton>
+										</div>
+										<div style="height: 4px" />
+										<MudPaper Outlined Style="width:260px; height:200px; background-color:transparent">
+											<div id="unique_id_scroll_section" class="ma-0" style="height:200px;overflow-x: hidden;overflow-y: auto;">
 
-            <MudGrid Justify="Justify.Center">
-                <MudItem xs="11">
-                    <MudGrid>
-                        <MudItem xs="11">
-                            <MudSelect Label="Pattern" @bind-Value="@IntifaceService.PatternType" Variant="Variant.Outlined">
-                                @foreach (var pattern in Enum.GetValues<PatternType>().ToList())
-                                {
-                                    <MudSelectItem Value="@pattern">@pattern.ToString()</MudSelectItem>
-                                }
-                            </MudSelect>
-                        </MudItem>
+												@foreach (IntifaceDevice device in IntifaceService.ConfigedDevices)
+												{
+													<MudItem Style="height:60px; padding-left: 8px; padding-top: 4px;">
+														<MudText Typo="Typo.h6">@device.DisplayName</MudText>
+														<MudItem Style="height: 60px; position: relative; left: 0px; top: 0px">
+															<MudCheckBox Style="position: relative; left: -10px; top: -14px" Disabled="true" @bind-Value="@device.Connected" Color="Color.Success" />
+															<MudText Style="position: relative; left: 28px; top: -48px" Typo="Typo.body1">Connected</MudText>
+														</MudItem>
+														@* Leaving this off atm, pain to deal with disabling devices.
+											<MudItem Style="height: 60px; position: relative; left: 0px; top: 0px">
+											<MudCheckBox Style="position: relative; left: -10px; top: -14px" @bind-Value="device.Enabled" Color="Color.Info" />
+											<MudText Style="position: relative; left: 28px; top: -48px" Typo="Typo.body1">Enabled</MudText>
+											</MudItem>
+											<MudItem Style="height: 60px; position: relative; left: 90px; top: -60px">
+											<MudCheckBox Style="position: relative; left: -10px; top: -14px" Disabled="true" @bind-Value="@device.Connected" Color="Color.Success" />
+											<MudText Style="position: relative; left: 28px; top: -48px" Typo="Typo.body1">Connected</MudText>
+											</MudItem>
+											*@
+													</MudItem>
+												}
+											</div>
+										</MudPaper>
+									}
+								</MudItem>
+							</MudGrid>
+						</MudCollapse>
+					}
+				</MudPaper>
+			</div>
 
-                        @* Values that only appear if the patType is Wave*@
-                        @if (IntifaceService.PatternType == PatternType.Wave)
-                        {
-                            <MudItem xs="6">
-                                <MudNumericField @bind-Value="@IntifaceService.PatSpeedClimb" Label="Climb Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.2" Format="N1" />
-                            </MudItem>
+			<MudPaper Outlined Style="background-color:transparent; padding-left: 24px; padding-right: 12px; padding-top: 18px; padding-bottom: 18px;">
+				<MudGrid>
+					<MudItem xs="11">
+						<MudGrid>
+							<MudItem xs="8">
+								<MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Filled" Style="width: 250px;"
+										   Color="@(IntifaceService.FullStop ? Color.Primary : Color.Error )"
+										   OnClick="PowerFullStop">
+									@(IntifaceService.FullStop ? "Stopped" : "Full Stop")
+								</MudButton>
+							</MudItem>
 
-                            <MudItem xs="6">
-                                <MudNumericField @bind-Value="@IntifaceService.PatSpeedDrop" Label="Drop Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.2" Format="N1" />
-                            </MudItem>
-                        }
+							<MudItem xs="9">
+								<MudSelect Label="Pattern" @bind-Value="@IntifaceService.PatternType" Variant="Variant.Outlined">
+									@foreach (var pattern in Enum.GetValues<PatternType>().ToList())
+									{
+										<MudSelectItem Value="@pattern">@pattern.ToString()</MudSelectItem>
+									}
+								</MudSelect>
+							</MudItem>
 
+							<MudItem xs="2">
+								<MudMenu Label="Presets" Variant="Variant.Outlined">
+									@foreach (var preset in Enum.GetValues<ControlPreset>().ToList())
+									{
+										<MudMenuItem @onclick="() => ApplyControlPreset(preset)">@preset.ToString()</MudMenuItem>
+									}
+								</MudMenu>
+							</MudItem>
 
-                        <MudItem xs="3">
-                            <MudNumericField @bind-Value="@IntifaceService.PatRandomOffTimeMin" Label="Off Min Sec" Variant="Variant.Filled" Min="0" Max="@IntifaceService.PatRandomOffTimeMax" Step="0.1" Format="N1" />
-                        </MudItem>
-                        <MudItem xs="3">
-                            <MudNumericField @bind-Value="@IntifaceService.PatRandomOffTimeMax" Label="Off Max Sec" Variant="Variant.Filled" Min="@IntifaceService.PatRandomOffTimeMin" Max="30" Step="0.1" Format="N1" />
-                        </MudItem>
-                        <MudItem xs="3">
-                            <MudNumericField @bind-Value="@IntifaceService.PatRandomOnTimeMin" Label="On Min Sec" Variant="Variant.Filled" Min="0" Max="@IntifaceService.PatRandomOnTimeMax" Step="0.1" Format="N1" />
-                        </MudItem>
-                        <MudItem xs="3">
-                            <MudNumericField @bind-Value="@IntifaceService.PatRandomOnTimeMax" Label="On Max Sec" Variant="Variant.Filled" Min="@IntifaceService.PatRandomOnTimeMin" Max="10" Step="0.1" Format="N1" />
-                        </MudItem>
+							@* Values that only appear if the patType is Wave*@
+							@if (IntifaceService.PatternType == PatternType.Wave)
+							{
+								<MudItem xs="6">
+									<MudNumericField @bind-Value="@IntifaceService.PatSpeedClimb" Label="Climb Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.2" Format="N1" />
+								</MudItem>
 
-
-                        <MudItem xs="4">
-                            <MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMin" Label="Min Strength" Variant="Variant.Filled" Min="0" Max="@IntifaceService.PatRandomPowerMax" Step="0.1" Format="N1" />
-                        </MudItem>
-
-                        <MudItem xs="4">
-                            <MudCheckBox @bind-Value="@IntifaceService.PatUseRandomPower" Size="Size.Large" Label="Random %" Color="Color.Primary" UncheckedColor="Color.Secondary" />
-                        </MudItem>
-
-                        <MudItem xs="4">
-                            <MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMax" Label="Max Strength" Variant="Variant.Filled" Min="@IntifaceService.PatRandomPowerMin" Max="1" Step="0.1" Format="N1" />
-                        </MudItem>
-
-
-                        <MudItem xs="12">
-                            <MudSlider Vertical="false" Color="Color.Tertiary" Variant="Variant.Filled" Size="Size.Large" Min="0.0" Max="1.0" Step="0.05" @bind-Value="@IntifaceService.PatternPowerMulti">Multiplier</MudSlider>
-                        </MudItem>
+								<MudItem xs="6">
+									<MudNumericField @bind-Value="@IntifaceService.PatSpeedDrop" Label="Drop Speed" Variant="Variant.Filled" Min="0.1" Max="10.0" Step="0.2" Format="N1" />
+								</MudItem>
+							}
 
 
-                    </MudGrid>
-                </MudItem>
+							<MudItem xs="3">
+								<MudNumericField @bind-Value="@IntifaceService.PatRandomOffTimeMin" Label="Off Min Sec" Variant="Variant.Filled" Min="0" Max="@IntifaceService.PatRandomOffTimeMax" Step="0.1" Format="N1" />
+							</MudItem>
+							<MudItem xs="3">
+								<MudNumericField @bind-Value="@IntifaceService.PatRandomOffTimeMax" Label="Off Max Sec" Variant="Variant.Filled" Min="@IntifaceService.PatRandomOffTimeMin" Max="30" Step="0.1" Format="N1" />
+							</MudItem>
+							<MudItem xs="3">
+								<MudNumericField @bind-Value="@IntifaceService.PatRandomOnTimeMin" Label="On Min Sec" Variant="Variant.Filled" Min="0" Max="@IntifaceService.PatRandomOnTimeMax" Step="0.1" Format="N1" />
+							</MudItem>
+							<MudItem xs="3">
+								<MudNumericField @bind-Value="@IntifaceService.PatRandomOnTimeMax" Label="On Max Sec" Variant="Variant.Filled" Min="@IntifaceService.PatRandomOnTimeMin" Max="10" Step="0.1" Format="N1" />
+							</MudItem>
 
-                <Panel_IntifaceReadout />
 
-            </MudGrid>
+							<MudItem xs="4">
+								<MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMin" Label="Min Strength" Variant="Variant.Filled" Min="0" Max="@IntifaceService.PatRandomPowerMax" Step="0.1" Format="N1" />
+							</MudItem>
 
-        </MudGrid>
+							<MudItem xs="4">
+								<MudCheckBox @bind-Value="@IntifaceService.PatUseRandomPower" Size="Size.Large" Label="Random %" Color="Color.Primary" UncheckedColor="Color.Secondary" />
+							</MudItem>
 
-    </Authorized>
+							<MudItem xs="4">
+								<MudNumericField @bind-Value="@IntifaceService.PatRandomPowerMax" Label="Max Strength" Variant="Variant.Filled" Min="@IntifaceService.PatRandomPowerMin" Max="1" Step="0.1" Format="N1" />
+							</MudItem>
+
+
+							<MudItem xs="12">
+                                <MudItem xs="12" style="display: flex; justify-content: center; padding-bottom:10px">
+                                    <MudText Style="" Typo="Typo.body1">Power Strength</MudText>
+                                </MudItem>
+								<MudSlider Vertical="false" Color="Color.Tertiary" Variant="Variant.Filled" Size="Size.Large" Min="0.0" Max="1.0" Step="0.05" @bind-Value="@IntifaceService.PatternPowerMulti"></MudSlider>
+							</MudItem>
+
+
+						</MudGrid>
+					</MudItem>
+
+					<Panel_IntifaceReadout />
+
+				</MudGrid>
+			</MudPaper>
+
+		</MudPaper>
+
+	</Authorized>
 </AuthorizeView>

@@ -6,6 +6,11 @@
 	<MudText Typo="Typo.h6">Logs</MudText>
 </MudItem>
 
+<div style="height: 4px" />
+<MudDivider />
+<div style="height: 4px" />
+
+<MudPaper Outlined Style="background-color:transparent">
 @foreach (LogEvent logevent in LogService.logEvents.OrderByDescending(e => e.time))
 {
 	if (logevent.source.StartsWith("GamePoints") || logevent.source.StartsWith("GameControls") || logevent.source.StartsWith("AvatarPoints") || logevent.source.StartsWith("PointControls") || logevent.source.StartsWith("Service_AutoGames"))
@@ -13,3 +18,4 @@
 		<MudAlert Dense="true" Severity="Severity.Normal">@logevent.user @logevent.message</MudAlert>
 	}
 }
+</MudPaper>
