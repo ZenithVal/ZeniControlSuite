@@ -8,9 +8,9 @@ public class Game
 
     public class MDLink
     {
-		public string text { get; set; } = "";
-		public string url { get; set; } = "";
-	}
+        public string text { get; set; } = "";
+        public string url { get; set; } = "";
+    }
 
     public class DescriptionLine
     {

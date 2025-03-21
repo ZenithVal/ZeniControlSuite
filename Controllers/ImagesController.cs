@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.IO;
 
 namespace ZeniControlSuite.Controllers;
 
@@ -12,7 +11,7 @@ public class ImagesController : ControllerBase
     {
         //Console.WriteLine($"Requested {imageName}");
 
-        string imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images/"+imageName);
+        string imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images/" + imageName);
         //Console.WriteLine($"Path: {imagePath}");
 
         if (!System.IO.File.Exists(imagePath))
@@ -30,7 +29,7 @@ public class ImagesController : ControllerBase
     {
         //Console.WriteLine($"Requested {imageName}");
 
-        string imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images/Avatars/"+imageName);
+        string imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images/Avatars/" + imageName);
         //Console.WriteLine($"Path: {imagePath}");
 
         if (!System.IO.File.Exists(imagePath))
@@ -47,7 +46,7 @@ public class ImagesController : ControllerBase
     {
         //Console.WriteLine($"Requested {imageName}");
 
-        string imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images/Controls/"+imageName);
+        string imagePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images/Controls/" + imageName);
         //Console.WriteLine($"Path: {imagePath}");
 
         if (!System.IO.File.Exists(imagePath))

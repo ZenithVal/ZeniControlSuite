@@ -1,8 +1,6 @@
-﻿using System.Drawing;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
-using MudBlazor.Utilities;
 using ZeniControlSuite.Authentication;
 using ZeniControlSuite.Models;
 using ZeniControlSuite.Services;
@@ -78,9 +76,9 @@ public partial class AvatarSelect : IDisposable
         {
             Log($"Already Selected {avatar.Name}, increasing trap timer", Severity.Normal);
         }
-        
+
         //AvatarsService.TrapAvatar();
-        PointsService.UpdatePoints(-avatar.Cost*AvatarsService.avatarSelectCostMulti);
+        PointsService.UpdatePoints(-avatar.Cost * AvatarsService.avatarSelectCostMulti);
     }
 
     private void IncreaseTrapTimer()

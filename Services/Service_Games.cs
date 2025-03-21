@@ -188,7 +188,7 @@ public class Service_Games : IHostedService
                 {
                     gamesList.Last().Description.Add(new Game.DescriptionLine { typo = level, text = editedLine });
                 }
-                }
+            }
         }
 
         gameSelected = gamesList.First();

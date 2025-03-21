@@ -1,5 +1,4 @@
-﻿using Buttplug.Core.Messages;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using ZeniControlSuite.Authentication;
@@ -69,13 +68,13 @@ public partial class Panel_IntifaceMain : IDisposable
         if (!IntifaceService.DeviceScanning)
         {
             IntifaceService.StartScanning();
-			Log("Device Scanning Started", Severity.Normal);
-		}
-		else
+            Log("Device Scanning Started", Severity.Normal);
+        }
+        else
         {
             IntifaceService.StopScanning();
-			Log("Device Scanning Stopped", Severity.Normal);
-		}
+            Log("Device Scanning Stopped", Severity.Normal);
+        }
     }
 
     bool adminPanelExpand = false;
@@ -188,14 +187,14 @@ public partial class Panel_IntifaceMain : IDisposable
         IntifaceService.PatRandomPowerMax = PatRandomPowerMax;
         IntifaceService.PatternPowerMulti = PowerInput;
 
-		if (PatternType == PatternType.None)
-		{
-			IntifaceService.PatternsEnabled = false;
-		}
-		else
-		{
-			IntifaceService.PatternsEnabled = true;
-		}
+        if (PatternType == PatternType.None)
+        {
+            IntifaceService.PatternsEnabled = false;
+        }
+        else
+        {
+            IntifaceService.PatternsEnabled = true;
+        }
 
         LogService.AddLog(pageName, user, "Control Preset Applied", Severity.Normal);
         InvokeAsync(StateHasChanged);

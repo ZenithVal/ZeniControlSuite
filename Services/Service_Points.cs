@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using MudBlazor;
+﻿using MudBlazor;
 
 namespace ZeniControlSuite.Services;
 
@@ -91,7 +90,7 @@ public class Service_Points : IHostedService
 
         //FractionalScore(pointsTotal);
         pointsTruncated = Math.Truncate(pointsTotal * 100) / 100;
-        pointsDisplay =  $"{pointsTruncated}✦";
+        pointsDisplay = $"{pointsTruncated}✦";
         //PointsDisplayCalc();
 
         InvokePointsUpdate();
@@ -101,7 +100,7 @@ public class Service_Points : IHostedService
     {
         double remainder = pointsTruncated;
 
-		int wholeNumber = 0;
+        int wholeNumber = 0;
         int denominator = 1;
 
         wholeNumber = (int)Math.Floor(remainder);

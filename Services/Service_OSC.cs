@@ -8,11 +8,11 @@ namespace ZeniControlSuite.Services;
 
 public class Service_OSC : IHostedService
 {
-	public delegate void OscSubscriptionEventHandler(OscMessage e);
-	public event OscSubscriptionEventHandler? OnOscMessageReceived;
+    public delegate void OscSubscriptionEventHandler(OscMessage e);
+    public event OscSubscriptionEventHandler? OnOscMessageReceived;
 
-	private readonly Service_Logs LogService;
-    public Service_OSC(Service_Logs serviceLogs ) { LogService = serviceLogs; }
+    private readonly Service_Logs LogService;
+    public Service_OSC(Service_Logs serviceLogs) { LogService = serviceLogs; }
 
     private void Log(string message, Severity severity = Severity.Normal)
     {
@@ -64,12 +64,12 @@ public class Service_OSC : IHostedService
     private bool OSCQuery = false;
 
     public bool Running { get; private set; } = false;
-	#endregion
+    #endregion
 
 
-	//===========================================//
-	#region Initialization
-	public Task InitializeOSCConfig()
+    //===========================================//
+    #region Initialization
+    public Task InitializeOSCConfig()
     {
         if (!File.Exists("Configs/OSC.json"))
         {
@@ -98,8 +98,7 @@ public class Service_OSC : IHostedService
     public void CreateDefaultConfig()
     {
         //create a json file from the default config
-        var defaultConfig = new
-        {
+        var defaultConfig = new {
             IP = "127.0.0.1",
             ListingPort = 9001,
             SendingPort = 9000,
@@ -133,7 +132,7 @@ public class Service_OSC : IHostedService
 
         Running = true;
         HandleOscPacket callback = delegate (OscPacket packet)
-        { 
+        {
             var messageReceived = (OscMessage)packet;
             if (messageReceived != null)
             {
@@ -180,12 +179,12 @@ public class Service_OSC : IHostedService
         }
     }
 
-	#endregion
+    #endregion
 
 
-	//===========================================//
-	#region OSC Stuff
-	public void sendOSCParameter(Parameter param)
+    //===========================================//
+    #region OSC Stuff
+    public void sendOSCParameter(Parameter param)
     {
         var value = OSCExtensions.FormatOutGoing(param.Value, param.Type);
 

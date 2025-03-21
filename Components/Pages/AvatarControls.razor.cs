@@ -1,8 +1,6 @@
-﻿using System.Drawing;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
-using MudBlazor.Utilities;
 using ZeniControlSuite.Authentication;
 using ZeniControlSuite.Models;
 using ZeniControlSuite.Services;
@@ -11,39 +9,39 @@ namespace ZeniControlSuite.Components.Pages;
 
 public partial class AvatarControls : IDisposable
 {
-	public static bool pageEnabled = true;
+    public static bool pageEnabled = true;
 
     [Inject] private AuthenticationStateProvider AuthProvider { get; set; } = default!;
-	[Inject] private Service_Logs LogService { get; set; } = default!;
+    [Inject] private Service_Logs LogService { get; set; } = default!;
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
 
     [Inject] private Service_Avatars AvatarsService { get; set; } = default!;
-	[Inject] private Service_OSC OscService { get; set; } = default!;
+    [Inject] private Service_OSC OscService { get; set; } = default!;
 
 
-	private string user = "Undefined";
-	private AuthenticationState context;
+    private string user = "Undefined";
+    private AuthenticationState context;
 
-	private readonly string pageName = "Avatar Controls";
+    private readonly string pageName = "Avatar Controls";
 
-	protected override async Task OnInitializedAsync()
-	{
-		AvatarsService.OnAvatarsUpdate += OnAvatarsUpdate;
+    protected override async Task OnInitializedAsync()
+    {
+        AvatarsService.OnAvatarsUpdate += OnAvatarsUpdate;
 
-		var context = await AuthProvider.GetAuthenticationStateAsync();
-		user = context.GetUserName();
-		LogService.AddLog(pageName, user, "PageLoad", Severity.Normal);
+        var context = await AuthProvider.GetAuthenticationStateAsync();
+        user = context.GetUserName();
+        LogService.AddLog(pageName, user, "PageLoad", Severity.Normal);
 
-	}
-	private void OnAvatarsUpdate()
-	{
-		InvokeAsync(StateHasChanged);
-	}
+    }
+    private void OnAvatarsUpdate()
+    {
+        InvokeAsync(StateHasChanged);
+    }
 
-	public void Dispose()
-	{
-		AvatarsService.OnAvatarsUpdate -= OnAvatarsUpdate;
-	}
+    public void Dispose()
+    {
+        AvatarsService.OnAvatarsUpdate -= OnAvatarsUpdate;
+    }
 
     private void ControlTogglePress(ContTypeToggle control)
     {
@@ -56,32 +54,32 @@ public partial class AvatarControls : IDisposable
             control.Parameter.Value = control.ValueOff;
         }
 
-		AvatarsService.SetParameterValue(control.Parameter);
+        AvatarsService.SetParameterValue(control.Parameter);
 
         LogService.AddLog(pageName, user, $"{control.Name} set to {control.Parameter.Value}", Severity.Normal);
     }
 
-	private void ControlRadialChange(ContTypeRadial control, float value)
-	{
+    private void ControlRadialChange(ContTypeRadial control, float value)
+    {
 
-		control.Parameter.Value = value;
+        control.Parameter.Value = value;
 
-		AvatarsService.SetParameterValue(control.Parameter);
+        AvatarsService.SetParameterValue(control.Parameter);
         //LogService.AddLog(pageName, user, $"radial {control.Name} set to {control.Parameter.Value}", Severity.Normal);
     }
 
 
-	private void ControlHSVChange(ContTypeHSV control, HSVParamValue param, float value)
-	{
-		switch (param)
-		{
+    private void ControlHSVChange(ContTypeHSV control, HSVParamValue param, float value)
+    {
+        switch (param)
+        {
             case HSVParamValue.Hue:
                 control.ParameterHue.Value = value;
                 AvatarsService.SetParameterValue(control.ParameterHue);
                 break;
             case HSVParamValue.Saturation:
                 control.ParameterSaturation.Value = value;
-				AvatarsService.SetParameterValue(control.ParameterSaturation);
+                AvatarsService.SetParameterValue(control.ParameterSaturation);
                 break;
             case HSVParamValue.Brightness:
                 if (control.InvertedBrightness)
@@ -96,7 +94,7 @@ public partial class AvatarControls : IDisposable
                 AvatarsService.SetParameterValue(control.ParameterBrightness);
                 break;
         }
-	}
+    }
 
     private float RoundFloat(float value)
     {
@@ -134,12 +132,12 @@ public partial class AvatarControls : IDisposable
 	*/
 
     private void ControlHSVReset(ContTypeHSV control)
-	{
+    {
 
     }
 
-	private void ControlHSVPreset(ContTypeHSV control)
-	{
+    private void ControlHSVPreset(ContTypeHSV control)
+    {
 
     }
 
