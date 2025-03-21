@@ -7,7 +7,7 @@ public partial class Panel_IntifaceReadout : IDisposable
 {
     public static bool pageEnabled = true;
     private string user = "Undefined";
-    private string pageName = "Panel_Intiface";
+    private string pageName = "Panel_Intiface_Readout";
 
     [Inject] private Service_Intiface IntifaceService { get; set; } = default!;
 

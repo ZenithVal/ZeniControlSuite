@@ -1,4 +1,6 @@
-﻿namespace ZeniControlSuite.Models;
+﻿using MudBlazor;
+
+namespace ZeniControlSuite.Models;
 
 public enum PatternType
 {

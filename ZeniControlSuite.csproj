@@ -44,7 +44,7 @@
     <PackageReference Include="Buttplug" Version="4.0.0" />
     <PackageReference Include="Discord.OAuth2.AspNetCore" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
-    <PackageReference Include="MudBlazor" Version="7.15.0" />
+    <PackageReference Include="MudBlazor" Version="8.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="OpenShock.SDK.CSharp" Version="0.0.29" />
   </ItemGroup>

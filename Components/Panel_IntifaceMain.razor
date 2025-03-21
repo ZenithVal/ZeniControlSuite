@@ -114,14 +114,23 @@
 					<MudItem xs="11">
 						<MudGrid>
 							<MudItem xs="12">
-								<MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Filled" Style="width: 100%;"
-										   Color="@(IntifaceService.FullStop ? Color.Primary : Color.Error )"
-										   OnClick="PowerFullStop">
-									@(IntifaceService.FullStop ? "Stopped" : "Full Stop")
-								</MudButton>
+								<div style="display: flex">
+									<MudButton Disabled="@(!IntifaceService.IntifaceRunning)" Variant="Variant.Filled" Style="width: 75%;"
+											   Color="@(IntifaceService.FullStop ? Color.Primary : Color.Error )"
+											   OnClick="PowerFullStop">
+										@(IntifaceService.FullStop ? "Stopped" : "Full Stop")
+									</MudButton>
+									<MudSpacer />
+									<MudMenu Label="Presets" Variant="Variant.Outlined" Style="width: 18%;">
+										@foreach (var preset in Enum.GetValues<ControlPreset>().ToList())
+										{
+											<MudMenuItem @onclick="() => ApplyControlPreset(preset)">@preset.ToString()</MudMenuItem>
+										}
+									</MudMenu>
+								</div>
 							</MudItem>
 
-							<MudItem xs="8">
+							<MudItem xs="12">
 								<MudSelect Label="Pattern" @bind-Value="@IntifaceService.PatternType" Variant="Variant.Outlined">
 									@foreach (var pattern in Enum.GetValues<PatternType>().ToList())
 									{
@@ -130,13 +139,18 @@
 								</MudSelect>
 							</MudItem>
 
-							<MudCarousel Class="mud-width-full" Style="height:200px;" ShowArrows="true" ShowBullets="true" EnableSwipeGesture="false" AutoCycle="false" TData="object">
-								<MudCarouselItem Transition="Transition.Slide" Color="@Color.Primary">
-									<div class="d-flex" style="height:100%">
-										<MudIcon Class="mx-auto my-auto" Icon="@Icons.Custom.Brands.MudBlazor" Size="@Size.Large" />
-									</div>
-								</MudCarouselItem>
-							</MudCarousel>
+							@* TODO				
+							<MudItem xs="12">
+								<MudCarousel @bind-SelectedIndex="@IntifaceService.PatternIndex"  Style="height:150px;" ShowArrows="true" ShowBullets="true" EnableSwipeGesture="false" AutoCycle="false" TData="object">
+									<MudCarouselItem Transition="Transition.None" Color="@Color.Primary">
+									</MudCarouselItem>
+									<MudCarouselItem Transition="Transition.None" Color="@Color.Primary">
+									</MudCarouselItem>
+									<MudCarouselItem Transition="Transition.None" Color="@Color.Primary">
+									</MudCarouselItem>
+								</MudCarousel>
+							</MudItem> 
+							*@
 
 							@* Values that only appear if the patType is Wave*@
 							@if (IntifaceService.PatternType == PatternType.Wave)

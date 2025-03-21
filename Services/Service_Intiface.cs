@@ -4,6 +4,7 @@ using CoreOSC;
 using MudBlazor;
 using ZeniControlSuite.Extensions;
 using ZeniControlSuite.Models;
+using static MudBlazor.CategoryTypes;
 
 namespace ZeniControlSuite.Services;
 
@@ -43,6 +44,9 @@ public class Service_Intiface : IHostedService, IDisposable
 
     public delegate void RequestHapticsUpdate();
     public event RequestHapticsUpdate? OnIntifaceHapticsUpdate;
+
+    public delegate void RequestGraphUpdate();
+    public event RequestGraphUpdate? OnIntifaceGraphUpdate;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -143,6 +147,10 @@ public class Service_Intiface : IHostedService, IDisposable
 
     public double PatternPowerPointMulti = 0.25;
 
+    public int PatternIndex {
+        get { return (int)PatternType; }
+        set { PatternType = (PatternType)value; }
+    }
     public PatternType PatternType { get; set; } = PatternType.Wave;
     public List<PatternType> GetPatternTypes => Enum.GetValues<PatternType>().ToList();
 
@@ -158,12 +166,12 @@ public class Service_Intiface : IHostedService, IDisposable
     public double PatPowerGoal = 0.0;
     public double PatRandomPowerMin = 0.1;
     public double PatRandomPowerMax = 1.0;
-    #endregion
+	#endregion
 
 
-    //===========================================//
-    #region Intialization
-    private string validationLog = "";
+	//===========================================//
+	#region Intialization
+	private string validationLog = "";
     private void ValidationLog(string message)
     {
         validationLog = message;
@@ -377,7 +385,8 @@ public class Service_Intiface : IHostedService, IDisposable
             IntifaceRunning = false;
             IntifaceConnected = false;
         }
-        InvokeControlUpdate();
+
+		InvokeControlUpdate();
     }
 
     public async Task IntifaceStop()
@@ -491,7 +500,7 @@ public class Service_Intiface : IHostedService, IDisposable
                 }
                 InvokeReadoutUpdate();
             }
-        }
+		}
     }
 
     private void HandleOSCMessage(OscMessage messageReceived)
@@ -512,11 +521,14 @@ public class Service_Intiface : IHostedService, IDisposable
     private async Task DevicePattern()
     {
         PatState = 0;
-        PatPowerGoal = PatternPowerMulti;
 
         if (PatUseRandomPower)
         {
             PatPowerGoal = new Random().NextDouble() * (PatRandomPowerMax - PatRandomPowerMin) + PatRandomPowerMin;
+        }
+        else
+        {
+            PatPowerGoal = PatternPowerMulti;
         }
 
         PatternPower = 0.0;
@@ -575,12 +587,12 @@ public class Service_Intiface : IHostedService, IDisposable
 
         PatternRunning = false;
     }
-    #endregion
+	#endregion
 
 
-    //===========================================//
-    #region Haptics
-    private void HandleHapticParam(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
+	//===========================================//
+	#region Haptics
+	private void HandleHapticParam(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
     {
         var hapticInput = HapticInputs.Find(x => x.Parameter.Address == param.Address);
         if (hapticInput != null)
