@@ -514,15 +514,16 @@ public class Service_Avatars : IHostedService
 
     public void HandleAvatarChange(string avatarID)
     {
+		if (StruggleGameSystem)
+		{
+			TransferLastStruggleGameState();
+		}
 
-        if (selectedAvatar.ID == avatarID)
+		if (selectedAvatar.ID == avatarID)
         {
             //Usually an avatar reset or switching worlds.
             return;
         }
-
-        HandleStruggleGame();
-
 
         if (avatars.Any(a => a.ID == avatarID))
         {
@@ -548,12 +549,10 @@ public class Service_Avatars : IHostedService
 
     public void SetParameterValue(Parameter param) //used by AvatarControls. Upddates the param and sends an OSC message out with it
     {
-        if (!selectedAvatar.Parameters.ContainsKey(param.Address))
+        if (selectedAvatar.Parameters.ContainsKey(param.Address))
         {
-            LogControls($"Parameter {param.Address} not found in {selectedAvatar.Name}", Severity.Warning);
-            return;
+			selectedAvatar.Parameters[param.Address].Value = param.Value;
         }
-        selectedAvatar.Parameters[param.Address].Value = param.Value;
         OSCService.sendOSCParameter(param);
 
         InvokeAvatarControlsUpdate();
@@ -635,7 +634,8 @@ public class Service_Avatars : IHostedService
     //===========================================//
     #region StruggleGame Handling
     public bool StruggleGameSystem = false;
-    public bool StruggleGameActive = false;
+	public bool StruggleGameIgnoreIncoming = false;
+	public bool StruggleGameActive = false;
     public Avatar StruggleGameAvatar = new Avatar();
 
     List<Parameter> StruggleGameLastState = new List<Parameter>();
@@ -656,6 +656,8 @@ public class Service_Avatars : IHostedService
 
     public void HandleStruggleGameParam(Parameter param, float value)
     {
+        if (StruggleGameIgnoreIncoming) return;
+        
         if (!StruggleGameAvatar.Parameters.ContainsKey(param.Address))
         {
             LogControls($"Parameter {param.Address} not found in StruggleGame", Severity.Warning);
@@ -679,14 +681,16 @@ public class Service_Avatars : IHostedService
         }
     }
 
-    public void HandleStruggleGame()
+    private async void TransferLastStruggleGameState()
     {
-        if (!StruggleGameActive) return;
+        StruggleGameIgnoreIncoming = true;
+        await Task.Delay(1000); //delay to allow avatar to load
 
         foreach (var param in StruggleGameLastState)
         {
             SetParameterValue(param);
         }
+        StruggleGameIgnoreIncoming = false;
     }
 
     public void StruggleGameStart()

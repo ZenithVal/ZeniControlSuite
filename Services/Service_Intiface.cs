@@ -494,7 +494,8 @@ public class Service_Intiface : IHostedService, IDisposable
 
             if (HapticsEnabled && !HapticCalcRunning)
             {
-                IntifaceHapticCalc();
+				HapticCalcRunning = true;
+				IntifaceHapticCalc();
             }
             PowerOutput = Math.Clamp(Math.Pow((PatternPower * PatternPowerMulti), PatternExponent) + PowerSpike + HapticPower, 0.0, 1.0);
             if (IntifacePointsEnabled)
@@ -632,7 +633,6 @@ public class Service_Intiface : IHostedService, IDisposable
 
     public async Task IntifaceHapticCalc()
     {
-        HapticCalcRunning = true;
         var newHapticPower = 0.0f;
         foreach (var HI in HapticInputs)
         {
