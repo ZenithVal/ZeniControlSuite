@@ -39,7 +39,8 @@ public class Service_Avatars : IHostedService
     public Task StartAsync(CancellationToken cancellationToken)
     {
         InitializeAvatarControls();
-        return Task.CompletedTask;
+		StruggleGameSetup();
+		return Task.CompletedTask;
     }
     public Task StopAsync(CancellationToken cancellationToken)
     {
@@ -207,8 +208,6 @@ public class Service_Avatars : IHostedService
             avatars.Add(undefiinedAvatar);
         }
         var undefinedAvatar = avatars.FirstOrDefault(a => a.ID == "Undefined");
-
-        StruggleGameSetup();
 
         avatarsLoaded = true;
         InvokeAvatarControlsUpdate();
@@ -489,6 +488,7 @@ public class Service_Avatars : IHostedService
     #region Avatar Functions
     private void HandleOSCMessage(OscMessage messageReceived)
     {
+        //Console.WriteLine($"OSC | {messageReceived.Address} : {messageReceived.Arguments[0]}");
         if (selectedAvatar.Parameters.ContainsKey(messageReceived.Address)) //Handle existing Params
         {
             var parameter = selectedAvatar.Parameters[messageReceived.Address];
@@ -500,11 +500,11 @@ public class Service_Avatars : IHostedService
             var avatarID = messageReceived.Arguments[0].ToString();
             HandleAvatarChange(avatarID);
         }
-        else if (StruggleGameSystem && messageReceived.Address.Contains("StruggleGame"))
+        else if (messageReceived.Address.Contains("StruggleGame"))
         {
-            if (StruggleGameAvatar.Parameters.ContainsKey(messageReceived.Address))
+            if (StruggleGameParameters.ContainsKey(messageReceived.Address))
             {
-                var parameter = StruggleGameAvatar.Parameters[messageReceived.Address];
+                var parameter = StruggleGameParameters[messageReceived.Address];
                 float value = OSCExtensions.FormatIncoming(messageReceived.Arguments[0], parameter.Type);
                 HandleStruggleGameParam(parameter, value);
             }
@@ -521,14 +521,14 @@ public class Service_Avatars : IHostedService
 
 		if (selectedAvatar.ID == avatarID)
         {
-            //Usually an avatar reset or switching worlds.
+            LogAvatars($"Avatar {selectedAvatar.Name} already loaded", Severity.Info);
             return;
         }
 
         if (avatars.Any(a => a.ID == avatarID))
         {
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == avatarID);
-            LogAvatars($"Avatar {selectedAvatar.Name} loaded", Severity.Normal);
+            LogAvatars($"Avatar {selectedAvatar.Name} loaded", Severity.Info);
 
             HandleTrappedSwitch();
 
@@ -541,7 +541,7 @@ public class Service_Avatars : IHostedService
 
             LogAvatars($"No avatar for {avatarIDTruncated} found", Severity.Normal);
             selectedAvatar = avatars.FirstOrDefault(a => a.ID == "Global");
-            LogAvatars($"Selected avatar Global", Severity.Normal);
+            LogAvatars($"Selected avatar Global", Severity.Info);
 
             InvokeAvatarControlsUpdate();
         }
@@ -636,55 +636,50 @@ public class Service_Avatars : IHostedService
     public bool StruggleGameSystem = false;
 	public bool StruggleGameIgnoreIncoming = false;
 	public bool StruggleGameActive = false;
-    public Avatar StruggleGameAvatar = new Avatar();
+    private string StruggleGamePath = "/avatar/parameters/StruggleGame/";
+    private Dictionary<string, Parameter> StruggleGameParameters = new Dictionary<string, Parameter>();
     private void StruggleGameSetup()
-    {
-        if (avatars.Any(a => a.ID == "StruggleGame"))
-        {
-			try
-			{
-				StruggleGameSystem = true;
-				LogControls("Struggle Game System Enabled", Severity.Info);
-				StruggleGameAvatar = avatars.FirstOrDefault(a => a.ID == "StruggleGame");
+	{
+		try
+		{
+			List<string> bools = new List<string> { "Active" };
+			List<string> floats = new List<string> { "Level", "Difficulty", "Shield" };
 
-				if (!StruggleGameAvatar.Parameters.ContainsKey("Active") ||
-					!StruggleGameAvatar.Parameters.ContainsKey("ForceMax") ||
-					!StruggleGameAvatar.Parameters.ContainsKey("Level") ||
-					!StruggleGameAvatar.Parameters.ContainsKey("Difficulty") ||
-					!StruggleGameAvatar.Parameters.ContainsKey("Shield") ||
-					!StruggleGameAvatar.Parameters.ContainsKey("Counter"))
-				{
-					StruggleGameSystem = false;
-					LogControls("StruggleGame Missing a parameter, please check the avatar config.", Severity.Warning);
-					return;
-				}
+			foreach (var parameter in bools)
+			{
+				StruggleGameParameters.Add(StruggleGamePath+parameter, new Parameter { Address = StruggleGamePath+parameter, Type = ParameterType.Bool, Value = 0.0f });
 			}
-            catch (Exception e)
-            {
-				StruggleGameSystem = false;
-				LogControls($"Struggle Game System Failed to load: {e}", Severity.Error);
-				return;
+			foreach (var parameter in floats)
+			{
+				StruggleGameParameters.Add(StruggleGamePath+parameter, new Parameter { Address = StruggleGamePath+parameter, Type = ParameterType.Float, Value = 0.0f });
 			}
-        }
-        else
-        {
-            StruggleGameSystem = false;
-            return;
-        }
+		}
+		catch (Exception e)
+		{
+			LogControls($"Struggle Game System Failed to load: \n{e}", Severity.Error);
+			return;
+		}
+	}
+
+    private void StruggleGameEnable()
+    {
+        StruggleGameSystem = true;
+        LogControls("Struggle Game System Enabled", Severity.Normal);
     }
 
     public void HandleStruggleGameParam(Parameter param, float value)
     {
+        if (!StruggleGameSystem) StruggleGameEnable();
         if (StruggleGameIgnoreIncoming) return;
         
-        if (!StruggleGameAvatar.Parameters.ContainsKey(param.Address))
+        if (!StruggleGameParameters.ContainsKey(param.Address))
         {
             //LogControls($"Parameter {param.Address} not found in StruggleGame", Severity.Warning);
             return;
         }
 
         //Update StruggleGame Avatar Param
-        StruggleGameAvatar.Parameters[param.Address].Value = value;
+        StruggleGameParameters[param.Address].Value = value;
 
         if (param.Address.Contains("Active"))
         {
@@ -696,7 +691,7 @@ public class Service_Avatars : IHostedService
             }
             else if (!ParamActive && StruggleGameActive)
             {
-                if (StruggleGameAvatar.Parameters["Level"].Value > 0.02)
+                if (StruggleGameParameters[StruggleGamePath+"Level"].Value > 0.02)
                 {
 					StruggleGameEndBad();
 				}
@@ -714,20 +709,21 @@ public class Service_Avatars : IHostedService
         StruggleGameIgnoreIncoming = true;
         await Task.Delay(1000); //delay to allow avatar to load
 
-        foreach (var parameter in StruggleGameAvatar.Parameters)
+        foreach (var parameter in StruggleGameParameters)
         {
-            var param = StruggleGameAvatar.Parameters[parameter.Key];
+            var param = StruggleGameParameters[parameter.Key];
             SetParameterValue(param);
         }
         StruggleGameIgnoreIncoming = false;
     }
 
-    float struggleGamePenaltyValue = 0.0f;
+    double struggleGamePenaltyValue = 0.0f;
 
     public void SetStruggleGamePenalty()
     {
-        float value = StruggleGameAvatar.Parameters["Level"].Value;
-		struggleGamePenaltyValue = (float)Math.Round(value * 4) / 4;
+        float value = StruggleGameParameters[StruggleGamePath + "Level"].Value;
+        struggleGamePenaltyValue = Math.Round(value * 4, MidpointRounding.ToEven) / 4;
+        struggleGamePenaltyValue = Math.Truncate(struggleGamePenaltyValue * 100) / 100;
 	}
 
     public void StruggleGameStart()
@@ -741,14 +737,14 @@ public class Service_Avatars : IHostedService
 	public void StruggleGameEndGood()
     {
 		StruggleGameActive = false;
-		LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game succeeded.", Severity.Info, Variant.Outlined);
+		LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game finished.", Severity.Info, Variant.Outlined);
     }
 
     public void StruggleGameEndBad()
 	{
 		StruggleGameActive = false;
 		PointsService.UpdatePoints(struggleGamePenaltyValue);
-		LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game Failed, added {struggleGamePenaltyValue}✦ | Total: {PointsService.pointsDisplay}", Severity.Info, Variant.Outlined);
+		LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game failed, added {struggleGamePenaltyValue}✦ | Total: {PointsService.pointsDisplay}", Severity.Info, Variant.Outlined);
 	}
 	#endregion
 
