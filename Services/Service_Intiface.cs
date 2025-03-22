@@ -436,6 +436,7 @@ public class Service_Intiface : IHostedService, IDisposable
             if (deviceLoopTimer != null)
             {
                 deviceLoopTimer.Stop();
+                deviceLoopTimer.Dispose();
             }
             Log("Intiface Stopped", Severity.Info);
         }
@@ -453,7 +454,7 @@ public class Service_Intiface : IHostedService, IDisposable
         InvokeControlUpdate();
     }
 
-    System.Timers.Timer deviceLoopTimer;
+    private System.Timers.Timer deviceLoopTimer;
     private void DeviceHeartbeatTimer() //Runs Device control loop
     {
         deviceLoopTimer = new System.Timers.Timer(100);

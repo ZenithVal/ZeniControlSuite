@@ -127,7 +127,7 @@ public class Service_Points : IHostedService
         }
         else
         {
-            pointsDisplay = $"{wholeNumber} & {remainder}/{denominator}⭐";
+            pointsDisplay = $"{wholeNumber} & {remainder}/{denominator}✦";
         }
     }
 

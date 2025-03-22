@@ -637,15 +637,34 @@ public class Service_Avatars : IHostedService
 	public bool StruggleGameIgnoreIncoming = false;
 	public bool StruggleGameActive = false;
     public Avatar StruggleGameAvatar = new Avatar();
-
-    List<Parameter> StruggleGameLastState = new List<Parameter>();
     private void StruggleGameSetup()
     {
         if (avatars.Any(a => a.ID == "StruggleGame"))
         {
-            StruggleGameSystem = true;
-            LogControls("Struggle Game System Enabled", Severity.Info);
-            StruggleGameAvatar = avatars.FirstOrDefault(a => a.ID == "StruggleGame");
+			try
+			{
+				StruggleGameSystem = true;
+				LogControls("Struggle Game System Enabled", Severity.Info);
+				StruggleGameAvatar = avatars.FirstOrDefault(a => a.ID == "StruggleGame");
+
+				if (!StruggleGameAvatar.Parameters.ContainsKey("Active") ||
+					!StruggleGameAvatar.Parameters.ContainsKey("ForceMax") ||
+					!StruggleGameAvatar.Parameters.ContainsKey("Level") ||
+					!StruggleGameAvatar.Parameters.ContainsKey("Difficulty") ||
+					!StruggleGameAvatar.Parameters.ContainsKey("Shield") ||
+					!StruggleGameAvatar.Parameters.ContainsKey("Counter"))
+				{
+					StruggleGameSystem = false;
+					LogControls("StruggleGame Missing a parameter, please check the avatar config.", Severity.Warning);
+					return;
+				}
+			}
+            catch (Exception e)
+            {
+				StruggleGameSystem = false;
+				LogControls($"Struggle Game System Failed to load: {e}", Severity.Error);
+				return;
+			}
         }
         else
         {
@@ -660,9 +679,11 @@ public class Service_Avatars : IHostedService
         
         if (!StruggleGameAvatar.Parameters.ContainsKey(param.Address))
         {
-            LogControls($"Parameter {param.Address} not found in StruggleGame", Severity.Warning);
+            //LogControls($"Parameter {param.Address} not found in StruggleGame", Severity.Warning);
             return;
         }
+
+        //Update StruggleGame Avatar Param
         StruggleGameAvatar.Parameters[param.Address].Value = value;
 
         if (param.Address.Contains("Active"))
@@ -675,7 +696,14 @@ public class Service_Avatars : IHostedService
             }
             else if (!ParamActive && StruggleGameActive)
             {
-                StruggleGameEnd();
+                if (StruggleGameAvatar.Parameters["Level"].Value > 0.02)
+                {
+					StruggleGameEndBad();
+				}
+				else
+                {
+					StruggleGameEndGood();
+				}
                 LogControls("Struggle Game Ended", Severity.Info);
             }
         }
@@ -686,55 +714,48 @@ public class Service_Avatars : IHostedService
         StruggleGameIgnoreIncoming = true;
         await Task.Delay(1000); //delay to allow avatar to load
 
-        foreach (var param in StruggleGameLastState)
+        foreach (var parameter in StruggleGameAvatar.Parameters)
         {
+            var param = StruggleGameAvatar.Parameters[parameter.Key];
             SetParameterValue(param);
         }
         StruggleGameIgnoreIncoming = false;
     }
 
+    float struggleGamePenaltyValue = 0.0f;
+
+    public void SetStruggleGamePenalty()
+    {
+        float value = StruggleGameAvatar.Parameters["Level"].Value;
+		struggleGamePenaltyValue = (float)Math.Round(value * 4) / 4;
+	}
+
     public void StruggleGameStart()
     {
         StruggleGameActive = true;
-        PointsService.UpdatePoints(0.25);
-        LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game started, added +0.25p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
-
-        try
-        {
-            foreach (var param in StruggleGameAvatar.Parameters)
-            {
-                if (StruggleGameLastState.Any(p => p.Address == param.Key))
-                {
-                    StruggleGameLastState.FirstOrDefault(p => p.Address == param.Key).Value = param.Value.Value;
-                }
-                else
-                {
-                    StruggleGameLastState.Add(new Parameter {
-                        Address = param.Key,
-                        Type = param.Value.Type,
-                        Value = param.Value.Value
-                    });
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-        }
+        SetStruggleGamePenalty();
+		
+        LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game started, {struggleGamePenaltyValue}✦ will be added if failed.", Severity.Info, Variant.Outlined);
     }
 
-    public void StruggleGameEnd()
+	public void StruggleGameEndGood()
     {
-        StruggleGameActive = false;
-        PointsService.UpdatePoints(-0.25);
-        LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game succeeded, removed 0.25p | Total: {PointsService.pointsTruncated}", Severity.Info, Variant.Outlined);
+		StruggleGameActive = false;
+		LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game succeeded.", Severity.Info, Variant.Outlined);
     }
-    #endregion
+
+    public void StruggleGameEndBad()
+	{
+		StruggleGameActive = false;
+		PointsService.UpdatePoints(struggleGamePenaltyValue);
+		LogService.AddLog("AvatarPoints", "OSC Input", $"Struggle game Failed, added {struggleGamePenaltyValue}✦ | Total: {PointsService.pointsDisplay}", Severity.Info, Variant.Outlined);
+	}
+	#endregion
 
 
-    //===========================================//
-    #region Helper function
-    public void HandleAvatarParam(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
+	//===========================================//
+	#region Helper function
+	public void HandleAvatarParam(Parameter param, float value) //Used for incoming OSC messages. Updates the param in the app and invokes an update for visuals.
     {
         selectedAvatar.Parameters[param.Address].Value = value;
         //hsv handling
