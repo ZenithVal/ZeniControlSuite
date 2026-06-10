@@ -44,19 +44,19 @@ public class Service_OSC : IHostedService, IDisposable
     private const string VrchatOscServicePrefix = "VRChat-Client";
 
     private string IP = "127.0.0.1";
-    private int listeningPort = 9001;
-    private int sendingPort = 9000;
+    public int listeningPort = 9001;
+	public int sendingPort = 9000;
     private bool useOSCQuery = false;
-    private int oscQueryTcpPort = 0;
+    private bool paramLogging = false;
     private const string OscQueryServiceName = "Zeni Control Suite";
     private readonly object _oscQueryTargetsLock = new();
     private List<OscQueryTarget> oscQueryTargets = new();
+    private readonly HashSet<string> _loggedOscServices = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _loggedOscQueryServices = new(StringComparer.OrdinalIgnoreCase);
     private List<DiscoveredOscParameter> _discoveredAvatarParameters = new();
 
     public bool Running { get; private set; } = false;
     public bool OscQueryRunning => _oscQueryService != null;
-    public string OscEndpoint => $"{IP}:{sendingPort}";
-    public string ListeningEndpoint => $"0.0.0.0:{listeningPort}";
     public DateTimeOffset LastAvatarParameterDiscovery { get; private set; } = DateTimeOffset.MinValue;
     public IReadOnlyList<DiscoveredOscParameter> DiscoveredAvatarParameters
     {
@@ -96,7 +96,7 @@ public class Service_OSC : IHostedService, IDisposable
             listeningPort = config.ListeningPort > 0 ? config.ListeningPort : 9001;
             sendingPort = config.SendingPort > 0 ? config.SendingPort : 9000;
             useOSCQuery = config.UseOSCQuery;
-            oscQueryTcpPort = 0;
+            paramLogging = config.ParamLogging;
         }
         catch (Exception ex)
         {
@@ -143,16 +143,13 @@ public class Service_OSC : IHostedService, IDisposable
                 Log($"Invalid OSC IP '{IP}', falling back to 127.0.0.1.", Severity.Warning);
             }
 
-            if (useOSCQuery)
+			if (useOSCQuery)
             {
-                // Match OSCPickup/HQuery behavior: the app advertises its own available UDP port,
-                // then discovers VRChat's OSC service port for outbound sends.
-                listeningPort = VRC.OSCQuery.Extensions.GetAvailableUdpPort();
-                if (oscQueryTcpPort <= 0)
-                {
-                    oscQueryTcpPort = VRC.OSCQuery.Extensions.GetAvailableTcpPort();
-                }
-            }
+				int udpPort = VRC.OSCQuery.Extensions.GetAvailableUdpPort();
+				int tcpPort = VRC.OSCQuery.Extensions.GetAvailableTcpPort();
+
+                listeningPort = udpPort;
+			}
 
             var receiver = new OSCReceiver(2048);
             var listenEndpoint = new IPEndPoint(IPAddress.Any, listeningPort);
@@ -167,17 +164,12 @@ public class Service_OSC : IHostedService, IDisposable
                 _senderConnected = false;
             }
 
-            if (!useOSCQuery)
-            {
-                await ConnectSenderAsync(sendingPort, "configured OSC target", stoppingToken);
-            }
+            await ConnectSenderAsync(sendingPort, "configured OSC send port", stoppingToken);
 
             Running = true;
-            Log(useOSCQuery
-                ? $"Listening on {ListeningEndpoint}; OSCQuery will discover the VRChat send target."
-                : $"Listening on {ListeningEndpoint}; sending to {OscEndpoint}");
+            Log($"Listening on {listeningPort}; sending to {sendingPort}));", Severity.Info);
 
-            if (useOSCQuery)
+			if (useOSCQuery)
             {
                 StartOscQuery();
             }
@@ -256,12 +248,6 @@ public class Service_OSC : IHostedService, IDisposable
         }
     }
 
-    private void QueueSenderReconnect(int port, string source)
-    {
-        _ = Task.Run(async () => await ConnectSenderAsync(port, source));
-    }
-
-
     private void SendVisitorCodeAfterSenderConnection(OSCSender sender)
     {
         try
@@ -273,7 +259,7 @@ public class Service_OSC : IHostedService, IDisposable
             }
 
             sender.Send(new FastOscMessage(AccessCodes.VisitorCodeParameter.Address, NormalizeArguments(new object[] { value }).ToArray()));
-            Log($"Sent visitor code to avatar after OSC sender connection: {AccessCodes.VisitorCodeDisplay}", Severity.Info);
+            //Log($"Sent visitor code to avatar after OSC sender connection: {AccessCodes.VisitorCodeDisplay}", Severity.Info);
         }
         catch (Exception ex)
         {
@@ -301,7 +287,7 @@ public class Service_OSC : IHostedService, IDisposable
         {
             case FastOscMessage message:
                 var suiteMessage = new SuiteOscMessage(message.Address, message.Arguments);
-                LogOSC(suiteMessage);
+                if (paramLogging) LogOSC(suiteMessage);
                 DispatchOscMessage(suiteMessage);
                 break;
 
@@ -344,7 +330,7 @@ public class Service_OSC : IHostedService, IDisposable
             _oscQueryService = new OSCQueryServiceBuilder()
                 .WithServiceName(OscQueryServiceName)
                 .WithUdpPort(listeningPort)
-                .WithTcpPort(oscQueryTcpPort)
+                .WithTcpPort(sendingPort)
                 .WithDiscovery(new MeaModDiscovery())
                 .StartHttpServer()
                 .AdvertiseOSC()
@@ -358,8 +344,11 @@ public class Service_OSC : IHostedService, IDisposable
                     return;
                 }
 
-                Log($"OSCQuery found VRChat OSC target at osc://{profile.address}:{profile.port}/ ({profile.name}).", Severity.Info);
-                QueueSenderReconnect(profile.port, $"OSCQuery service {profile.name}");
+                var address = profile.address.ToString();
+                if (RememberLoggedOscService(address, profile.port, profile.name))
+                {
+                    Log($"OSCQuery found VRChat OSC service.", Severity.Info);
+                }
             };
 
             _oscQueryService.OnOscQueryServiceAdded += profile =>
@@ -369,17 +358,20 @@ public class Service_OSC : IHostedService, IDisposable
                     return;
                 }
 
-                RememberOscQueryTarget(profile.address.ToString(), profile.port, profile.name);
-                Log($"OSCQuery found VRChat query service at http://{profile.address}:{profile.port}/ ({profile.name}).", Severity.Info);
+                var address = profile.address.ToString();
+                if (RememberOscQueryTarget(address, profile.port, profile.name))
+                {
+                    Log($"OSCQuery found VRChat query service.", Severity.Info);
+                }
             };
 
-            _oscQueryService.AddEndpoint("/avatar/change", "s", VRC.OSCQuery.Attributes.AccessValues.WriteOnly, null, "VRChat avatar change events");
-            _oscQueryService.AddEndpoint("/avatar/parameters", "", VRC.OSCQuery.Attributes.AccessValues.WriteOnly, null, "VRChat avatar parameter updates");
+            _oscQueryService.AddEndpoint("/avatar/change", "s", VRC.OSCQuery.Attributes.AccessValues.ReadWrite, null, "VRChat avatar change events");
+            _oscQueryService.AddEndpoint("/avatar/parameters", "", VRC.OSCQuery.Attributes.AccessValues.ReadWrite, null, "VRChat avatar parameter updates");
             _oscQueryService.AddEndpoint(AccessCodes.VisitorCodeOscAddress, "i", VRC.OSCQuery.Attributes.AccessValues.WriteOnly, null, "Visitor code");
 
             _oscQueryService.RefreshServices();
 
-            Log($"OSCQuery advertised as '{OscQueryServiceName}' on UDP {listeningPort}, TCP {oscQueryTcpPort}.", Severity.Info);
+            Log($"OSCQuery advertising on UDP {listeningPort}, TCP {sendingPort}.", Severity.Info);
         }
         catch (Exception ex)
         {
@@ -394,20 +386,40 @@ public class Service_OSC : IHostedService, IDisposable
             && serviceName.StartsWith(VrchatOscServicePrefix, StringComparison.OrdinalIgnoreCase);
     }
 
-    private void RememberOscQueryTarget(string address, int port, string serviceName)
+    private bool RememberLoggedOscService(string address, int port, string serviceName)
     {
         if (port <= 0)
         {
-            return;
+            return false;
         }
 
         lock (_oscQueryTargetsLock)
         {
+            return _loggedOscServices.Add($"{address}:{port}:{serviceName}");
+        }
+    }
+
+    private bool RememberOscQueryTarget(string address, int port, string serviceName)
+    {
+        if (port <= 0)
+        {
+            return false;
+        }
+
+        lock (_oscQueryTargetsLock)
+        {
+            var key = $"{address}:{port}:{serviceName}";
+            if (!_loggedOscQueryServices.Add(key))
+            {
+                return false;
+            }
+
             oscQueryTargets.RemoveAll(target =>
                 target.Port == port
                 && string.Equals(target.Address, address, StringComparison.OrdinalIgnoreCase));
 
             oscQueryTargets.Add(new OscQueryTarget(address, port, serviceName));
+            return true;
         }
     }
 
@@ -619,6 +631,8 @@ public class Service_OSC : IHostedService, IDisposable
             lock (_oscQueryTargetsLock)
             {
                 oscQueryTargets.Clear();
+                _loggedOscServices.Clear();
+                _loggedOscQueryServices.Clear();
             }
         }
     }
@@ -825,7 +839,7 @@ public class Service_OSC : IHostedService, IDisposable
         }
         catch
         {
-            // best-effort cleanup only
+            //heck
         }
     }
 
@@ -838,5 +852,6 @@ public class Service_OSC : IHostedService, IDisposable
         public int SendingPort { get; set; } = 9000;
         public int ListeningPort { get; set; } = 9001;
         public bool UseOSCQuery { get; set; } = true;
-    }
+        public bool ParamLogging { get; set; } = false;
+	}
 }

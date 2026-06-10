@@ -37,8 +37,8 @@
             <MudText Typo="Typo.caption">Visitor code expires at @AccessCodes.VisitorCodeExpiresAt.ToLocalTime().ToString("HH:mm:ss")</MudText>
             <br />
             <MudText Typo="Typo.caption">Visitor code OSC address: @AccessCodes.VisitorCodeOscAddress</MudText>
-            <MudText Typo="Typo.caption">OSC listening: @OscService.ListeningEndpoint</MudText><br />
-            <MudText Typo="Typo.caption">OSC sending: @OscService.OscEndpoint</MudText><br />
+            <MudText Typo="Typo.caption">OSC listening: @OscService.listeningPort</MudText><br />
+            <MudText Typo="Typo.caption">OSC sending: @OscService.sendingPort</MudText><br />
             <MudText Typo="Typo.caption">OSCQuery: @(OscService.OscQueryRunning ? "Running" : "Off")</MudText>
             <div class="mt-4">
                 <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="RefreshAdminPassword">Refresh Admin Password</MudButton>

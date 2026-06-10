@@ -1,4 +1,4 @@
 {
-  "VisitorCodeRotationMinutes": 3,
-  "VisitorCodeOscAddress": "/avatar/parameters/ZCS_VisitorCode"
+	"VisitorCodeRotationMinutes": 3,
+	"VisitorCodeOscAddress": "ZCS_VisitorCode"
 }

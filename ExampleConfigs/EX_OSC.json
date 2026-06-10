@@ -1,6 +1,7 @@
 {
-  "IP": "127.0.0.1",
-  "SendingPort": 9000,
-  "ListeningPort": 9001,
-  "UseOSCQuery": true
+    "IP": "127.0.0.1",
+    "SendingPort": 9000,
+    "ListeningPort": 9001,
+    "UseOSCQuery": true,
+    "ParamLogging": false
 }

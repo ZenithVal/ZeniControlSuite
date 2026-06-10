@@ -45,14 +45,14 @@ public class AccountController : ControllerBase
     {
         if (!_accessCodes.VerifyAdminPassword(password))
         {
-            _logs.AddLog("Authentication", "Admin Password", "Admin password login failed", MudBlazor.Severity.Warning, MudBlazor.Variant.Outlined);
+            _logs.AddLog("Authentication", "Admin Password", "Admin login failed", MudBlazor.Severity.Warning, MudBlazor.Variant.Outlined);
             return LocalRedirect($"/Login?adminError=1&returnUrl={Uri.EscapeDataString(returnUrl)}");
         }
 
         var principal = SuiteClaims.CreateAdminPasswordPrincipal();
         await SignIn(principal);
 
-        _logs.AddLog("Authentication", principal.FindFirstValue(ClaimTypes.Name) ?? "Generated Admin", "Admin password login succeeded", MudBlazor.Severity.Info, MudBlazor.Variant.Outlined);
+        _logs.AddLog("Authentication", principal.FindFirstValue(ClaimTypes.Name) ?? "Generated Admin", "Admin login succeeded", MudBlazor.Severity.Info, MudBlazor.Variant.Outlined);
         return LocalRedirect(LoginDestination(returnUrl));
     }
 
@@ -63,14 +63,14 @@ public class AccountController : ControllerBase
     {
         if (!_accessCodes.VerifyVisitorCode(visitorCode))
         {
-            _logs.AddLog("Authentication", "Visitor Code", "Visitor code login failed", MudBlazor.Severity.Warning, MudBlazor.Variant.Outlined);
+            _logs.AddLog("Authentication", "Visitor Code", "Visitor login failed", MudBlazor.Severity.Warning, MudBlazor.Variant.Outlined);
             return LocalRedirect($"/Login?visitorError=1&returnUrl={Uri.EscapeDataString(returnUrl)}");
         }
 
         var principal = SuiteClaims.CreateVisitorCodePrincipal();
         await SignIn(principal);
 
-        _logs.AddLog("Authentication", principal.FindFirstValue(ClaimTypes.Name) ?? "Visitor", "Visitor code login succeeded", MudBlazor.Severity.Info, MudBlazor.Variant.Outlined);
+        _logs.AddLog("Authentication", principal.FindFirstValue(ClaimTypes.Name) ?? "Visitor", "Visitor login succeeded", MudBlazor.Severity.Info, MudBlazor.Variant.Outlined);
         return LocalRedirect(LoginDestination(returnUrl));
     }
 

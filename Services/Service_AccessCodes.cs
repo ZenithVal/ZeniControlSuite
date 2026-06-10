@@ -139,7 +139,7 @@ public sealed class Service_AccessCodes : IHostedService, IDisposable
             var config = System.Text.Json.JsonSerializer.Deserialize<AccessCodeConfig>(json) ?? new AccessCodeConfig();
 
             VisitorCodeRotationMinutes = Math.Clamp(config.VisitorCodeRotationMinutes ?? config.TemporaryCodeRotationMinutes ?? 3, 1, 60);
-            VisitorCodeOscAddress = FirstNonEmpty(config.VisitorCodeOscAddress, config.TemporaryCodeOscAddress, VisitorCodeOscAddress);
+            VisitorCodeOscAddress = FirstNonEmpty("/avatar/parameters/" + config.VisitorCodeOscAddress, config.TemporaryCodeOscAddress, VisitorCodeOscAddress);
         }
         catch (Exception ex)
         {

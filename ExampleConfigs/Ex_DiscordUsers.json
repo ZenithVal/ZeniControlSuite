@@ -1,9 +1,9 @@
 {
-  "453777653216837632": {
+    "453777653216837632": {
     "DisplayName": "ZenithVal",
     "Roles": [
-      "Admin",
-      "LocalHost"
+        "Admin",
+        "LocalHost"
     ]
-  }
+    }
 }
