@@ -1,5 +1,9 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthProvider
+@inject ZeniControlSuite.Services.Service_PageAccess PageAccess
+@using Microsoft.AspNetCore.Components.Authorization
 
 <MudThemeProvider Theme="ZeniTheme" IsDarkMode=true />
 <MudPopoverProvider />
@@ -12,23 +16,11 @@
         <NavMenu />
     </div>
 
-    <AuthorizeView>
-        <Authorized>
-            <main style="overflow: scroll;">
-                <article class="content px-4;">
-                    @Body
-                </article>
-            </main>
-        </Authorized>
-        <NotAuthorized>
-			<main style="overflow: scroll;">
-				<article class="content px-4;">
-					<h1>Not Authorized</h1>
-					<p class="alert alert-danger">Not Authorized, please log in.</p>
-				</article>
-			</main>
-        </NotAuthorized>
-    </AuthorizeView>
+    <main style="overflow: scroll;">
+        <article class="content px-4;">
+            @Body
+        </article>
+    </main>
 
 </div>
 
@@ -46,4 +38,61 @@
                 Error = Colors.Red.Darken3,
             },
         };
+
+    protected override void OnInitialized()
+    {
+        PageAccess.OnPageAccessChanged += OnPageAccessChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await EnsureCurrentPageAllowedAsync();
+        }
+    }
+
+    private void OnPageAccessChanged()
+    {
+        _ = InvokeAsync(EnsureCurrentPageAllowedAsync);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        _ = InvokeAsync(EnsureCurrentPageAllowedAsync);
+    }
+
+    private async Task EnsureCurrentPageAllowedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].TrimStart('/');
+        if (path == "/")
+        {
+            var firstAvailable = PageAccess.FirstAvailablePath();
+            if (firstAvailable != "/")
+            {
+                Navigation.NavigateTo(firstAvailable, replace: true);
+            }
+            return;
+        }
+
+        var isAdmin = auth.User.IsInRole("Admin") || auth.User.IsInRole("LocalHost");
+        if (!isAdmin && PageAccess.ShouldRedirectFromPath(path))
+        {
+            Navigation.NavigateTo(PageAccess.FirstAvailablePath(), replace: true);
+        }
+    }
+
+    public void Dispose()
+    {
+        PageAccess.OnPageAccessChanged -= OnPageAccessChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
 }

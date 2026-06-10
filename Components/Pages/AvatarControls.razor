@@ -1,149 +1,309 @@
-﻿@page "/AvatarControls"
-@using Microsoft.AspNetCore.Components.Authorization
+@page "/AvatarControls"
 @using Microsoft.AspNetCore.Authorization
-@using ZeniControlSuite.Authentication
 @using ZeniControlSuite.Models
-@using MudBlazor.Services
 @using MudBlazor.Utilities
-@attribute [Authorize(Roles = "Admin, Avatar")]
+@attribute [Authorize(Roles = "Admin,Visitor")]
 
 <PageTitle>Avatar Controls</PageTitle>
 
-<h1 style="text-align: Left;">Avatar Controls:     @AvatarsService.selectedAvatar.Name </h1>
-<MudDivider></MudDivider>
+<div class="d-flex align-center justify-space-between flex-wrap gap-3">
+    <MudText Typo="Typo.h4">@AvatarsService.selectedAvatar.Name</MudText>
 
-<br />
-<br />
+    @if (isAdmin)
+    {
+        <MudButton Variant="@(editMode ? Variant.Filled : Variant.Outlined)" Color="Color.Info" OnClick="ToggleEditMode">
+            @(editMode ? "Exit Edit Mode" : "Edit Mode")
+        </MudButton>
+    }
+</div>
 
-<AuthorizeView>
-    <Authorized>
+<MudDivider Class="my-4" />
 
-        <MudGrid Spacing="3" Justify="Justify.FlexStart">
-            @if (!AvatarsService.avatarsLoaded)
+@if (!AvatarsService.avatarsLoaded)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (!AvatarsService.SelectedAvatarIsValid)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+        No valid avatar selected.
+    </MudAlert>
+
+    @if (isAdmin && editMode)
+    {
+        <MudPaper Class="pa-4 mt-4" Outlined="true">
+            <MudText Typo="Typo.h6">Current Worn Avatar</MudText>
+            <MudText Typo="Typo.body2" Class="mb-3">ID: @AvatarsService.CurrentWornAvatarId</MudText>
+
+            @if (AvatarsService.CurrentAvatarInvalid)
             {
-                <MudItem>
-                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                </MudItem>
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-3">This avatar is marked invalid.</MudAlert>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="RemoveCurrentAvatarInvalidMark">Remove Invalid Mark</MudButton>
             }
             else
             {
-                foreach (AvatarControl control in AvatarsService.selectedAvatar.Controls)
+                <MudTextField @bind-Value="avatarDisplayName" Label="Display Name" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 420px;" />
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="LoadAvatarParameters" Disabled="@loadingParameters" Class="mt-3">Load Avatar Parameters</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddCurrentAvatar" Class="mt-3 ml-2">Add Avatar To Controls</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="MarkCurrentAvatarInvalid" Class="mt-3 ml-2">Mark Invalid</MudButton>
+
+                @if (!string.IsNullOrWhiteSpace(AvatarsService.LastLoadedAvatarParameterFile))
                 {
-                    if (!@context.User.IsInRole("Admin"))
-                    {
-                        bool hasRole = true;
-                        foreach (string role in control.RequiredRoles)
-                        {
-                            if (!context.User.IsInRole(role))
-                            {
-                                hasRole = false;
-                                continue;
-                            }
-                        }
-
-                        if (!hasRole)
-                        {
-                            continue;
-                        }
-                    }
-
-                    <MudItem>
-                        <MudPaper Style="@("width: 200px; height: 270px; padding-left: 0px; padding-right: 0px; padding-top: 12px;")" Class="mt-2; justify-center; align-start; p-2; border-1">
-
-                            <div style="posiition: absolute; width: 100%; height: 32px; background: rgba(0, 0, 0, 0.0)">
-                                <MudText Typo="Typo.h6" Align="Align.Center">@control.Name</MudText>
-                            </div>
-
-                            <div style="height: 8px"></div>
-
-                            @if (control is ContTypeButton contBut)
-                            {
-
-                            }
-
-                            else if (control is ContTypeToggle contTog)
-                            {
-                                Parameter _Param = AvatarsService.selectedAvatar.Parameters[contTog.Parameter.Address];
-
-                                <div style="width: 140px; height: 140px; margin-left:auto; margin-right:auto">
-                                    @if (_Param.Value == contTog.ValueOff)
-                                    {
-                                        <MudButton Style="@("width: 100%; height: 100%;")" Variant="Variant.Outlined" Color="Color.Default" OnClick="@(() => ControlTogglePress(contTog))">
-                                            <MudImage Src="@control.Icon" Style="width: 100%; height: 100%;" Alt="Off"></MudImage>
-                                        </MudButton>
-                                    }
-                                    else
-                                    {
-                                        <MudButton Style="@("width: 100%; height: 100%;")" Variant="Variant.Filled" Color="Color.Info" OnClick="@(() => ControlTogglePress(contTog))">
-                                            <MudImage Src="@control.Icon" Style="width: 100%; height: 100%;" Alt="On"></MudImage>
-                                        </MudButton>
-                                    }
-                                </div>
-                            }
-
-                            else if (control is ContTypeRadial contRad)
-                            {
-                                Parameter _Param = AvatarsService.selectedAvatar.Parameters[contRad.Parameter.Address];
-
-                                <MudPaper Style="@("margin-left:auto; margin-right:auto; width: 140px; height: 140px; padding-left: 16px;  padding-right: 16px; padding-top: 12px; opacity: 1.0;")" Class="border-1 border-secondary">
-                                    <MudButton Style="@("width: 100%; height: 30px; font-size: 30")" Variant="Variant.Outlined" DropShadow="false" Color="Color.Info">@contRad.Parameter.Value</MudButton>
-                                    <div style="height: 10px;" />
-                                    <MudSlider Color="Color.Info" Size="Size.Large" Min="contRad.ValueMin" Max="contRad.ValueMax" Step="0.01f" Value="_Param.Value" ValueChanged="@((float value) => ControlRadialChange(contRad, value))" />
-                                </MudPaper>
-                            }
-
-                            else if (control is ContTypeHSV contHSV)
-                            {
-                                MudColor mudColorEstimate = AvatarsService.HSVControlToMudColor(contHSV);
-                                string hexColorEstimate = mudColorEstimate.ToString(MudColorOutputFormats.Hex);
-                                Parameter _ParamHue = AvatarsService.selectedAvatar.Parameters[contHSV.ParameterHue.Address];
-                                Parameter _ParamSat = AvatarsService.selectedAvatar.Parameters[contHSV.ParameterSaturation.Address];
-                                Parameter _ParamBri = AvatarsService.selectedAvatar.Parameters[contHSV.ParameterBrightness.Address];
-
-                                
-                                <MudPaper Style="@($"margin-left:auto; margin-right:auto; width: 150px; height: 15px; padding-left: 16px; padding-right: 16px; opacity: 1.0; background-color: {hexColorEstimate}")" Class="border-1 border-secondary">
-                                </MudPaper>
-                                
-                                <div style="width: 100%; padding-left: 28px; padding-right: 28px; background: rgba(0, 0, 0, 0.0)">
-                                    <MudSlider Color="Color.Error" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamHue.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Hue, value))" > Hue: @RoundFloat(_ParamHue.Value) </MudSlider>
-                                    <MudSlider Color="Color.Info" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamSat.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Saturation, value))"> Saturation: @RoundFloat(_ParamSat.Value) </MudSlider>
-
-                                    @if (contHSV.InvertedBrightness)
-								    {
-                                        <MudSlider Color="Color.Warning" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="contHSV.InvertedBrightnessValue" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))"> Value: @RoundFloat(contHSV.InvertedBrightnessValue) </MudSlider>
-								    }
-								    else
-								    {
-                                        <MudSlider Color="Color.Tertiary" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="_ParamBri.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))"> Brightness: @RoundFloat(_ParamBri.Value) </MudSlider>
-								    }
-                                </div>
-                                   
-                            }
-
-                            else
-                            {
-                                <MudText Typo="Typo.caption">Unknown Type</MudText>
-                            }
-
-                        </MudPaper>
-                    </MudItem>
+                    <MudText Typo="Typo.caption" Class="d-block mt-3">Loaded: @AvatarsService.LastLoadedAvatarParameterFile</MudText>
                 }
             }
+        </MudPaper>
+    }
+}
+else
+{
+    @if (isAdmin && editMode)
+    {
+        <MudGrid Spacing="3" Class="mb-4">
+            <MudItem xs="12" md="8">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudText Typo="Typo.h6">Avatar Info</MudText>
+                    <MudText Typo="Typo.caption">Name: @AvatarsService.selectedAvatar.Name</MudText><br />
+                    <MudText Typo="Typo.caption">ID: @AvatarsService.selectedAvatar.ID</MudText><br />
+                    <MudText Typo="Typo.caption">Controls: @AvatarsService.selectedAvatar.Controls.Count</MudText><br />
+                    <MudText Typo="Typo.caption">Loaded parameters: @OscService.DiscoveredAvatarParameters.Count</MudText><br />
+                    @if (!string.IsNullOrWhiteSpace(AvatarsService.LastLoadedAvatarParameterFile))
+                    {
+                        <MudText Typo="Typo.caption">Source: @AvatarsService.LastLoadedAvatarParameterFile</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudText Typo="Typo.h6">Access</MudText>
+                    <MudNumericField T="int" Value="@AvatarsService.CurrentAccessLevel" ValueChanged="@((int value) => SetCurrentAccessLevel(value))" Label="Current Access Level" Min="0" Max="10" Step="1" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudPaper>
+            </MudItem>
         </MudGrid>
 
-    </Authorized>
-</AuthorizeView>
+        <MudExpansionPanels Class="mb-4" MultiExpansion="true">
+            <MudExpansionPanel Text="Avatar Setup" Expanded="false">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="LoadAvatarParameters" Disabled="@loadingParameters">Load Avatar Parameters</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" OnClick="AddMatchedGlobals" Class="ml-2">Add Matched Global Controls</MudButton>
 
+                @if (AvatarsService.GetMatchedGlobalControlsNotOnSelected().Count > 0)
+                {
+                    <MudText Typo="Typo.subtitle2" Class="mt-4">Matched Global Controls</MudText>
+                    <MudGrid Spacing="2">
+                        @foreach (var control in AvatarsService.GetMatchedGlobalControlsNotOnSelected())
+                        {
+                            <MudItem xs="12" sm="6" md="4" lg="3">
+                                <MudButton Variant="Variant.Outlined" Color="Color.Success" FullWidth="true" OnClick="@(() => AddGlobalControl(control))">@control.Name</MudButton>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+            </MudExpansionPanel>
 
-@code {
-    public IEnumerable<MudColor> HSVPallet { get; set; } = new MudColor[]
+            <MudExpansionPanel Text="Add Control From Loaded Avatar Parameters" Expanded="false">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" md="5">
+                        <MudTextField @bind-Value="parameterFilter" Label="Filter Parameters" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudNumericField T="int" @bind-Value="newToggleAccessLevel" Label="New Control Access Level" Min="0" Max="10" Step="1" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudNumericField T="int" @bind-Value="newToggleIntegerValue" Label="Integer On Value" Step="1" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                    </MudItem>
+                </MudGrid>
+
+                <div style="max-height: 440px; overflow-y: auto;">
+                    <MudTable Items="@FilteredLoadedParameters()" Hover="true" Class="mt-2">
+                        <HeaderContent>
+                            <MudTh>Name</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Address</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Name">@context.DisplayName</MudTd>
+                            <MudTd DataLabel="Type">@context.Type</MudTd>
+                            <MudTd DataLabel="Address">@context.Address</MudTd>
+                            <MudTd>
+                                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => AddLoadedToggle(context))">Add To Avatar</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info" Class="ml-2" OnClick="@(() => AddLoadedToggleToGlobal(context))">Add To Global</MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </div>
+            </MudExpansionPanel>
+
+            <MudExpansionPanel Text="Add Existing Global Control" Expanded="false">
+                <MudGrid Spacing="2">
+                    @foreach (var control in AvatarsService.GetGlobalControlsNotOnSelected())
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Info" FullWidth="true" OnClick="@(() => AddGlobalControl(control))">@control.Name</MudButton>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudExpansionPanel>
+
+            <MudExpansionPanel Text="Global Controls" Expanded="false">
+                <div style="max-height: 520px; overflow-y: auto;">
+                    <MudTable Items="@AvatarsService.GlobalControls" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Name</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Access</MudTh>
+                            <MudTh>Values</MudTh>
+                            <MudTh>Order</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Name">
+                                <MudTextField T="string" Value="@context.Name" ValueChanged="@((string value) => RenameControl(context, value))" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                            </MudTd>
+                            <MudTd DataLabel="Type">@context.Type</MudTd>
+                            <MudTd DataLabel="Access">
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => AdjustControlAccess(context, -1))">-</MudButton>
+                                <MudText Typo="Typo.body2" Class="d-inline-block mx-2">@context.AccessLevel</MudText>
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => AdjustControlAccess(context, 1))">+</MudButton>
+                            </MudTd>
+                            <MudTd DataLabel="Values">
+                                @if (context is ContTypeToggle globalToggle)
+                                {
+                                    if (globalToggle.Parameter.Type == ParameterType.Bool)
+                                    {
+                                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning" OnClick="@(() => InvertToggleValues(globalToggle))">Invert</MudButton>
+                                    }
+                                    else if (globalToggle.Parameter.Type == ParameterType.Int)
+                                    {
+                                        <MudNumericField T="int" Value="@ToggleOnValueAsInt(globalToggle)" ValueChanged="@((int value) => SetIntegerToggleValue(globalToggle, value))" Label="On Value" Step="1" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 130px;" />
+                                    }
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Order">
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => MoveGlobalControl(context, -1))">Up</MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Class="ml-2" OnClick="@(() => MoveGlobalControl(context, 1))">Down</MudButton>
+                            </MudTd>
+                            <MudTd>
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => RemoveGlobalControl(context))">Remove</MudButton>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </div>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    }
+
+    @if (!GetVisibleControls().Any())
     {
-        "#ffffff", "#010000", "#ff0000", "#fffb00", "#000dff",
-        "#ff00ff", "#00f7ff", "#00ff73", "#9000ff", "#ffa600",
-        "#ffcc00", "#003399", "#00a2ff", "#003c80", "#800000",
-        "#ffcccc", "#ffccfb", "#ff8af9", "#ff3396", "#00a128",
-        "#8f8f8f", "#000d96", "#6800a8", "#ffffff", "#ffffff",
-        "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff",
-        "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"
-    };
+        <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">No controls are available.</MudAlert>
+    }
+    else
+    {
+        <MudGrid Spacing="3" Justify="Justify.FlexStart">
+            @foreach (AvatarControl control in GetVisibleControls())
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                    <MudPaper Style="@ControlCardStyle(control)" Class="mt-2">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.subtitle1">@control.Name</MudText>
+                        </div>
+
+                        @if (isAdmin && editMode)
+                        {
+                            <MudPaper Class="pa-2 mb-2" Outlined="true">
+                                @if (AvatarsService.SelectedControlIsInheritedGlobal(control))
+                                {
+                                    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-2">Inherited global control.</MudAlert>
+                                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Warning" OnClick="@(() => BreakGlobalControl(control))" Class="mb-2">Break Global</MudButton>
+                                }
+
+                                <MudTextField T="string" Value="@control.Name" ValueChanged="@((string value) => RenameControl(control, value))" Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@AvatarsService.SelectedControlIsInheritedGlobal(control)" />
+
+                                @if (control is ContTypeToggle editToggle)
+                                {
+                                    <MudText Typo="Typo.caption" Class="d-block mt-2">@editToggle.Parameter.Address</MudText>
+                                    @if (editToggle.Parameter.Type == ParameterType.Bool)
+                                    {
+                                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning" OnClick="@(() => InvertToggleValues(editToggle))" Disabled="@AvatarsService.SelectedControlIsInheritedGlobal(control)">Invert Bool Values</MudButton>
+                                        <MudText Typo="Typo.caption" Class="ml-2">Off: @editToggle.ValueOff / On: @editToggle.ValueOn</MudText>
+                                    }
+                                    else if (editToggle.Parameter.Type == ParameterType.Int)
+                                    {
+                                        <MudNumericField T="int" Value="@ToggleOnValueAsInt(editToggle)" ValueChanged="@((int value) => SetIntegerToggleValue(editToggle, value))" Label="Integer On Value" Step="1" Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@AvatarsService.SelectedControlIsInheritedGlobal(control)" />
+                                    }
+                                }
+
+                                <div class="d-flex align-center justify-space-between flex-wrap gap-2 mt-2">
+                                    <div>
+                                        <MudText Typo="Typo.caption">Access</MudText><br />
+                                        <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => AdjustControlAccess(control, -1))" Disabled="@AvatarsService.SelectedControlIsInheritedGlobal(control)">-</MudButton>
+                                        <MudText Typo="Typo.body2" Class="d-inline-block mx-2">@control.AccessLevel</MudText>
+                                        <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => AdjustControlAccess(control, 1))" Disabled="@AvatarsService.SelectedControlIsInheritedGlobal(control)">+</MudButton>
+                                    </div>
+                                    <div>
+                                        <MudText Typo="Typo.caption">Order</MudText><br />
+                                        <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => MoveSelectedControl(control, -1))">Up</MudButton>
+                                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Class="ml-1" OnClick="@(() => MoveSelectedControl(control, 1))">Down</MudButton>
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    @if (!AvatarsService.SelectedControlIsInheritedGlobal(control) && !AvatarsService.SelectedControlExistsInGlobal(control))
+                                    {
+                                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info" OnClick="@(() => AddControlToGlobal(control))">Add To Global</MudButton>
+                                    }
+                                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => RemoveSelectedControl(control))">Remove</MudButton>
+                                </div>
+                            </MudPaper>
+                        }
+
+                        @if (control is ContTypeButton contBut)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Info" Disabled="@(!CanUseControl(control))" FullWidth="true" OnClick="@(() => AvatarsService.SetParameterValue(contBut.Parameter))">Send</MudButton>
+                        }
+                        else if (control is ContTypeToggle contTog)
+                        {
+                            TryGetParameter(contTog.Parameter, out var param);
+                            var isOn = Math.Abs(param.Value - contTog.ValueOn) < 0.001f;
+                            <MudButton Style="width: 100%; height: 150px;" Variant="@(isOn ? Variant.Filled : Variant.Outlined)" Color="@(isOn ? Color.Info : Color.Default)" Disabled="@(!CanUseControl(control))" OnClick="@(() => ControlTogglePress(contTog))">
+                                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1">
+                                    <MudImage Src="@control.Icon" Style="width: 72px; height: 72px; object-fit: contain;" Alt="@control.Name"></MudImage>
+                                    <MudText Typo="Typo.body2">@(isOn ? "On" : "Off")</MudText>
+                                </MudStack>
+                            </MudButton>
+                        }
+                        else if (control is ContTypeRadial contRad)
+                        {
+                            TryGetParameter(contRad.Parameter, out var param);
+                            <MudText Typo="Typo.body2" Align="Align.Center">@RoundFloat(param.Value)</MudText>
+                            <MudSlider Disabled="@(!CanUseControl(control))" Color="Color.Info" Size="Size.Large" Min="contRad.ValueMin" Max="contRad.ValueMax" Step="0.01f" Value="param.Value" ValueChanged="@((float value) => ControlRadialChange(contRad, value))" />
+                        }
+                        else if (control is ContTypeHSV contHSV)
+                        {
+                            MudColor mudColorEstimate = AvatarsService.HSVControlToMudColor(contHSV);
+                            string hexColorEstimate = mudColorEstimate.ToString(MudColorOutputFormats.Hex);
+                            TryGetParameter(contHSV.ParameterHue, out var paramHue);
+                            TryGetParameter(contHSV.ParameterSaturation, out var paramSat);
+                            TryGetParameter(contHSV.ParameterBrightness, out var paramBri);
+
+                            <MudPaper Style="@($"height: 18px; background-color: {hexColorEstimate};")" Class="mb-2" />
+                            <MudSlider Disabled="@(!CanUseControl(control))" Color="Color.Error" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="paramHue.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Hue, value))">Hue: @RoundFloat(paramHue.Value)</MudSlider>
+                            <MudSlider Disabled="@(!CanUseControl(control))" Color="Color.Info" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="paramSat.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Saturation, value))">Saturation: @RoundFloat(paramSat.Value)</MudSlider>
+                            @if (contHSV.InvertedBrightness)
+                            {
+                                <MudSlider Disabled="@(!CanUseControl(control))" Color="Color.Warning" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="contHSV.InvertedBrightnessValue" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))">Value: @RoundFloat(contHSV.InvertedBrightnessValue)</MudSlider>
+                            }
+                            else
+                            {
+                                <MudSlider Disabled="@(!CanUseControl(control))" Color="Color.Tertiary" Size="Size.Large" Min="0.0f" Max="1.0f" Step="0.005f" Value="paramBri.Value" ValueChanged="@((float value) => ControlHSVChange(contHSV, HSVParamValue.Brightness, value))">Brightness: @RoundFloat(paramBri.Value)</MudSlider>
+                            }
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption">Unsupported control type.</MudText>
+                        }
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
 }

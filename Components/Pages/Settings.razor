@@ -1,37 +1,120 @@
-﻿@page "/Settings"
+@page "/Settings"
 @using ZeniControlSuite.Authentication
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "Admin, LocalHost")]
+@using ZeniControlSuite.Services
+@attribute [Authorize(Roles = "Admin,LocalHost")]
+@inject Service_AccessCodes AccessCodes
+@inject Service_Avatars AvatarsService
+@inject Service_OSC OscService
+@inject Service_Logs LogService
+@inject Service_PageAccess PageAccess
+@implements IDisposable
 
 <PageTitle>Settings</PageTitle>
-<MudDivider></MudDivider>
 
-<br/>
-<br/>
+<h1>Settings</h1>
+<MudDivider />
 
-<div>
-    <MudSwitch Label="Avatar Controls" @bind-Value="@AvatarControls.pageEnabled" Color="Color.Info" />
-    <br>
-    <MudSwitch Label="Avatar Select" @bind-Value="@AvatarSelect.pageEnabled" Color="Color.Info" />
-    <br>
-    <MudSwitch Label="Games & Points" @bind-Value="@GamesPoints.pageEnabled" Color="Color.Info" />
-    <br>
-    <MudSwitch Label="Bindings" @bind-Value="@Bindings.pageEnabled" Color="Color.Info" />
-    <br>
-    <MudSwitch Label="Devices" @bind-Value="@Devices.pageEnabled" Color="Color.Info" />
-    <br>
-    <MudSwitch Label="App Debug Mod" @bind-Value="@Settings.AppDebug" Color="Color.Info" />
-    <br>
-</div>
+<MudGrid Class="mt-4" Spacing="3">
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudText Typo="Typo.h6">Page Access</MudText>
+            @foreach (var accessPage in PageAccess.Pages)
+            {
+                <div style="@PageOutline(accessPage.Enabled)">
+                    <MudSwitch T="bool" Label="@accessPage.Label" Value="@accessPage.Enabled" ValueChanged="@((bool value) => SetPageEnabled(accessPage.Key, value))" Color="Color.Info" />
+                </div>
+            }
+            <MudSwitch T="bool" Label="App Debug Mode" @bind-Value="@AppDebug" Color="Color.Info" />
+        </MudPaper>
+    </MudItem>
 
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudText Typo="Typo.h6">Admin Session</MudText>
+            <MudText Typo="Typo.body2">Generated admin password: <b>@AccessCodes.AdminPassword</b></MudText>
+            <MudText Typo="Typo.body2">Visitor code: <b>@AccessCodes.VisitorCodeDisplay</b></MudText>
+            <MudText Typo="Typo.caption">Visitor code expires at @AccessCodes.VisitorCodeExpiresAt.ToLocalTime().ToString("HH:mm:ss")</MudText>
+            <br />
+            <MudText Typo="Typo.caption">Visitor code OSC address: @AccessCodes.VisitorCodeOscAddress</MudText>
+            <MudText Typo="Typo.caption">OSC listening: @OscService.ListeningEndpoint</MudText><br />
+            <MudText Typo="Typo.caption">OSC sending: @OscService.OscEndpoint</MudText><br />
+            <MudText Typo="Typo.caption">OSCQuery: @(OscService.OscQueryRunning ? "Running" : "Off")</MudText>
+            <div class="mt-4">
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" OnClick="RefreshAdminPassword">Refresh Admin Password</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" Class="ml-2" OnClick="RefreshVisitorCode">Refresh Visitor Code</MudButton>
+            </div>
+        </MudPaper>
+    </MudItem>
 
-<br />
-
-
-
-@*reload DiscordUsers.Json*@
-<MudButton OnClick="@(() => { Whitelist.loadDiscordUsersJson(); })">Reload Discord Users Json</MudButton>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudText Typo="Typo.h6">Admin Refresh</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="RefreshSettings">Refresh Settings</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Class="ml-2" OnClick="ReloadDiscordUsers">Reload Discord Users Json</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Tertiary" Class="ml-2" OnClick="NotifyPageAccessChanged">Refresh Navigation</MudButton>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
 
 @code {
     public static bool AppDebug = false;
+
+    protected override void OnInitialized()
+    {
+        PageAccess.OnPageAccessChanged += OnPageAccessChanged;
+    }
+
+    private void OnPageAccessChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void SetPageEnabled(string key, bool enabled)
+    {
+        PageAccess.SetEnabled(key, enabled);
+        LogService.AddLog("Settings", "Admin", $"{key} {(enabled ? "enabled" : "disabled")}", Severity.Info, Variant.Outlined);
+    }
+
+    private void NotifyPageAccessChanged()
+    {
+        PageAccess.NotifyChanged();
+        LogService.AddLog("Settings", "Admin", "Navigation refreshed", Severity.Info, Variant.Outlined);
+    }
+
+    private void RefreshSettings()
+    {
+        Whitelist.loadDiscordUsersJson();
+        AvatarsService.ReloadSettings();
+        OscService.RefreshOscQuery();
+        PageAccess.NotifyChanged();
+        LogService.AddLog("Settings", "Admin", "Settings refreshed", Severity.Info, Variant.Outlined);
+    }
+
+    private void ReloadDiscordUsers()
+    {
+        Whitelist.loadDiscordUsersJson();
+        LogService.AddLog("Settings", "Admin", "Discord users JSON reloaded", Severity.Info, Variant.Outlined);
+    }
+
+    private void RefreshAdminPassword()
+    {
+        AccessCodes.RefreshAdminPassword();
+    }
+
+    private void RefreshVisitorCode()
+    {
+        AccessCodes.RefreshVisitorCode();
+    }
+
+    private static string PageOutline(bool enabled)
+    {
+        var color = enabled ? "rgba(76, 175, 80, .95)" : "rgba(244, 67, 54, .95)";
+        return $"border: 2px solid {color}; border-radius: 6px; padding: 2px 8px; margin: 8px 0;";
+    }
+
+    public void Dispose()
+    {
+        PageAccess.OnPageAccessChanged -= OnPageAccessChanged;
+    }
 }

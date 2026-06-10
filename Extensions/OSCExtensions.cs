@@ -6,39 +6,49 @@ public static class OSCExtensions
 {
     public static object? FormatOutGoing(float value, ParameterType type)
     {
-        switch (type)
+        return type switch
         {
-            case ParameterType.Bool:
-                return value < 0.5 ? false : true;
-            case ParameterType.Int:
-                return (int)value;
-            case ParameterType.Float:
-                return value;
-            default:
-                return null;
+            ParameterType.Bool => value >= 0.5f,
+            ParameterType.Int => (int)MathF.Round(value),
+            ParameterType.Float => value,
+            _ => null
+        };
+    }
+
+    public static float FormatIncoming(object? value, ParameterType type)
+    {
+        if (value == null)
+        {
+            return 0;
+        }
+
+        try
+        {
+            return type switch
+            {
+                ParameterType.Bool => value is bool boolValue ? (boolValue ? 1 : 0) : (ToFloat(value) >= 0.5f ? 1 : 0),
+                ParameterType.Int => Convert.ToInt32(value),
+                ParameterType.Float => (float)Math.Truncate(ToFloat(value) * 1000) / 1000,
+                _ => 0
+            };
+        }
+        catch
+        {
+            return 0;
         }
     }
 
-    public static float FormatIncoming(object value, ParameterType type)
+    private static float ToFloat(object value)
     {
-        switch (type)
+        return value switch
         {
-            case ParameterType.Bool:
-                if (value is bool)
-                {
-                    return (bool)value ? 1 : 0;
-                }
-                else //Sometimes paramters are mismatched. Dont want to explode.
-                {
-                    return (float)value < 0.5 ? 0 : 1;
-                }
-            case ParameterType.Int:
-                return (int)value;
-            case ParameterType.Float:
-                return (float)Math.Truncate((float)value * 1000) / 1000;
-            default:
-                return 0;
-        }
+            bool boolValue => boolValue ? 1 : 0,
+            int intValue => intValue,
+            long longValue => longValue,
+            float floatValue => floatValue,
+            double doubleValue => (float)doubleValue,
+            string stringValue when float.TryParse(stringValue, out var parsed) => parsed,
+            _ => Convert.ToSingle(value)
+        };
     }
 }
-

@@ -1,189 +1,688 @@
-﻿using System.Text.Json;
-using CoreOSC;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using FastOSC;
 using MudBlazor;
+using VRC.OSCQuery;
 using ZeniControlSuite.Extensions;
 using ZeniControlSuite.Models;
+using SuiteOscMessage = ZeniControlSuite.Models.OscMessage;
+using FastOscMessage = FastOSC.OSCMessage;
 
 namespace ZeniControlSuite.Services;
 
-public class Service_OSC : IHostedService
+public class Service_OSC : IHostedService, IDisposable
 {
-    public delegate void OscSubscriptionEventHandler(OscMessage e);
+    public delegate void OscSubscriptionEventHandler(SuiteOscMessage e);
     public event OscSubscriptionEventHandler? OnOscMessageReceived;
 
     private readonly Service_Logs LogService;
-    public Service_OSC(Service_Logs serviceLogs) { LogService = serviceLogs; }
+    private readonly Service_AccessCodes AccessCodes;
+
+    public Service_OSC(Service_Logs serviceLogs, Service_AccessCodes accessCodes)
+    {
+        LogService = serviceLogs;
+        AccessCodes = accessCodes;
+    }
 
     private void Log(string message, Severity severity = Severity.Normal)
     {
         LogService.AddLog("Service_OSC", "System", message, severity, Variant.Outlined);
     }
 
-    //===========================================//
-    #region HostedService Stuff 
-    //public delegate void RequestOSCUpdate();
-    //public event RequestOSCUpdate? OnOSCUpdate;
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        Task.Run(() => RunOSC(_cts.Token), _cts.Token);
-
-        return Task.CompletedTask;
-    }
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        if (Running)
-        {
-            Running = false;
-        }
-        return Task.CompletedTask;
-    }
-    /*    
-    public void InvokeOSCUpdate()
-    {
-        if (OnOSCUpdate != null)
-        {
-            OnOSCUpdate.Invoke();
-        }
-    }
-    */
-    #endregion
-
-
-    //===========================================//
-    #region OSC Settings
-
-    private UDPListener _listener;
-    private UDPSender _sender;
-    private CancellationTokenSource _cts;
+    private readonly object _logLock = new();
+    private readonly object _clientLock = new();
+    private readonly object _discoveredParametersLock = new();
+    private OSCSender? _sender;
+    private OSCReceiver? _receiver;
+    private IPEndPoint? _sendEndPoint;
+    private IPEndPoint? _listenEndPoint;
+    private OSCQueryService? _oscQueryService;
+    private bool _senderConnected;
+    private bool _receiverConnected;
+    private readonly SemaphoreSlim _senderReconnectLock = new(1, 1);
+    private const string VrchatOscServicePrefix = "VRChat-Client";
 
     private string IP = "127.0.0.1";
     private int listeningPort = 9001;
     private int sendingPort = 9000;
-    private bool OSCQuery = false;
+    private bool useOSCQuery = false;
+    private int oscQueryTcpPort = 0;
+    private const string OscQueryServiceName = "Zeni Control Suite";
+    private readonly object _oscQueryTargetsLock = new();
+    private List<OscQueryTarget> oscQueryTargets = new();
+    private List<DiscoveredOscParameter> _discoveredAvatarParameters = new();
 
     public bool Running { get; private set; } = false;
-    #endregion
+    public bool OscQueryRunning => _oscQueryService != null;
+    public string OscEndpoint => $"{IP}:{sendingPort}";
+    public string ListeningEndpoint => $"0.0.0.0:{listeningPort}";
+    public DateTimeOffset LastAvatarParameterDiscovery { get; private set; } = DateTimeOffset.MinValue;
+    public IReadOnlyList<DiscoveredOscParameter> DiscoveredAvatarParameters
+    {
+        get
+        {
+            lock (_discoveredParametersLock)
+            {
+                return _discoveredAvatarParameters.OrderBy(parameter => parameter.DisplayName).ToList();
+            }
+        }
+    }
 
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        await RunOSC(cancellationToken);
+    }
 
-    //===========================================//
-    #region Initialization
-    public Task InitializeOSCConfig()
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        await StopServiceAsync(cancellationToken);
+    }
+
+    public async Task InitializeOSCConfig()
     {
         if (!File.Exists("Configs/OSC.json"))
         {
-            Log("OSC Config Not Found, creating...", Severity.Warning);
+            Log("OSC config not found; creating default config.", Severity.Warning);
             CreateDefaultConfig();
         }
-        var json = File.ReadAllText("Configs/OSC.json");
-        var config = JsonSerializer.Deserialize<JsonElement>(json);
 
         try
         {
-            IP = config.GetProperty("IP").GetString() ?? "127.0.0.1";
-            listeningPort = config.GetProperty("ListeningPort").GetInt32();
-            sendingPort = config.GetProperty("SendingPort").GetInt32();
-            OSCQuery = config.GetProperty("OSCQuery").GetBoolean();
+            var json = await File.ReadAllTextAsync("Configs/OSC.json");
+            var config = JsonSerializer.Deserialize<OscConfig>(json) ?? new OscConfig();
 
+            IP = string.IsNullOrWhiteSpace(config.IP) ? "127.0.0.1" : config.IP;
+            listeningPort = config.ListeningPort > 0 ? config.ListeningPort : 9001;
+            sendingPort = config.SendingPort > 0 ? config.SendingPort : 9000;
+            useOSCQuery = config.UseOSCQuery;
+            oscQueryTcpPort = 0;
         }
         catch (Exception ex)
         {
-            Log($"Error loading OSC Config: {ex.Message}", Severity.Error);
+            Log($"Error loading OSC config: {ex.Message}", Severity.Error);
         }
-
-        //Log($"OSC Config Loaded: {addressString} Listening on {listeningPort} & sending to {sendingPort}", Severity.Info);
-        return Task.CompletedTask;
     }
+
     public void CreateDefaultConfig()
     {
-        //create a json file from the default config
-        var defaultConfig = new {
-            IP = "127.0.0.1",
-            ListingPort = 9001,
-            SendingPort = 9000,
-            OSCQuery = false
-        };
+        Directory.CreateDirectory("Configs");
+        var defaultConfig = new OscConfig();
         var json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText("Configs/OSC.json", json);
     }
-    #endregion
 
+    public List<SuiteOscMessage> OscLogs { get; private set; } = new();
 
-    //===========================================//
-    #region OSC Logs
-    public List<OscMessage> OscLogs { get; private set; } = new();
-    private void LogOSC(OscMessage message)
+    private void LogOSC(SuiteOscMessage message)
     {
-        OscLogs.Add(message);
-        if (OscLogs.Count > 500)
+        lock (_logLock)
         {
-            OscLogs.RemoveAt(0);
+            OscLogs.Add(message);
+            if (OscLogs.Count > 500)
+            {
+                OscLogs.RemoveAt(0);
+            }
         }
     }
 
-    #endregion
-
-    //===========================================//
-    #region Running OSC service
     private async Task RunOSC(CancellationToken stoppingToken)
     {
-        await InitializeOSCConfig();
-
-        Running = true;
-        HandleOscPacket callback = delegate (OscPacket packet)
+        if (Running)
         {
-            var messageReceived = (OscMessage)packet;
-            if (messageReceived != null)
-            {
-                LogOSC(messageReceived);
-                //Console.WriteLine($"OSC Message Received: {messageReceived.Address}/{messageReceived.Arguments[0]}");
-                OnOscMessageReceived?.Invoke((messageReceived));
-            }
-        };
+            return;
+        }
+
+        await InitializeOSCConfig();
 
         try
         {
-            Log($"Listening on {listeningPort} & Sending on {sendingPort}");
-            Console.WriteLine("");
+            if (!IPAddress.TryParse(IP, out var sendIp))
+            {
+                sendIp = IPAddress.Loopback;
+                Log($"Invalid OSC IP '{IP}', falling back to 127.0.0.1.", Severity.Warning);
+            }
 
-            _sender = new UDPSender(IP, sendingPort);
-            _listener = new UDPListener(listeningPort, callback);
-            await Task.Delay(Timeout.Infinite);
+            if (useOSCQuery)
+            {
+                // Match OSCPickup/HQuery behavior: the app advertises its own available UDP port,
+                // then discovers VRChat's OSC service port for outbound sends.
+                listeningPort = VRC.OSCQuery.Extensions.GetAvailableUdpPort();
+                if (oscQueryTcpPort <= 0)
+                {
+                    oscQueryTcpPort = VRC.OSCQuery.Extensions.GetAvailableTcpPort();
+                }
+            }
+
+            var receiver = new OSCReceiver(2048);
+            var listenEndpoint = new IPEndPoint(IPAddress.Any, listeningPort);
+            receiver.OnPacketReceived += HandleFastOscPacketAsync;
+            receiver.Connect(listenEndpoint);
+
+            lock (_clientLock)
+            {
+                _receiver = receiver;
+                _listenEndPoint = listenEndpoint;
+                _receiverConnected = true;
+                _senderConnected = false;
+            }
+
+            if (!useOSCQuery)
+            {
+                await ConnectSenderAsync(sendingPort, "configured OSC target", stoppingToken);
+            }
+
+            Running = true;
+            Log(useOSCQuery
+                ? $"Listening on {ListeningEndpoint}; OSCQuery will discover the VRChat send target."
+                : $"Listening on {ListeningEndpoint}; sending to {OscEndpoint}");
+
+            if (useOSCQuery)
+            {
+                StartOscQuery();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Running = false;
+            await DisconnectFastOscAsync();
+            StopOscQuery();
         }
         catch (Exception ex)
         {
+            Running = false;
+            await DisconnectFastOscAsync();
+            StopOscQuery();
             Log($"Error starting OSC: {ex.Message}", Severity.Error);
-            _cts.Cancel();
+        }
+    }
+
+    private async Task ConnectSenderAsync(int port, string source, CancellationToken cancellationToken = default)
+    {
+        if (port <= 0)
+        {
+            Log($"OSC sender target from {source} had an invalid port: {port}", Severity.Warning);
+            return;
         }
 
-        Running = false;
+        await _senderReconnectLock.WaitAsync(cancellationToken);
+        try
+        {
+            if (!IPAddress.TryParse(IP, out var sendIp))
+            {
+                sendIp = IPAddress.Loopback;
+            }
+
+            var endpoint = new IPEndPoint(sendIp, port);
+            var sender = new OSCSender();
+            await sender.ConnectAsync(endpoint);
+
+            OSCSender? oldSender;
+            lock (_clientLock)
+            {
+                oldSender = _sender;
+                _sender = sender;
+                _sendEndPoint = endpoint;
+                sendingPort = port;
+                _senderConnected = true;
+            }
+
+            try
+            {
+                oldSender?.Disconnect();
+            }
+            catch (ObjectDisposedException) { }
+            catch (InvalidOperationException) { }
+
+            Log($"OSC sender connected to {IP}:{port} ({source}).", Severity.Info);
+            SendVisitorCodeAfterSenderConnection(sender);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            lock (_clientLock)
+            {
+                _senderConnected = false;
+            }
+
+            Log($"OSC sender connection failed for {IP}:{port} ({source}): {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _senderReconnectLock.Release();
+        }
+    }
+
+    private void QueueSenderReconnect(int port, string source)
+    {
+        _ = Task.Run(async () => await ConnectSenderAsync(port, source));
+    }
+
+
+    private void SendVisitorCodeAfterSenderConnection(OSCSender sender)
+    {
+        try
+        {
+            var value = OSCExtensions.FormatOutGoing(AccessCodes.VisitorCodeParameter.Value, AccessCodes.VisitorCodeParameter.Type);
+            if (value == null)
+            {
+                return;
+            }
+
+            sender.Send(new FastOscMessage(AccessCodes.VisitorCodeParameter.Address, NormalizeArguments(new object[] { value }).ToArray()));
+            Log($"Sent visitor code to avatar after OSC sender connection: {AccessCodes.VisitorCodeDisplay}", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Log($"Visitor code send after OSC sender connection failed: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private Task HandleFastOscPacketAsync(IOSCPacket packet)
+    {
+        try
+        {
+            DispatchFastOscPacket(packet);
+        }
+        catch (Exception ex)
+        {
+            Log($"OSC packet handler error: {ex.Message}", Severity.Error);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void DispatchFastOscPacket(IOSCPacket packet)
+    {
+        switch (packet)
+        {
+            case FastOscMessage message:
+                var suiteMessage = new SuiteOscMessage(message.Address, message.Arguments);
+                LogOSC(suiteMessage);
+                DispatchOscMessage(suiteMessage);
+                break;
+
+            case OSCBundle bundle:
+                foreach (var child in bundle.Packets)
+                {
+                    DispatchFastOscPacket(child);
+                }
+                break;
+        }
+    }
+
+    private void DispatchOscMessage(SuiteOscMessage message)
+    {
+        var handlers = OnOscMessageReceived;
+        if (handlers == null)
+        {
+            return;
+        }
+
+        foreach (var handler in handlers.GetInvocationList().Cast<OscSubscriptionEventHandler>())
+        {
+            try
+            {
+                handler(message);
+            }
+            catch (Exception ex)
+            {
+                Log($"OSC subscriber error for {message.Address}: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void StartOscQuery()
+    {
+        try
+        {
+            StopOscQuery();
+
+            _oscQueryService = new OSCQueryServiceBuilder()
+                .WithServiceName(OscQueryServiceName)
+                .WithUdpPort(listeningPort)
+                .WithTcpPort(oscQueryTcpPort)
+                .WithDiscovery(new MeaModDiscovery())
+                .StartHttpServer()
+                .AdvertiseOSC()
+                .AdvertiseOSCQuery()
+                .Build();
+
+            _oscQueryService.OnOscServiceAdded += profile =>
+            {
+                if (!IsVrchatService(profile.name))
+                {
+                    return;
+                }
+
+                Log($"OSCQuery found VRChat OSC target at osc://{profile.address}:{profile.port}/ ({profile.name}).", Severity.Info);
+                QueueSenderReconnect(profile.port, $"OSCQuery service {profile.name}");
+            };
+
+            _oscQueryService.OnOscQueryServiceAdded += profile =>
+            {
+                if (!IsVrchatService(profile.name))
+                {
+                    return;
+                }
+
+                RememberOscQueryTarget(profile.address.ToString(), profile.port, profile.name);
+                Log($"OSCQuery found VRChat query service at http://{profile.address}:{profile.port}/ ({profile.name}).", Severity.Info);
+            };
+
+            _oscQueryService.AddEndpoint("/avatar/change", "s", VRC.OSCQuery.Attributes.AccessValues.WriteOnly, null, "VRChat avatar change events");
+            _oscQueryService.AddEndpoint("/avatar/parameters", "", VRC.OSCQuery.Attributes.AccessValues.WriteOnly, null, "VRChat avatar parameter updates");
+            _oscQueryService.AddEndpoint(AccessCodes.VisitorCodeOscAddress, "i", VRC.OSCQuery.Attributes.AccessValues.WriteOnly, null, "Visitor code");
+
+            _oscQueryService.RefreshServices();
+
+            Log($"OSCQuery advertised as '{OscQueryServiceName}' on UDP {listeningPort}, TCP {oscQueryTcpPort}.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            _oscQueryService = null;
+            Log($"OSCQuery startup failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private static bool IsVrchatService(string? serviceName)
+    {
+        return !string.IsNullOrWhiteSpace(serviceName)
+            && serviceName.StartsWith(VrchatOscServicePrefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void RememberOscQueryTarget(string address, int port, string serviceName)
+    {
+        if (port <= 0)
+        {
+            return;
+        }
+
+        lock (_oscQueryTargetsLock)
+        {
+            oscQueryTargets.RemoveAll(target =>
+                target.Port == port
+                && string.Equals(target.Address, address, StringComparison.OrdinalIgnoreCase));
+
+            oscQueryTargets.Add(new OscQueryTarget(address, port, serviceName));
+        }
+    }
+
+    public async Task<IReadOnlyList<DiscoveredOscParameter>> RefreshAvatarParametersFromOscQueryAsync(CancellationToken cancellationToken = default)
+    {
+        var discovered = new List<DiscoveredOscParameter>();
+        var targets = GetOscQueryTargets();
+
+        foreach (var target in targets)
+        {
+            try
+            {
+                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+                var rootJson = await http.GetStringAsync($"http://{target.Address}:{target.Port}/", cancellationToken);
+                using var rootDocument = JsonDocument.Parse(rootJson);
+                CollectAvatarParameters(rootDocument.RootElement, discovered, $"OSCQuery:{target.ServiceName}");
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Log($"OSCQuery avatar parameter read failed on {target.Address}:{target.Port}: {ex.Message}", Severity.Info);
+            }
+        }
+
+        if (discovered.Count > 0)
+        {
+            MergeDiscoveredAvatarParameters(discovered);
+            LastAvatarParameterDiscovery = DateTimeOffset.UtcNow;
+            Log($"OSCQuery discovered {discovered.Count} avatar parameter(s).", Severity.Info);
+        }
+        else
+        {
+            LastAvatarParameterDiscovery = DateTimeOffset.UtcNow;
+            Log("OSCQuery did not return avatar parameters. Existing incoming-OSC observations are still available.", Severity.Warning);
+        }
+
+        return DiscoveredAvatarParameters;
+    }
+
+    private List<OscQueryTarget> GetOscQueryTargets()
+    {
+        var targets = new List<OscQueryTarget>();
+
+        lock (_oscQueryTargetsLock)
+        {
+            targets.AddRange(oscQueryTargets);
+        }
+
+
+        return targets
+            .GroupBy(target => $"{target.Address}:{target.Port}", StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToList();
+    }
+
+    private static void CollectAvatarParameters(JsonElement element, List<DiscoveredOscParameter> output, string source)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        var address = TryReadString(element, "FULL_PATH") ?? TryReadString(element, "fullPath") ?? TryReadString(element, "PATH") ?? TryReadString(element, "path");
+        if (!string.IsNullOrWhiteSpace(address) && address.StartsWith("/avatar/parameters/", StringComparison.OrdinalIgnoreCase))
+        {
+            output.Add(new DiscoveredOscParameter
+            {
+                Address = address,
+                Type = InferParameterTypeFromOscQueryType(TryReadString(element, "OSC_TYPE") ?? TryReadString(element, "TYPE") ?? TryReadString(element, "type")),
+                Source = source,
+                LastSeen = DateTimeOffset.UtcNow
+            });
+        }
+
+        if (element.TryGetProperty("CONTENTS", out var contents) && contents.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var child in contents.EnumerateObject())
+            {
+                CollectAvatarParameters(child.Value, output, source);
+            }
+        }
+
+        if (element.TryGetProperty("contents", out var lowerContents) && lowerContents.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var child in lowerContents.EnumerateObject())
+            {
+                CollectAvatarParameters(child.Value, output, source);
+            }
+        }
+    }
+
+    private static string? TryReadString(JsonElement element, string propertyName)
+    {
+        return element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+    }
+
+
+    public void ReplaceDiscoveredAvatarParameters(IEnumerable<DiscoveredOscParameter> parameters, string source)
+    {
+        lock (_discoveredParametersLock)
+        {
+            _discoveredAvatarParameters = parameters
+                .Where(parameter => !string.IsNullOrWhiteSpace(parameter.Address))
+                .Select(parameter =>
+                {
+                    parameter.Source = string.IsNullOrWhiteSpace(parameter.Source) ? source : parameter.Source;
+                    parameter.LastSeen = DateTimeOffset.UtcNow;
+                    return parameter;
+                })
+                .GroupBy(parameter => parameter.Address, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .OrderBy(parameter => parameter.DisplayName)
+                .ToList();
+
+            LastAvatarParameterDiscovery = DateTimeOffset.UtcNow;
+        }
+
+        Log($"Loaded {_discoveredAvatarParameters.Count} avatar parameter(s) from {source}.", Severity.Info);
+    }
+
+    private void RememberDiscoveredAvatarParameter(string address, object? value, string source)
+    {
+        if (!address.StartsWith("/avatar/parameters/", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        MergeDiscoveredAvatarParameters(new[]
+        {
+            new DiscoveredOscParameter
+            {
+                Address = address,
+                Type = InferParameterTypeFromValue(value),
+                Source = source,
+                LastSeen = DateTimeOffset.UtcNow
+            }
+        });
+    }
+
+    private void MergeDiscoveredAvatarParameters(IEnumerable<DiscoveredOscParameter> parameters)
+    {
+        lock (_discoveredParametersLock)
+        {
+            var byAddress = _discoveredAvatarParameters.ToDictionary(parameter => parameter.Address, StringComparer.OrdinalIgnoreCase);
+            foreach (var parameter in parameters.Where(parameter => !string.IsNullOrWhiteSpace(parameter.Address)))
+            {
+                byAddress[parameter.Address] = parameter;
+            }
+
+            _discoveredAvatarParameters = byAddress.Values.OrderBy(parameter => parameter.DisplayName).ToList();
+        }
+    }
+
+    private static ParameterType InferParameterTypeFromValue(object? value)
+    {
+        return value switch
+        {
+            bool => ParameterType.Bool,
+            int => ParameterType.Int,
+            long => ParameterType.Int,
+            short => ParameterType.Int,
+            byte => ParameterType.Int,
+            float => ParameterType.Float,
+            double => ParameterType.Float,
+            decimal => ParameterType.Float,
+            _ => ParameterType.Bool
+        };
+    }
+
+    private static ParameterType InferParameterTypeFromOscQueryType(string? type)
+    {
+        if (string.IsNullOrWhiteSpace(type))
+        {
+            return ParameterType.Bool;
+        }
+
+        var normalized = type.Trim().ToLowerInvariant();
+        if (normalized.Contains('i') || normalized.Contains("int"))
+        {
+            return ParameterType.Int;
+        }
+
+        if (normalized.Contains('f') || normalized.Contains("float") || normalized.Contains("double"))
+        {
+            return ParameterType.Float;
+        }
+
+        return ParameterType.Bool;
+    }
+
+    private void StopOscQuery()
+    {
+        try
+        {
+            _oscQueryService?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Log($"OSCQuery shutdown failed: {ex.Message}", Severity.Warning);
+        }
+        finally
+        {
+            _oscQueryService = null;
+            lock (_oscQueryTargetsLock)
+            {
+                oscQueryTargets.Clear();
+            }
+        }
+    }
+
+    public void RefreshOscQuery()
+    {
+        if (_oscQueryService == null)
+        {
+            if (useOSCQuery && Running)
+            {
+                StartOscQuery();
+            }
+            return;
+        }
+
+        try
+        {
+            _oscQueryService.RefreshServices();
+            Log("OSCQuery service discovery refreshed.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Log($"OSCQuery refresh failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    public void RegisterOscQueryEndpoint(string path, string typeTag, string description)
+    {
+        if (_oscQueryService == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _oscQueryService.AddEndpoint(path, typeTag, VRC.OSCQuery.Attributes.AccessValues.ReadWrite, null, description);
+        }
+        catch (Exception ex)
+        {
+            Log($"OSCQuery endpoint registration failed for {path}: {ex.Message}", Severity.Warning);
+        }
     }
 
     public void StopService()
     {
-        if (Running)
-        {
-            Running = false;
-            _sender.Close();
-            _listener.Close();
-            Log("OSC Service Stopped", Severity.Info);
-        }
+        _ = StopServiceAsync(CancellationToken.None);
+    }
+
+    private async Task StopServiceAsync(CancellationToken cancellationToken)
+    {
+        StopOscQuery();
+        await DisconnectFastOscAsync();
+        Running = false;
+        Log("OSC service stopped", Severity.Info);
     }
 
     public void StartService()
     {
         if (!Running)
         {
-            StartAsync(CancellationToken.None);
+            _ = StartAsync(CancellationToken.None);
         }
     }
 
-    #endregion
-
-
-    //===========================================//
-    #region OSC Stuff
     public void sendOSCParameter(Parameter param)
     {
         var value = OSCExtensions.FormatOutGoing(param.Value, param.Type);
@@ -194,32 +693,150 @@ public class Service_OSC : IHostedService
             return;
         }
 
-        var message = new OscMessage(param.Address, value);
-        //Log($"Sending OSC message: {message.Address}/{message.Arguments[0]}");
-        try
-        {
-            _sender.Send(message);
-        }
-        catch (Exception ex)
-        {
-            Log($"Error sending OSC message: {ex.Message}", Severity.Error);
-        }
+        sendOSCMessage(param.Address, value);
     }
 
-    public void sendOSCMessage(string address, object value) //For sending custom OSC messages
+    public void sendOSCMessage(string address, object value)
     {
-        var message = new OscMessage(address, value);
-        //Log($"Sending OSC message: {message.Address}/{message.Arguments[0]}");
+        var message = new SuiteOscMessage(address, value);
+        Send(message);
+    }
+
+    public void Send(SuiteOscMessage message)
+    {
+        _ = SendAsync(message);
+    }
+
+    public Task SendAsync(SuiteOscMessage message)
+    {
+        OSCSender? sender;
+        lock (_clientLock)
+        {
+            sender = _sender;
+        }
+
+        if (sender == null || !_senderConnected)
+        {
+            Log($"OSC send skipped; service is not ready: {message.Address}", Severity.Warning);
+            return Task.CompletedTask;
+        }
+
         try
         {
-            _sender.Send(message);
+            var arguments = NormalizeArguments(message.Arguments).ToArray();
+            if (arguments.Length == 0)
+            {
+                Log($"OSC send skipped; FastOSC messages require at least one argument: {message.Address}", Severity.Warning);
+                return Task.CompletedTask;
+            }
+
+            sender.Send(new FastOscMessage(message.Address, arguments));
+        }
+        catch (ObjectDisposedException)
+        {
+            Log($"OSC send skipped; sender is closed: {message.Address}", Severity.Warning);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Log($"OSC send skipped; sender is disconnected: {message.Address} ({ex.Message})", Severity.Warning);
         }
         catch (Exception ex)
         {
-            Log($"Error sending OSC message: {ex.Message}", Severity.Error);
+            Log($"Error sending OSC message {message.Address}: {ex.Message}", Severity.Error);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static IEnumerable<object> NormalizeArguments(IEnumerable<object> arguments)
+    {
+        foreach (var argument in arguments)
+        {
+            yield return argument switch
+            {
+                double value => (float)value,
+                decimal value => (float)value,
+                long value => unchecked((int)value),
+                short value => (int)value,
+                byte value => (int)value,
+                null => string.Empty,
+                _ => argument
+            };
         }
     }
-    #endregion
+
+    private async Task DisconnectFastOscAsync()
+    {
+        OSCSender? sender;
+        OSCReceiver? receiver;
+        bool senderConnected;
+        bool receiverConnected;
+
+        lock (_clientLock)
+        {
+            sender = _sender;
+            receiver = _receiver;
+            senderConnected = _senderConnected;
+            receiverConnected = _receiverConnected;
+            _sender = null;
+            _receiver = null;
+            _sendEndPoint = null;
+            _listenEndPoint = null;
+            _senderConnected = false;
+            _receiverConnected = false;
+        }
+
+        if (receiver != null && receiverConnected)
+        {
+            try
+            {
+                await receiver.DisconnectAsync();
+            }
+            catch (ObjectDisposedException) { }
+            catch (OperationCanceledException) { }
+            catch (InvalidOperationException) { }
+            catch (Exception ex)
+            {
+                Log($"OSC receiver shutdown failed: {ex.Message}", Severity.Warning);
+            }
+        }
+
+        if (sender != null && senderConnected)
+        {
+            try
+            {
+                sender.Disconnect();
+            }
+            catch (ObjectDisposedException) { }
+            catch (InvalidOperationException) { }
+            catch (Exception ex)
+            {
+                Log($"OSC sender shutdown failed: {ex.Message}", Severity.Warning);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        StopOscQuery();
+        try
+        {
+            DisconnectFastOscAsync().GetAwaiter().GetResult();
+        }
+        catch
+        {
+            // best-effort cleanup only
+        }
+    }
 
 
+    private sealed record OscQueryTarget(string Address, int Port, string ServiceName);
+
+    private sealed class OscConfig
+    {
+        public string IP { get; set; } = "127.0.0.1";
+        public int SendingPort { get; set; } = 9000;
+        public int ListeningPort { get; set; } = 9001;
+        public bool UseOSCQuery { get; set; } = true;
+    }
 }

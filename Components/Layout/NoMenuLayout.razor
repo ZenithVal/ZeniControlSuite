@@ -1,35 +1,17 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 
 <MudThemeProvider IsDarkMode=true />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-    <AuthorizeView>
-        <Authorized>
-            <div class="page">
-
-                <main style="overflow: scroll; display: flex; justify-content: center; align-items: center;">
-                    <article class="content px-4;">
-                        @Body
-                    </article>
-                </main>
-
-            </div>
-        </Authorized>
-
-        <NotAuthorized>
-			<main style="overflow: scroll;">
-				<article class="content px-4;">
-					<h1>Not Authorized</h1>
-                    <p class="alert alert-danger">Not Authorized, please log in.</p>
-				</article>
-			</main>
-        </NotAuthorized>
-
-    </AuthorizeView>
-
+<div class="page">
+    <main style="overflow: scroll; display: flex; justify-content: center; align-items: center;">
+        <article class="content px-4;">
+            @Body
+        </article>
+    </main>
+</div>
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.

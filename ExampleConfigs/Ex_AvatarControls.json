@@ -1,155 +1,140 @@
 {
-    "GlobalControls": [
-
+  "GlobalControls": [
+    {
+      "Name": "Button",
+      "Type": "Button",
+      "Parameter": {
+        "Path": "/avatar/parameters/Button",
+        "Type": "Bool",
+        "Value": false
+      },
+      "ValueOff": 0.0,
+      "ValueOn": 1.0,
+      "AccessLevel": 0
+    },
+    {
+      "Name": "Toggle",
+      "Type": "Toggle",
+      "Parameter": {
+        "Path": "/avatar/parameters/Toggle",
+        "Type": "Bool",
+        "Value": false
+      },
+      "ValueOff": 0.0,
+      "ValueOn": 1.0,
+      "AccessLevel": 0
+    },
+    {
+      "Name": "Toggle w/ Role'",
+      "Type": "Toggle",
+      "Parameter": {
+        "Path": "/avatar/parameters/Toggle",
+        "Type": "Bool",
+        "Value": false
+      },
+      "ValueOff": 0.0,
+      "ValueOn": 1.0,
+      "AccessLevel": 0
+    },
+    {
+      "Name": "Radial",
+      "Type": "Radial",
+      "Parameter": {
+        "Path": "/avatar/parameters/Radial",
+        "Type": "Float",
+        "Value": 1.0
+      },
+      "ValueMin": 0.0,
+      "ValueMax": 1.0,
+      "AccessLevel": 0
+    },
+    {
+      "Name": "Colors - Primary",
+      "Type": "HSV",
+      "ParameterHue": {
+        "Path": "/avatar/parameters/PriHue",
+        "Type": "Float",
+        "Value": 0.0
+      },
+      "ParameterSaturation": {
+        "Path": "/avatar/parameters/PriSat",
+        "Type": "Float",
+        "Value": 0.0
+      },
+      "ParameterBrightness": {
+        "Path": "/avatar/parameters/PriVal",
+        "Type": "Float",
+        "Value": 0.0
+      },
+      "InvertedBrightness": false,
+      "AccessLevel": 0
+    },
+    {
+      "Name": "Colors - Secondary",
+      "Type": "HSV",
+      "ParameterHue": {
+        "Path": "/avatar/parameters/SecHue",
+        "Type": "Float",
+        "Value": 0.0
+      },
+      "ParameterSaturation": {
+        "Path": "/avatar/parameters/SecSat",
+        "Type": "Float",
+        "Value": 0.0
+      },
+      "ParameterBrightness": {
+        "Path": "/avatar/parameters/SecVal",
+        "Type": "Float",
+        "Value": 0.0
+      },
+      "InvertedBrightness": true,
+      "AccessLevel": 0
+    }
+  ],
+  "Avatars": [
+    {
+      "ID": "Global",
+      "Name": "No Valid Avatar Loaded",
+      "Controls": [],
+      "InheritedGlobalControls": [
+        "Colors - Primary",
+        "Colors - Secondary"
+      ]
+    },
+    {
+      "ID": "avtr_123456notarealID1",
+      "Name": "ZEN 2 | Catsuit",
+      "Controls": [],
+      "InheritedGlobalControls": [
+        "Toggle",
+        "Radial",
+        "Toggle W/ Role",
+        "Colors - Primary",
+        "Colors - Secondary"
+      ]
+    },
+    {
+      "ID": "avtr_123456notarealID2",
+      "Name": "ZEN 2 | Dress",
+      "Controls": [
         {
-            "Name": "Button",
-            "RequiredRoles": [],
-            "Type": "Button",
-            "Parameter": {
-                "Path": "/avatar/parameters/Button",
-                "Type": "Bool",
-                "Value": false,
-                "RequiredRoles": []
-            },
-            "ValueOff": 0.0,
-            "ValueOn": 1.0
-        },
-
-        {
-            "Name": "Toggle",
-            "RequiredRoles": [ "" ],
-            "Type": "Toggle",
-            "Parameter": {
-                "Path": "/avatar/parameters/Toggle",
-                "Type": "Bool",
-                "Value": false,
-                "RequiredRoles": []
-            },
-            "ValueOff": 0.0,
-            "ValueOn": 1.0
-        },
-
-        {
-            "Name": "Toggle w/ Role'",
-            "RequiredRoles": [ "ToggleRole" ],
-            "Type": "Toggle",
-            "Parameter": {
-                "Path": "/avatar/parameters/Toggle",
-                "Type": "Bool",
-                "Value": false,
-                "RequiredRoles": []
-            },
-            "ValueOff": 0.0,
-            "ValueOn": 1.0
-        },
-
-        {
-            "Name": "Radial",
-            "RequiredRoles": [],
-            "Type": "Radial",
-            "Parameter": {
-                "Path": "/avatar/parameters/Radial",
-                "Type": "Float",
-                "Value": 1.0
-            },
-            "ValueMin": 0.0,
-            "ValueMax": 1.0
-        },
-
-
-        {
-            "Name": "Colors - Primary",
-            "RequiredRoles": [],
-            "Type": "HSV",
-            "ParameterHue": {
-                "Path": "/avatar/parameters/PriHue",
-                "Type": "Float",
-                "Value": 0.0
-            },
-            "ParameterSaturation": {
-                "Path": "/avatar/parameters/PriSat",
-                "Type": "Float",
-                "Value": 0.0
-            },
-            "ParameterBrightness": {
-                "Path": "/avatar/parameters/PriVal",
-                "Type": "Float",
-                "Value": 0.0
-            },
-            "InvertedBrightness": false
-        },
-        {
-            "Name": "Colors - Secondary",
-            "RequiredRoles": [],
-            "Type": "HSV",
-            "ParameterHue": {
-                "Path": "/avatar/parameters/SecHue",
-                "Type": "Float",
-                "Value": 0.0
-            },
-            "ParameterSaturation": {
-                "Path": "/avatar/parameters/SecSat",
-                "Type": "Float",
-                "Value": 0.0
-            },
-            "ParameterBrightness": {
-                "Path": "/avatar/parameters/SecVal",
-                "Type": "Float",
-                "Value": 0.0
-            },
-            "InvertedBrightness": true
+          "Name": "UniqueToggle",
+          "Type": "Toggle",
+          "Parameter": {
+            "Path": "/avatar/parameters/UniqueToggle",
+            "Type": "Bool",
+            "Value": false
+          },
+          "ValueOff": 0.0,
+          "ValueOn": 1.0,
+          "AccessLevel": 0
         }
-
-    ],
-    "Avatars": [
-        {
-            "ID": "Global",
-            "Name": "No Valid Avatar Loaded",
-            "Controls": [
-            ],
-            "InheritedGlobalControls": [
-                "Colors - Primary",
-                "Colors - Secondary"
-            ]
-        },
-
-        {
-            "ID": "avtr_123456notarealID1",
-            "Name": "ZEN 2 | Catsuit",
-            "Controls": [
-            ],
-            "InheritedGlobalControls": [
-                "Toggle",
-                "Radial",
-                "Toggle W/ Role",
-                "Colors - Primary",
-                "Colors - Secondary"
-            ]
-        },
-
-        {
-            "ID": "avtr_123456notarealID2",
-            "Name": "ZEN 2 | Dress",
-            "Controls": [
-                {
-                    "Name": "UniqueToggle",
-                    "RequiredRoles": [ "" ],
-                    "Type": "Toggle",
-                    "Parameter": {
-                        "Path": "/avatar/parameters/UniqueToggle",
-                        "Type": "Bool",
-                        "Value": false,
-                        "RequiredRoles": []
-                    },
-                    "ValueOff": 0.0,
-                    "ValueOn": 1.0
-                }
-            ],
-            "InheritedGlobalControls": [
-                "Colors - Primary",
-                "Colors - Secondary"
-            ]
-        }
-
-    ]
+      ],
+      "InheritedGlobalControls": [
+        "Colors - Primary",
+        "Colors - Secondary"
+      ]
+    }
+  ],
+  "InvalidAvatars": []
 }

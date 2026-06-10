@@ -1,176 +1,139 @@
-﻿@page "/AvatarSelect"
+@page "/AvatarSelect"
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Authorization
 @using ZeniControlSuite.Authentication
 @using ZeniControlSuite.Models
 @using MudBlazor.Services
 @using MudBlazor.Utilities
-@attribute [Authorize(Roles = "Admin, Avatar")]
+@attribute [Authorize(Roles = "Admin,Visitor")]
 
-<PageTitle>Avatar Controls</PageTitle>
+<PageTitle>Avatar Select</PageTitle>
 
-<h1 style="text-align: Left;">Avatar Select</h1>
+<div class="d-flex align-center justify-space-between flex-wrap gap-3">
+    <MudText Typo="Typo.h4">Avatar Select</MudText>
+</div>
 
-<MudDivider />
-<div style="height: 8px"></div>
-
+<MudDivider Class="my-4" />
 
 <AuthorizeView>
-	<Authorized>
-		<MudGrid Style="width: 1497px; height: 100px">
-			<MudItem xs="8">
+    <Authorized>
+        @{ var isAdminUser = context.User.IsInRole("Admin") || context.User.IsInRole("LocalHost"); }
+        <MudGrid>
+            <MudItem xs="12" lg="8">
+                <MudPaper Outlined Class="pa-3 mb-3 bg-transparent">
+                    <div class="d-flex align-center flex-wrap gap-2">
+                        @if (isAdminUser)
+                        {
+                            <MudButton Variant="@(avatarSelectEditMode ? Variant.Filled : Variant.Outlined)" Color="Color.Info" Style="text-transform:none" OnClick="ToggleAvatarSelectEditMode">
+                                @(avatarSelectEditMode ? "Exit Edit Mode" : "Edit Mode")
+                            </MudButton>
+                            <MudButton Variant="@(adminPanelExpand ? Variant.Filled : Variant.Outlined)" Color="Color.Secondary" Style="text-transform:none" OnClick="ToggleAdminPanel">
+                                @(adminPanelExpand ? "Hide Settings" : "Settings")
+                            </MudButton>
+                        }
 
-				<div style="display: flex">
-					<MudPaper Style="width: 100%; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 8px; background-color:transparent">
-						<MudPaper Outlined Class="bg-transparent" Style="display: flex; flex-direction: row; align-items: center; padding-left: 8px; padding-bottom: 8px; padding-top: 6px;">
-							@if (@context.User.IsInRole("Admin"))
-							{
-								<MudButton Variant="Variant.Outlined" Style="width: 150px; text-transform:none" OnClick="ToggleAdminPanel">@(adminPanelExpand ? "Admin (Collapse)" : "Admin (Expand)")</MudButton>
-							}
-							@if (!AvatarsService.avatarSelectFree)
-							{
-								<MudButton Variant="Variant.Outlined" Style="width: 150px; text-transform:none" Color="Color.Success">Points: @PointsService.pointsDisplay</MudButton>
-							}
-							@if (AvatarsService.Trapped) //display time remaning
-							{
-								string EndTime = AvatarsService.TrapEndTime.ToString("HH:mm");
-								bool canAffordAddTime = PointsService.pointsTotal >= 2;
+                        @if (!AvatarsService.avatarSelectFree)
+                        {
+                            <MudButton Variant="Variant.Outlined" Style="text-transform:none" Color="Color.Success">Points: @PointsService.pointsDisplay</MudButton>
+                        }
 
-								<MudItem Style="display: flex; flex-direction: row; align-items: center; padding-left: 8px;">
-									<MudAlert Dense="true" Variant="Variant.Outlined" Severity="Severity.Error">Avatar locked until @EndTime</MudAlert>
-									<MudButton Variant="Variant.Filled" Style="text-transform:none" Color="Color.Success" Disabled="!canAffordAddTime" OnClick="IncreaseTrapTimer">Add Time - 2✦</MudButton>
-									<MudButton Variant="Variant.Filled" Style="text-transform:none" Color="Color.Primary" OnClick="DecreaseTrapTimer">Remove Time + 2✦</MudButton>
-								</MudItem>
-							}
-						</MudPaper>
-						@if (@context.User.IsInRole("Admin"))
-						{
-							<MudCollapse Expanded="adminPanelExpand" Style="width: 100%; padding-left: 8px; padding-right: 8px; padding-top: 8px;">
-								<MudDivider /><div style="height: 4px" />
-								<MudGrid>
-									<MudItem xs="3">
-										<MudSwitch @bind-Value="AvatarsService.avatarSelectEnabled" Label="Avatar Select Allowed" Color="Color.Info" />
-										<MudSwitch @bind-Value="AvatarsService.avatarSelectFree" Label="Avatar Select Free?" Color="Color.Warning" />
-										<MudSwitch @bind-Value="AvatarsService.Trapped" Label="Avatar Trapped" Color="Color.Error" />
-										<MudNumericField @bind-Value="AvatarsService.avatarSelectCostMulti" Label="Avatar Cost Multiplier" Color="Color.Info" Step="0.25" Min="1.0" />
-									</MudItem>
-									<MudItem xs="9">
-									</MudItem>
-								</MudGrid>
-							</MudCollapse>
-						}
-					</MudPaper>
-				</div>
+                        @if (AvatarsService.Trapped)
+                        {
+                            string endTime = AvatarsService.TrapEndTime.ToString("HH:mm");
+                            bool canAffordAddTime = PointsService.pointsTotal >= 2;
+                            <MudAlert Dense="true" Variant="Variant.Outlined" Severity="Severity.Error">Avatar locked until @endTime</MudAlert>
+                            <MudButton Variant="Variant.Filled" Style="text-transform:none" Color="Color.Success" Disabled="!canAffordAddTime" OnClick="IncreaseTrapTimer">Add Time - 2✦</MudButton>
+                            <MudButton Variant="Variant.Filled" Style="text-transform:none" Color="Color.Primary" OnClick="DecreaseTrapTimer">Remove Time + 2✦</MudButton>
+                        }
+                    </div>
 
+                    @if (isAdminUser && adminPanelExpand)
+                    {
+                        <MudDivider Class="my-3" />
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudSwitch Value="@AvatarsService.avatarSelectEnabled" ValueChanged="@((bool value) => UpdateAvatarSelectEnabled(value))" Label="Avatar Select Allowed" Color="Color.Info" />
+                                <MudSwitch Value="@AvatarsService.avatarSelectFree" ValueChanged="@((bool value) => UpdateAvatarSelectFree(value))" Label="Avatar Select Free" Color="Color.Warning" />
+                                <MudSwitch Value="@AvatarsService.Trapped" ValueChanged="@((bool value) => UpdateAvatarTrapped(value))" Label="Avatar Trapped" Color="Color.Error" />
+                                <MudNumericField T="double" Value="@AvatarsService.avatarSelectCostMulti" ValueChanged="@((double value) => UpdateAvatarCostMultiplier(value))" Label="Avatar Cost Multiplier" Color="Color.Info" Step="0.25" Min="1.0" />
+                            </MudItem>
+                        </MudGrid>
+                    }
+                </MudPaper>
 
-				@* Header with buttons
-				<div style="display: flex">
-				<MudPaper Style="width: 100%; padding-left: 0px; padding-right: 0px; padding-top: 0px; padding-bottom: 8px; background-color:transparent">
-				<MudPaper Class="bg-transparent" Style="display: flex; flex-direction: row; align-items: center; padding-left: 8px;">
-				@if (@context.User.IsInRole("Admin"))
-				{
-				<MudButton Variant="Variant.Outlined" Style="width: 150px; text-transform:none" OnClick="ToggleAdminPanel">@(adminPanelExpand ? "Admin (Collapse)" : "Admin (Expand)")</MudButton>
-				<MudSpacer />
-				}
-				<MudSpacer />
-				</MudPaper>
-				@if (@context.User.IsInRole("Admin"))
-				{
-				<MudCollapse Expanded="adminPanelExpand" Style="width: 100%; padding-left: 8px; padding-right: 8px; padding-top: 8px;">
-				<MudDivider /><div style="height: 4px" />
-				<MudGrid>
-				<MudItem xs="5">
-				</MudItem>
-				<MudItem xs="7">
-				</MudItem>
-				}
-				</MudGrid>
-				</MudCollapse>
-				}
-				</MudPaper>
-				</div>
-				*@
+                <MudPaper Outlined Class="pa-3 bg-transparent">
+                    <MudGrid Spacing="3" Justify="Justify.FlexStart">
+                        @foreach (Avatar avatar in AvatarsService.avatars)
+                        {
+                            if (!ShouldShowAvatarCard(avatar, isAdminUser))
+                            {
+                                continue;
+                            }
 
-				<div style="height: 8px"></div>
-				<MudPaper Outlined Style="background-color:transparent; justify-content: center; padding-left: 7px; padding-top: 8px;">
-					<MudGrid Spacing="3" Justify="Justify.FlexStart">
-						@foreach (Avatar avatar in AvatarsService.avatars)
-						{
-							if (!avatar.Selectable)
-							{
-								continue;
-							}
-							if (!avatar.Available && !@context.User.IsInRole("LocalHost"))
-							{
-								continue;
-							}
-							if (!AvatarsService.avatarSelectEnabled && !@context.User.IsInRole("LocalHost"))
-							{
-								continue;
-							}
-							<MudItem>
-								<MudPaper Style="width: 230px; padding-left: 12px; padding-right: 12px; padding-top: 12px; padding-bottom: 12px" Class="mt-2; justify-center; align-start; p-2; border-1">
+                            <MudItem>
+                                <MudPaper Style="width: 230px; padding: 12px;" Class="mt-2 justify-center align-start p-2 border-1">
+                                    <div style="width: 100%; min-height: 32px; background: rgba(0, 0, 0, 0.0)">
+                                        <MudText Typo="Typo.h6" Align="Align.Center">@AvatarCardTitle(avatar)</MudText>
+                                    </div>
 
-									<div style="posiition: absolute; width: 100%; height: 32px; background: rgba(0, 0, 0, 0.0)">
-										<MudText Typo="Typo.h6" Align="Align.Center">@avatar.Name.Split('|')[1].Trim()</MudText>
-									</div>
-									<MudImage Width="207" Class="rounded-lg" Src="@avatar.Thumbnail" Alt="@avatar.Name" />
+                                    <MudImage Width="207" Class="rounded-lg" Src="@avatar.Thumbnail" Alt="@avatar.Name" />
 
-									<div style="height: 4px"></div>
-									<MudDivider />
-									<div style="height: 4px"></div>
+                                    <div style="height: 4px"></div>
+                                    <MudDivider />
+                                    <div style="height: 4px"></div>
 
+                                    @if (avatarSelectEditMode && isAdminUser)
+                                    {
+                                        <MudPaper Class="pa-2 mb-2" Outlined="true">
+                                            <MudTextField T="string" Value="@avatar.Name" ValueChanged="@((string value) => UpdateAvatarName(avatar, value))" Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                            <MudNumericField T="double" Value="@avatar.Cost" ValueChanged="@((double value) => UpdateAvatarCost(avatar, value))" Label="Price" Min="0" Step="1" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                            <MudSwitch Value="@avatar.Selectable" ValueChanged="@((bool value) => UpdateAvatarSelectable(avatar, value))" Label="Selectable" Color="Color.Info" />
+                                            <MudSwitch Value="@avatar.Available" ValueChanged="@((bool value) => UpdateAvatarAvailable(avatar, value))" Label="Available" Color="Color.Success" />
+                                            <MudButton Variant="Variant.Outlined" Color="Color.Info" FullWidth="true" OnClick="@(() => SelectAvatar(avatar))">Select Now</MudButton>
+                                        </MudPaper>
+                                    }
 
-									@if (AvatarsService.avatarSelectFree)
-									{
-										@if (AvatarsService.selectedAvatar == avatar)
-										{
-											<MudButton Variant="Variant.Outlined" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Error" Disabled="true">Currently Selected</MudButton>
-										}
-										else
-										{
-											<MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Info" OnClick="@(() => { SelectAvatar(avatar); })">Select Avatar</MudButton>
-										}
-									}
-									else
-									{
-										double cost = avatar.Cost * AvatarsService.avatarSelectCostMulti;
-										bool canAffordAvatar = cost <= PointsService.pointsTotal;
-										@if (AvatarsService.selectedAvatar == avatar)
-										{
-											if (AvatarsService.TrapTimerRunning)
-											{
-												<MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Warning" Disabled="true">Avatar Locked</MudButton>
-											}
-											else
-											{
-												bool canAffordAddTime = PointsService.pointsTotal >= 2;
-												<MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Secondary" Disabled="!canAffordAddTime" OnClick="@(() => { IncreaseTrapTimer(); })">Lock Avatar - 2⭐</MudButton>
-											}
-
-										}
-										else
-										{
-											<MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="@(canAffordAvatar ? Color.Info : Color.Error)" Disabled="!canAffordAvatar" OnClick="@(() => { PurchaseAvatar(avatar); })">Select - @cost✦</MudButton>
-										}
-									}
-
-									@if (@context.User.IsInRole("LocalHost") && adminPanelExpand)
-									{
-										<div style="height: 4px"></div>
-										<MudDivider />
-										<MudSwitch @bind-Value="avatar.Available" Label="Available" Color="Color.Info" />
-									}
-								</MudPaper>
-							</MudItem>
-						}
-					</MudGrid>
-				</MudPaper>
-
-			</MudItem>
-			<MudItem xs="4">
-				<Panel_LogsAvatars />
-			</MudItem>
-		</MudGrid>
-</Authorized>
+                                    @if (AvatarsService.avatarSelectFree)
+                                    {
+                                        @if (AvatarsService.selectedAvatar == avatar)
+                                        {
+                                            <MudButton Variant="Variant.Outlined" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Error" Disabled="true">Currently Selected</MudButton>
+                                        }
+                                        else
+                                        {
+                                            <MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Info" Disabled="@(!CanSelectAvatar(avatar, isAdminUser))" OnClick="@(() => SelectAvatar(avatar))">Select Avatar</MudButton>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        double cost = avatar.Cost * AvatarsService.avatarSelectCostMulti;
+                                        bool canAffordAvatar = cost <= PointsService.pointsTotal;
+                                        @if (AvatarsService.selectedAvatar == avatar)
+                                        {
+                                            if (AvatarsService.TrapTimerRunning)
+                                            {
+                                                <MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Warning" Disabled="true">Avatar Locked</MudButton>
+                                            }
+                                            else
+                                            {
+                                                bool canAffordAddTime = PointsService.pointsTotal >= 2;
+                                                <MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="Color.Secondary" Disabled="!canAffordAddTime" OnClick="@(() => IncreaseTrapTimer())">Lock Avatar - 2⭐</MudButton>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <MudButton Variant="Variant.Filled" Style="width: 100%; height: 37px; text-transform:none; font-size: larger;" Color="@(canAffordAvatar ? Color.Info : Color.Error)" Disabled="@(!canAffordAvatar && !isAdminUser)" OnClick="@(() => PurchaseAvatar(avatar))">Select - @cost✦</MudButton>
+                                        }
+                                    }
+                                </MudPaper>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" lg="4">
+                <Panel_LogsAvatars />
+            </MudItem>
+        </MudGrid>
+    </Authorized>
 </AuthorizeView>

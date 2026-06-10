@@ -2,14 +2,16 @@
 
 public class Avatar
 {
-    public string ID { get; set; }
-    public string Name { get; set; }
+    public string ID { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
     public bool Selectable { get; set; }
     public bool Available { get; set; }
     public double Cost { get; set; }
-    public string Thumbnail { get; set; }
-    public List<AvatarControl> Controls { get; set; }
-    public Dictionary<string, Parameter> Parameters { get; set; }
+    public string Thumbnail { get; set; } = "/images/AvatarThumbDefault.png";
+    public List<AvatarControl> Controls { get; set; } = new();
+    public Dictionary<string, Parameter> Parameters { get; set; } = new();
+    public bool RuntimeGenerated { get; set; }
+    public bool IsInvalidPlaceholder { get; set; }
 }
 
 public enum ControlType
@@ -21,10 +23,12 @@ public enum ControlType
 }
 public abstract class AvatarControl
 {
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
     public abstract ControlType Type { get; }
-    public List<string> RequiredRoles { get; set; } = new List<string>();
-    public string Icon { get; set; }
+    public int AccessLevel { get; set; }
+    public string Icon { get; set; } = "/images/PowerButton.png";
+    public string? SourceGlobalName { get; set; }
+    public bool IsInheritedGlobalControl => !string.IsNullOrWhiteSpace(SourceGlobalName);
 }
 public class ContTypeButton : AvatarControl
 {
@@ -63,4 +67,15 @@ public class ContTypeHSV : AvatarControl
     public required Parameter ParameterBrightness { get; set; }
     public bool InvertedBrightness { get; set; }
     public float InvertedBrightnessValue { get; set; }
+}
+
+public sealed class DiscoveredOscParameter
+{
+    public string Address { get; set; } = string.Empty;
+    public ParameterType Type { get; set; } = ParameterType.Bool;
+    public string Source { get; set; } = string.Empty;
+    public DateTimeOffset LastSeen { get; set; } = DateTimeOffset.UtcNow;
+    public string DisplayName => Address.StartsWith("/avatar/parameters/", StringComparison.OrdinalIgnoreCase)
+        ? Address["/avatar/parameters/".Length..]
+        : Address.Trim('/');
 }

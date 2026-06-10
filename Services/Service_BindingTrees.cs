@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using Newtonsoft.Json;
 using ZeniControlSuite.Components.Pages;
@@ -11,7 +11,13 @@ public class Service_BindingTrees : IHostedService
 {
     [Inject] private Service_Points PointsService { get; set; } = default!;
     private readonly Service_Logs LogService;
-    public Service_BindingTrees(Service_Logs serviceLogs) { LogService = serviceLogs; }
+    private readonly Service_PageAccess PageAccess;
+
+    public Service_BindingTrees(Service_Logs serviceLogs, Service_PageAccess pageAccess)
+    {
+        LogService = serviceLogs;
+        PageAccess = pageAccess;
+    }
     private void Log(string message, Severity severity)
     {
         LogService.AddLog("Service_BindingTrees", "System", message, severity, Variant.Outlined);
@@ -76,7 +82,7 @@ public class Service_BindingTrees : IHostedService
         catch (Exception e)
         {
             Log($"Error loading Binding Trees:\n{e.Message}", Severity.Error);
-            Bindings.pageEnabled = false;
+            PageAccess.SetEnabled("Bindings", false);
         }
     }
 

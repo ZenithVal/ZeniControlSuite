@@ -1,0 +1,62 @@
+@page "/Login"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+<PageTitle>Login</PageTitle>
+
+<MudPaper Class="pa-6 mx-auto mt-8" Style="max-width: 460px;">
+    <MudText Typo="Typo.h4">Zeni Control Suite</MudText>
+
+    @if (VisitorError == "1")
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-4 mb-4">Invalid visitor code.</MudAlert>
+    }
+
+    <form method="post" action="/api/account/VisitorCodeLogin">
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+        <label class="mud-input-label mud-input-label-animated mud-input-label-outlined">Visitor Code</label>
+        <input name="visitorCode" type="password" maxlength="3" inputmode="numeric" pattern="[0-9]{3}" class="mud-input-slot mud-input-root mud-input-root-outlined" style="width:100%; padding:16px; border:1px solid rgba(255,255,255,.24); border-radius:4px; background:transparent; color:inherit;" />
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Info" Class="mt-4" FullWidth="true">Visitor Login</MudButton>
+    </form>
+
+    <MudDivider Class="my-4" />
+
+    <MudText Typo="Typo.h6" Class="mb-3">Admin Login</MudText>
+
+    @if (AdminError == "1")
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">Invalid admin password.</MudAlert>
+    }
+    @if (Discord == "disabled")
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">Discord login unavailable.</MudAlert>
+    }
+
+    <form method="post" action="/api/account/AdminPasswordLogin">
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+        <label class="mud-input-label mud-input-label-animated mud-input-label-outlined">Password</label>
+        <input name="password" type="password" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="mud-input-slot mud-input-root mud-input-root-outlined" style="width:100%; padding:16px; border:1px solid rgba(255,255,255,.24); border-radius:4px; background:transparent; color:inherit;" />
+        <div class="d-flex gap-2 mt-4">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Warning" Style="flex: 1;">Login</MudButton>
+            <MudButton Href="/api/account/login" Variant="Variant.Outlined" Color="Color.Secondary" Style="flex: 1;">Use Discord</MudButton>
+        </div>
+    </form>
+</MudPaper>
+
+@code {
+    [SupplyParameterFromQuery(Name = "adminError")]
+    public string? AdminError { get; set; }
+
+    [SupplyParameterFromQuery(Name = "visitorError")]
+    public string? VisitorError { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? LegacyError { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrlQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "discord")]
+    public string? Discord { get; set; }
+
+    private string ReturnUrl => string.IsNullOrWhiteSpace(ReturnUrlQuery) ? "/" : ReturnUrlQuery;
+}

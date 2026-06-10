@@ -3,9 +3,23 @@
 
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
-
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <LayoutView Layout="@typeof(MainLayout)">
+                        <MudPaper Class="pa-6 mx-auto mt-8" Style="max-width: 520px;">
+                            <MudText Typo="Typo.h4">Not Authorized</MudText>
+                            <MudText Typo="Typo.body1" Class="my-3">Log in</MudText>
+                            <MudButton Href="/Login" Variant="Variant.Filled" Color="Color.Info">Open Login</MudButton>
+                        </MudPaper>
+                    </LayoutView>
+                </NotAuthorized>
+                <Authorizing>
+                    <LayoutView Layout="@typeof(MainLayout)">
+                        <MudProgressCircular Color="Color.Info" Indeterminate="true" />
+                    </LayoutView>
+                </Authorizing>
+            </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
         </Found>
 
@@ -14,6 +28,5 @@
                 <p>Sorry, there's nothing at this address.</p>
             </LayoutView>
         </NotFound>
-
     </Router>
 </CascadingAuthenticationState>

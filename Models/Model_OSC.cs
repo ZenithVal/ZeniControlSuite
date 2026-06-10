@@ -18,7 +18,7 @@ public class Parameter
         Value = value;
     }
 
-    public string Address { get; set; }
+    public string Address { get; set; } = string.Empty;
     public ParameterType Type { get; set; }
     public float Value { get; set; }
 }

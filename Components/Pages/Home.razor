@@ -1,21 +1,47 @@
-﻿@page "/"
+@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+@inject ZeniControlSuite.Services.Service_PageAccess PageAccess
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Zeni Control Suite</PageTitle>
 
-<h1>Zeni's Control Suite</h1>
-<MudDivider></MudDivider>
+<h1>Zeni Control Suite</h1>
+<MudDivider />
 
-<br/>
-
-&nbsp;
-
-Home Page
-
-<div></div>
+<AuthorizeView>
+    <Authorized>
+        <MudPaper Class="pa-6 mt-4" Outlined="true" Style="max-width: 640px;">
+            <MudText Typo="Typo.h5">No available pages</MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">Ask an admin to enable a page.</MudText>
+        </MudPaper>
+    </Authorized>
+    <NotAuthorized>
+        <MudPaper Class="pa-6 mt-4" Outlined="true" Style="max-width: 560px;">
+            <MudText Typo="Typo.h5">Login Required</MudText>
+            <MudButton Href="Login" Variant="Variant.Filled" Color="Color.Info" Class="mt-3">Open Login</MudButton>
+        </MudPaper>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
 
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
 
+        var firstAvailable = PageAccess.FirstAvailablePath();
+        if (firstAvailable != "/")
+        {
+            Navigation.NavigateTo(firstAvailable, replace: true);
+        }
+    }
 }
-
-
