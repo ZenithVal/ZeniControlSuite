@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using Discord.OAuth2;
@@ -101,8 +101,7 @@ var authenticationBuilder = builder.Services.AddAuthentication(opt =>
             return;
         }
 
-        var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!string.IsNullOrWhiteSpace(userID) && Whitelist.usersToAccept.ContainsKey(userID))
+        if (Whitelist.EnsureDiscordVisitor(user, out var userID))
         {
             var claims = DiscordAuthStateProvider.GetClaims(user, userID);
             var identity = new ClaimsIdentity(claims, SuiteClaims.AuthenticationTypeDiscord);
@@ -116,7 +115,6 @@ var authenticationBuilder = builder.Services.AddAuthentication(opt =>
 
         context.RejectPrincipal();
         await context.HttpContext.SignOutAsync();
-        DiscordAuthStateProvider.AddUserToDeniedList(user);
     };
 });
 

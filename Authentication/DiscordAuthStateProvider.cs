@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace ZeniControlSuite.Authentication;
@@ -6,37 +6,29 @@ namespace ZeniControlSuite.Authentication;
 public class DiscordAuthStateProvider : AuthenticationStateProvider
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    //private Service_Logs LogsService { get; set; } = default!; //causes crashes, f
 
     public DiscordAuthStateProvider(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    public override Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var user = _httpContextAccessor.HttpContext.User;
+        var user = _httpContextAccessor.HttpContext?.User;
 
-        if (user.Identity?.IsAuthenticated == true)
+        if (user?.Identity?.IsAuthenticated == true && Whitelist.EnsureDiscordVisitor(user, out var userId))
         {
-            var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var claims = GetClaims(user, userId);
+            var identity = new ClaimsIdentity(claims, SuiteClaims.AuthenticationTypeDiscord);
+            var principal = new ClaimsPrincipal(identity);
 
-            if (userID != null && Whitelist.usersToAccept.ContainsKey(userID))
-            {
-                var claims = GetClaims(user, userID);
-
-                var identity = new ClaimsIdentity(claims, "Discord");
-                var principal = new ClaimsPrincipal(identity);
-
-                AddUserToAcceptedList(userID);
-
-                return Task.FromResult(new AuthenticationState(principal)).Result;
-            }
+            AddUserToAcceptedList(userId);
+            return Task.FromResult(new AuthenticationState(principal));
         }
 
-        AddUserToDeniedList(user);
-        return Task.FromResult(new AuthenticationState(new ClaimsPrincipal())).Result;
+        return Task.FromResult(new AuthenticationState(new ClaimsPrincipal()));
     }
+
     public static List<Claim> GetClaims(ClaimsPrincipal user, string userID)
     {
         var claims = new List<Claim>(user.Claims);
@@ -51,37 +43,30 @@ public class DiscordAuthStateProvider : AuthenticationStateProvider
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
+        claims.RemoveAll(x => x.Type == "zcs:auth_mode");
+        claims.Add(new Claim("zcs:auth_mode", SuiteClaims.AuthenticationTypeDiscord));
+
         return claims;
     }
 
     public static void AddUserToAcceptedList(string userID)
     {
-        if (!Whitelist.usersAccepted.ContainsKey(userID))
+        if (!Whitelist.usersAccepted.ContainsKey(userID) && Whitelist.usersToAccept.TryGetValue(userID, out var userInfo))
         {
-            var userInfo = Whitelist.usersToAccept[userID];
-            try { Whitelist.usersAccepted.Add(userID, new Whitelist.DiscordUser { DisplayName = userInfo.DisplayName, Roles = userInfo.Roles }); } catch { }
+            try
+            {
+                Whitelist.usersAccepted.Add(userID, new Whitelist.DiscordUser
+                {
+                    DisplayName = userInfo.DisplayName,
+                    Roles = userInfo.Roles.ToList()
+                });
+            }
+            catch { }
+        }
+
+        if (Whitelist.usersAccepted.ContainsKey(userID))
+        {
             Console.WriteLine($"||| AUTH |||| User {Whitelist.usersAccepted[userID].DisplayName} authenticated");
         }
     }
-
-    public static void AddUserToDeniedList(ClaimsPrincipal user)
-    {
-        var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (user != null && userID != null && user.Identity.IsAuthenticated && !Whitelist.usersToAccept.ContainsKey(userID))
-        {
-            if (Whitelist.usersDenied.ContainsKey(userID))
-            {
-                Console.WriteLine($"||| AUTH |||| User {userID} | {user.Identity.Name} tried to authenticate again");
-            }
-            else
-            {
-                Console.WriteLine($"||| AUTH |||| User {userID} | {user.Identity.Name} is not registered, adding to denied users.");
-                //this sometimes seems to fire async? so this is here so stuff doesnt explode.
-                try { Whitelist.usersDenied.Add(userID, new Whitelist.DiscordUser { DisplayName = user.Identity.Name, Roles = new List<string>() }); } catch { }
-                Whitelist.saveDeniedUsersJson();
-            }
-        }
-    }
-
-
 }

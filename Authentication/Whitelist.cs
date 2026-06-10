@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+using System.Security.Claims;
+using Newtonsoft.Json;
 
 namespace ZeniControlSuite.Authentication;
 
@@ -12,7 +13,6 @@ public static class Whitelist
 
     public static Dictionary<string, DiscordUser> usersToAccept = new();
     public static Dictionary<string, DiscordUser> usersAccepted = new();
-    public static Dictionary<string, DiscordUser> usersDenied = new();
 
     public static void loadDiscordUsersJson()
     {
@@ -31,7 +31,7 @@ public static class Whitelist
             var users = JsonConvert.DeserializeObject<Dictionary<string, DiscordUser>>(json) ?? new Dictionary<string, DiscordUser>();
             foreach (var user in users)
             {
-                usersToAccept[user.Key] = user.Value;
+                usersToAccept[user.Key] = NormalizeUser(user.Value);
             }
         }
         catch (Exception ex)
@@ -54,17 +54,40 @@ public static class Whitelist
         }
     }
 
-    public static void saveDeniedUsersJson()
+    public static bool EnsureDiscordVisitor(ClaimsPrincipal user, out string userId)
     {
-        try
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(userId) || user.Identity?.IsAuthenticated != true)
         {
-            Directory.CreateDirectory("Configs");
-            var json = JsonConvert.SerializeObject(usersDenied, Formatting.Indented);
-            File.WriteAllText("Configs/DeniedDiscordUsers.json", json);
+            return false;
         }
-        catch (Exception ex)
+
+        if (!usersToAccept.ContainsKey(userId))
         {
-            Console.WriteLine($"An error occurred saving DeniedDiscordUsers.json: {ex.Message}");
+            usersToAccept[userId] = new DiscordUser
+            {
+                DisplayName = user.Identity?.Name ?? user.FindFirst(ClaimTypes.Name)?.Value ?? userId,
+                Roles = new List<string> { "Visitor" }
+            };
+            saveDiscordUsersJson();
+            Console.WriteLine($"||| AUTH |||| User {userId} | {usersToAccept[userId].DisplayName} was added as Visitor.");
         }
+        else
+        {
+            usersToAccept[userId] = NormalizeUser(usersToAccept[userId]);
+        }
+
+        return true;
+    }
+
+    private static DiscordUser NormalizeUser(DiscordUser user)
+    {
+        user.DisplayName ??= string.Empty;
+        user.Roles ??= new List<string>();
+        if (user.Roles.Count == 0)
+        {
+            user.Roles.Add("Visitor");
+        }
+        return user;
     }
 }
