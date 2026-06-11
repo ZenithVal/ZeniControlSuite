@@ -1,24 +1,10 @@
 @page "/Devices"
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
 @attribute [Authorize(Roles = "Admin,Visitor")]
 
-<PageTitle>Device Controls</PageTitle>
+<PageTitle>Devices</PageTitle>
 
-<h1>Device Controls</h1>
-<MudDivider />
-<div style="height: 8px"></div>
-
-<AuthorizeView>
-    <Authorized>
-        @if (context.User.IsInRole("Admin") || Panel_IntifaceMain.pageEnabled)
-        {
-            <Panel_IntifaceMain />
-            <br /><br /><MudButton Href="Intiface" Variant="Variant.Filled" Color="Color.Primary">Dedicated Page</MudButton>
-        }
-        else
-        {
-            <MudText Typo="Typo.h6" Color="Color.Error">Device controls are disabled</MudText>
-        }
-    </Authorized>
-</AuthorizeView>
+@if (CanShowIntifacePanel)
+{
+    <Panel_IntifaceMain />
+}

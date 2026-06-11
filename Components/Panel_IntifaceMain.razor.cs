@@ -17,16 +17,59 @@ public partial class Panel_IntifaceMain : IDisposable
     [Inject] private Service_Intiface IntifaceService { get; set; } = default!;
 
     private string user = "Undefined";
-    private AuthenticationState context;
     private string pageName = "Intiface";
+    private bool isAdmin;
+    private bool isLocalHost;
+    private bool editMode;
+    private bool showPatternControls;
+
+    private static readonly PatternType[] AvailablePatterns =
+    {
+        PatternType.None,
+        PatternType.Pulse,
+        PatternType.Wave,
+        PatternType.RampUp,
+        PatternType.RampDown,
+        PatternType.Saw,
+        PatternType.Sine,
+        PatternType.Tremor,
+        PatternType.Burst,
+        PatternType.RandomPulse
+    };
+
+    private const double DoubleStepMedium = 0.1;
+    private const double DoubleMinPositive = 0.1;
+    private const double DoubleMaxTen = 10.0;
+
+    private const float FloatStepSmall = 0.05f;
+    private const float FloatStepMedium = 0.1f;
+    private const float FloatMinZero = 0f;
+    private const float FloatMinPositive = 0.1f;
+    private const float FloatMaxTen = 10f;
+
+    private bool CanStart => isLocalHost && IntifaceService.IntifaceEnabled && !IntifaceService.IntifaceRunning;
+    private bool HideForVisitor => !isAdmin && !IntifaceService.IntifaceRunning;
+    private string ConnectionText
+    {
+        get
+        {
+            if (!IntifaceService.IntifaceEnabled) return "Disabled";
+            if (IntifaceService.IntifaceConnected) return $"Connected · {IntifaceService.ConnectedDeviceCount} device(s)";
+            if (IntifaceService.IntifaceRunning) return "Connecting";
+            return "Stopped";
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         PointsService.OnPointsUpdate += OnPointsUpdate;
         IntifaceService.OnIntifaceControlsUpdate += OnIntifaceControlsUpdate;
+        IntifaceService.OnIntifaceReadoutUpdate += OnIntifaceControlsUpdate;
 
-        var context = await AuthProvider.GetAuthenticationStateAsync();
-        user = context.GetUserName();
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        user = authState.GetUserName();
+        isAdmin = authState.User.IsInRole("Admin");
+        isLocalHost = authState.User.IsInRole("LocalHost") || SuiteClaims.IsAdminPasswordUser(authState.User);
         Log("PageLoad", Severity.Normal);
     }
 
@@ -44,6 +87,7 @@ public partial class Panel_IntifaceMain : IDisposable
     {
         PointsService.OnPointsUpdate -= OnPointsUpdate;
         IntifaceService.OnIntifaceControlsUpdate -= OnIntifaceControlsUpdate;
+        IntifaceService.OnIntifaceReadoutUpdate -= OnIntifaceControlsUpdate;
     }
 
     private void Log(string message, Severity severity)
@@ -51,165 +95,150 @@ public partial class Panel_IntifaceMain : IDisposable
         LogService.AddLog(pageName, user, message, severity);
     }
 
-    public void StartIntiface()
+    private async Task StartIntiface()
     {
-        IntifaceService.IntifaceStart();
+        await IntifaceService.IntifaceStart();
         Log("Intiface Starting", Severity.Normal);
     }
 
-    public void StopIntiface()
+    private async Task StopIntiface()
     {
-        IntifaceService.IntifaceStop();
+        await IntifaceService.IntifaceStop();
         Log("Intiface Stopping", Severity.Normal);
     }
 
-    public void ToggleDeviceScanning()
+    private async Task ToggleDeviceScanning()
     {
         if (!IntifaceService.DeviceScanning)
         {
-            IntifaceService.StartScanning();
+            await IntifaceService.StartScanning();
             Log("Device Scanning Started", Severity.Normal);
         }
         else
         {
-            IntifaceService.StopScanning();
+            await IntifaceService.StopScanning();
             Log("Device Scanning Stopped", Severity.Normal);
         }
     }
 
-    bool adminPanelExpand = false;
-    private void ToggleAdminPanel()
+    private void ToggleEditMode()
     {
-        adminPanelExpand = !adminPanelExpand;
+        editMode = !editMode;
     }
 
-    bool patternPanelExpand = true;
-    private void TogglePatternPanel()
+    private void TogglePatternControls()
     {
-		patternPanelExpand = !patternPanelExpand;
-	}
+        showPatternControls = !showPatternControls;
+    }
 
-    bool hapticPanelExpand = true;
-    private void ToggleHapticPanel()
-    {
-		hapticPanelExpand = !hapticPanelExpand;
-
-	}
-
-    public void PowerFullStop()
+    private void PowerFullStop()
     {
         IntifaceService.FullStop = !IntifaceService.FullStop;
         Log("Full Stop: " + IntifaceService.FullStop, Severity.Normal);
     }
 
-    public void ResetControlValues()
+    private void SetPattern(PatternType patternType)
     {
-        IntifaceService.PatUseRandomPower = false;
-        IntifaceService.PatSpeedClimb = 2.0;
-        IntifaceService.PatSpeedDrop = 3.0;
-        IntifaceService.PatRandomOffTimeMin = 0.5;
-        IntifaceService.PatRandomOffTimeMax = 1.0;
-        IntifaceService.PatRandomOnTimeMin = 0.5;
-        IntifaceService.PatRandomOnTimeMax = 2.0;
-        IntifaceService.PatRandomPowerMin = 0.1;
-        IntifaceService.PatRandomPowerMax = 1.0;
-        IntifaceService.PatternPowerMulti = 0.2;
-        InvokeAsync(StateHasChanged);
+        IntifaceService.PatternType = patternType;
+        IntifaceService.PatternsEnabled = patternType != PatternType.None;
+        if (patternType == PatternType.None)
+        {
+            IntifaceService.PatternPower = 1.0;
+        }
+        Log("Pattern: " + patternType, Severity.Normal);
     }
 
-
-    public enum ControlPreset
+    private static string PatternLabel(PatternType patternType)
     {
-        Manual,
-        Pulses,
-        PulsesRandom,
-        PulsesRandomOnOff,
-        PulsesRandomOnOffLong,
-
-        ConstantRandom,
-
-        Waves,
-        WavesRandom,
-        WavesRandomOffTime,
-
-        ClimbDrop,
-        ClimbDropHoldLonger
+        return patternType switch
+        {
+            PatternType.None => "Manual",
+            PatternType.RampUp => "Ramp Up",
+            PatternType.RampDown => "Ramp Down",
+            PatternType.RandomPulse => "Random",
+            _ => patternType.ToString()
+        };
     }
 
-    public void ApplyControlPreset(ControlPreset preset)
+    private static Color PatternColor(PatternType patternType)
     {
-        switch (preset)
+        return patternType switch
         {
-            case ControlPreset.Manual:
-                SetIntifaceVariables(PatternType.None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, 0.0, 0.0, 0.0);
-                break;
-
-            case ControlPreset.Pulses:
-                SetIntifaceVariables(PatternType.Pulse, 0.0, 0.0, 0.5, 1.0, 0.5, 1.0, false, 0.2, 1.0, 1.0);
-                break;
-
-            case ControlPreset.PulsesRandom:
-                SetIntifaceVariables(PatternType.Pulse, 0.0, 0.0, 0.5, 1.5, 0.5, 1.0, true, 0.2, 1.0, 1.0);
-                break;
-
-            case ControlPreset.PulsesRandomOnOff:
-                SetIntifaceVariables(PatternType.Pulse, 0.0, 0.0, 0.5, 3.0, 0.8, 1.5, false, 0.0, 1.0, 1.0);
-                break;
-
-            case ControlPreset.PulsesRandomOnOffLong:
-                SetIntifaceVariables(PatternType.Pulse, 0.0, 0.0, 0.5, 15.0, 0.8, 1.5, false, 0.0, 1.0, 1.0);
-                break;
-
-            case ControlPreset.ConstantRandom:
-                SetIntifaceVariables(PatternType.Pulse, 0.0, 0.0, 0.0, 0.0, 0.25, 1.0, true, 0.2, 1.0, 1.0);
-                break;
-
-            case ControlPreset.Waves:
-                SetIntifaceVariables(PatternType.Wave, 2.0, 3.0, 0.0, 0.0, 0.5, 1.0, false, 0.2, 1.0, 1.0);
-                break;
-
-            case ControlPreset.WavesRandom:
-                SetIntifaceVariables(PatternType.Wave, 2.0, 3.0, 0.0, 0.5, 0.5, 2.0, true, 0.2, 1.0, 1.0);
-                break;
-
-            case ControlPreset.WavesRandomOffTime:
-                SetIntifaceVariables(PatternType.Wave, 2.0, 3.0, 0.1, 3.0, 0.5, 3.0, false, 0.0, 1.0, 1.0);
-                break;
-
-            case ControlPreset.ClimbDrop:
-                SetIntifaceVariables(PatternType.Wave, 0.3, 6.0, 0.2, 1.0, 0.5, 1.0, false, 0.0, 1.0, 1.0);
-                break;
-
-            case ControlPreset.ClimbDropHoldLonger:
-                SetIntifaceVariables(PatternType.Wave, 0.3, 6.0, 0.4, 4.0, 1.5, 4.0, false, 0.0, 1.0, 1.0);
-                break;
-        }
+            PatternType.None => Color.Default,
+            PatternType.Pulse => Color.Primary,
+            PatternType.Wave => Color.Secondary,
+            PatternType.RampUp or PatternType.RampDown or PatternType.Saw => Color.Info,
+            PatternType.Sine or PatternType.Tremor => Color.Tertiary,
+            PatternType.Burst or PatternType.RandomPulse => Color.Warning,
+            _ => Color.Default
+        };
     }
 
-    public void SetIntifaceVariables(PatternType PatternType, double PatSpeedClimb, double PatSpeedDrop, double PatRandomOffTimeMin, double PatRandomOffTimeMax, double PatRandomOnTimeMin, double PatRandomOnTimeMax, bool PatUseRandomPower, double PatRandomPowerMin, double PatRandomPowerMax, double PowerInput)
+    private void SaveIntifaceConfig()
     {
-        IntifaceService.PatternType = PatternType;
-        IntifaceService.PatSpeedClimb = PatSpeedClimb;
-        IntifaceService.PatSpeedDrop = PatSpeedDrop;
-        IntifaceService.PatRandomOffTimeMin = PatRandomOffTimeMin;
-        IntifaceService.PatRandomOffTimeMax = PatRandomOffTimeMax;
-        IntifaceService.PatRandomOnTimeMin = PatRandomOnTimeMin;
-        IntifaceService.PatRandomOnTimeMax = PatRandomOnTimeMax;
-        IntifaceService.PatUseRandomPower = PatUseRandomPower;
-        IntifaceService.PatRandomPowerMin = PatRandomPowerMin;
-        IntifaceService.PatRandomPowerMax = PatRandomPowerMax;
-        IntifaceService.PatternPowerMulti = PowerInput;
+        IntifaceService.SaveConfig();
+        Log("Device config saved", Severity.Normal);
+    }
 
-        if (PatternType == PatternType.None)
+    private void AddDevice()
+    {
+        IntifaceService.AddConfiguredDevice();
+    }
+
+    private void RemoveDevice(IntifaceDevice device)
+    {
+        IntifaceService.RemoveConfiguredDevice(device);
+    }
+
+    private void AddHapticInput()
+    {
+        IntifaceService.AddHapticInput();
+    }
+
+    private void RemoveHapticInput(HapticInput input)
+    {
+        IntifaceService.RemoveHapticInput(input);
+    }
+
+    private static string ParameterName(HapticInput input)
+    {
+        return Service_Intiface.StripAvatarPrefix(input.Parameter.Address);
+    }
+
+    private void SetHapticParameterName(HapticInput input, string value)
+    {
+        input.Parameter.Address = Service_Intiface.NormalizeAvatarParameter(value);
+        IntifaceService.RebuildHapticParameterIndex();
+    }
+
+    private void SetHapticType(HapticInput input, ParameterType value)
+    {
+        input.Parameter.Type = value;
+        IntifaceService.RebuildHapticParameterIndex();
+    }
+
+    private static string GetHapticPreview(HapticInput input)
+    {
+        var value = input.Parameter.Type switch
         {
-            IntifaceService.PatternsEnabled = false;
-        }
-        else
+            ParameterType.Bool => input.Parameter.Value > 0.5f ? 1f : 0f,
+            ParameterType.Int or ParameterType.Float => NormalizeHapticValue(input),
+            _ => 0f
+        };
+
+        value = Math.Clamp(value * input.Multiplier * input.Influence, 0f, 1f);
+        return value.ToString("0.###");
+    }
+
+    private static float NormalizeHapticValue(HapticInput input)
+    {
+        var range = input.Max - input.Min;
+        if (Math.Abs(range) < 0.0001f)
         {
-            IntifaceService.PatternsEnabled = true;
+            return 0f;
         }
 
-        LogService.AddLog(pageName, user, "Control Preset Applied", Severity.Normal);
-        InvokeAsync(StateHasChanged);
+        var normalized = Math.Clamp((input.Parameter.Value - input.Min) / range, 0f, 1f);
+        return (float)Math.Pow(normalized, input.Exponent);
     }
 }

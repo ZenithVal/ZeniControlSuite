@@ -15,19 +15,28 @@ public partial class Devices : IDisposable
     [Inject] private Service_Intiface IntifaceService { get; set; } = default!;
 
     private string user = "Undefined";
-    private AuthenticationState context;
-
     private string pageName = "Devices";
+    private bool isAdmin;
+
+    private bool CanShowIntifacePanel => isAdmin || IntifaceService.IntifaceRunning;
 
     protected override async Task OnInitializedAsync()
     {
+        IntifaceService.OnIntifaceControlsUpdate += OnIntifaceControlsUpdate;
+
         var context = await AuthProvider.GetAuthenticationStateAsync();
         user = context.GetUserName();
+        isAdmin = context.User.IsInRole("Admin");
         LogService.AddLog(pageName, user, "PageLoad", Severity.Normal);
+    }
+
+    private void OnIntifaceControlsUpdate()
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
     {
+        IntifaceService.OnIntifaceControlsUpdate -= OnIntifaceControlsUpdate;
     }
-
 }
