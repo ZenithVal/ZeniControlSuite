@@ -85,10 +85,15 @@
                                     @if (avatarSelectEditMode && isAdminUser)
                                     {
                                         <MudPaper Class="pa-2 mb-2" Outlined="true">
-                                            <MudTextField T="string" Value="@avatar.Name" ValueChanged="@((string value) => UpdateAvatarName(avatar, value))" Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                            <MudTextField T="string" Value="@avatar.Name" ValueChanged="@((string value) => UpdateAvatarName(avatar, value))" Label="Avatar Name" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                            <MudTextField T="string" Value="@avatar.IconName" ValueChanged="@((string value) => UpdateAvatarIconName(avatar, value))" Label="Icon Source Name" Variant="Variant.Outlined" Margin="Margin.Dense" />
                                             <MudNumericField T="double" Value="@avatar.Cost" ValueChanged="@((double value) => UpdateAvatarCost(avatar, value))" Label="Price" Min="0" Step="1" Variant="Variant.Outlined" Margin="Margin.Dense" />
                                             <MudSwitch Value="@avatar.Selectable" ValueChanged="@((bool value) => UpdateAvatarSelectable(avatar, value))" Label="Selectable" Color="Color.Info" />
                                             <MudSwitch Value="@avatar.Available" ValueChanged="@((bool value) => UpdateAvatarAvailable(avatar, value))" Label="Available" Color="Color.Success" />
+                                            <div class="d-flex gap-2 mb-2">
+                                                <MudButton Variant="Variant.Outlined" Color="Color.Default" Style="flex:1; text-transform:none" OnClick="@(() => MoveAvatar(avatar, -1))">Up</MudButton>
+                                                <MudButton Variant="Variant.Outlined" Color="Color.Default" Style="flex:1; text-transform:none" OnClick="@(() => MoveAvatar(avatar, 1))">Down</MudButton>
+                                            </div>
                                             <MudButton Variant="Variant.Outlined" Color="Color.Info" FullWidth="true" OnClick="@(() => SelectAvatar(avatar))">Select Now</MudButton>
                                         </MudPaper>
                                     }

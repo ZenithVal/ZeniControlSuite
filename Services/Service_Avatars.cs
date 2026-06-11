@@ -147,13 +147,16 @@ public class Service_Avatars : IHostedService
         {
             Console.WriteLine($"AC | Loading Avatar {avatarElement.GetProperty("Name").GetString()}");
             validationLog = $"loading avatar {avatarElement.GetProperty("Name").GetString()}";
+            var avatarName = avatarElement.GetProperty("Name").GetString() ?? "Unnamed Avatar";
+            var avatarIconName = ReadAvatarIconName(avatarElement, avatarName);
             var avatar = new Avatar {
                 ID = avatarElement.GetProperty("ID").GetString() ?? string.Empty,
-                Name = avatarElement.GetProperty("Name").GetString() ?? "Unnamed Avatar",
+                Name = avatarName,
+                IconName = avatarIconName,
                 Selectable = avatarElement.TryGetProperty("Selectable", out var selectableElement) && selectableElement.GetBoolean(),
                 Available = !avatarElement.TryGetProperty("Available", out var availableElement) || availableElement.GetBoolean(),
                 Cost = avatarElement.TryGetProperty("Cost", out var costElement) ? costElement.GetDouble() : 0,
-                Thumbnail = GetAvatarImage(avatarElement.TryGetProperty("Thumbnail", out var thumbnailElement) ? thumbnailElement.GetString() ?? string.Empty : string.Empty),
+                Thumbnail = GetAvatarImage(avatarIconName),
                 Controls = new List<AvatarControl>(),
                 Parameters = new Dictionary<string, Parameter>()
             };
@@ -218,6 +221,7 @@ public class Service_Avatars : IHostedService
             var globalAvatar = new Avatar {
                 ID = "Global",
                 Name = "Global",
+                IconName = "Global",
                 Controls = CloneControls(GlobalControls),
                 Parameters = new Dictionary<string, Parameter>()
             };
@@ -231,6 +235,7 @@ public class Service_Avatars : IHostedService
             var undefiinedAvatar = new Avatar {
                 ID = "Undefined",
                 Name = "Undefined",
+                IconName = "Undefined",
                 Controls = CloneControls(GlobalControls),
                 Parameters = new Dictionary<string, Parameter>()
             };
@@ -243,7 +248,7 @@ public class Service_Avatars : IHostedService
         InvokeAvatarControlsUpdate();
     }
 
-    private string GetAvatarImage(string ThumbnailName)
+    private string GetAvatarImage(string iconName)
     {
         if (!Directory.Exists("Images"))
         {
@@ -254,17 +259,52 @@ public class Service_Avatars : IHostedService
             Directory.CreateDirectory("Images/Avatars");
         }
 
-        if (File.Exists($"Images/Avatars/{ThumbnailName}.png"))
+        var sanitizedIconName = SanitizeAvatarIconName(iconName);
+        if (string.IsNullOrWhiteSpace(sanitizedIconName))
         {
-            Console.WriteLine($"AC | Found image for {ThumbnailName}");
-            return $"/api/Images/Avatars/{ThumbnailName}.png";
-        }
-        else
-        {
-            Console.WriteLine($"AC | No image found for {ThumbnailName}");
             return "/images/AvatarThumbDefault.png";
         }
 
+        if (File.Exists($"Images/Avatars/{sanitizedIconName}.png"))
+        {
+            Console.WriteLine($"AC | Found image for {sanitizedIconName}");
+            return $"/api/Images/Avatars/{sanitizedIconName}.png";
+        }
+
+        Console.WriteLine($"AC | No image found for {sanitizedIconName}");
+        return "/images/AvatarThumbDefault.png";
+
+    }
+
+    private static string ReadAvatarIconName(JsonElement avatarElement, string avatarName)
+    {
+        if (avatarElement.TryGetProperty("IconName", out var iconNameElement) && iconNameElement.ValueKind == JsonValueKind.String)
+        {
+            return SanitizeAvatarIconName(iconNameElement.GetString());
+        }
+
+        if (avatarElement.TryGetProperty("Thumbnail", out var thumbnailElement) && thumbnailElement.ValueKind == JsonValueKind.String)
+        {
+            return SanitizeAvatarIconName(thumbnailElement.GetString());
+        }
+
+        return SanitizeAvatarIconName(avatarName);
+    }
+
+    private static string SanitizeAvatarIconName(string? iconName)
+    {
+        if (string.IsNullOrWhiteSpace(iconName))
+        {
+            return "AvatarThumbDefault";
+        }
+
+        var invalidChars = Path.GetInvalidFileNameChars().ToHashSet();
+        var cleaned = new string(iconName
+            .Trim()
+            .Where(ch => !char.IsWhiteSpace(ch) && ch != '/' && ch != '\\' && !invalidChars.Contains(ch))
+            .ToArray());
+
+        return string.IsNullOrWhiteSpace(cleaned) ? "AvatarThumbDefault" : cleaned;
     }
 
     private void CreateAvatarParamList(Avatar avatar)
@@ -356,10 +396,13 @@ public class Service_Avatars : IHostedService
         }
 
         validationLog = $"deserializing control name of {controlName}";
-        control.Name = controlElement.GetProperty("Name").GetString();
+        control.Name = controlElement.GetProperty("Name").GetString() ?? "Unnamed Control";
 
         validationLog = $"deserializing control icons of {controlName}";
-        control.Icon = GetControlImage(controlName);
+        var iconName = controlElement.TryGetProperty("IconName", out var iconNameElement)
+            ? iconNameElement.GetString()
+            : control.Name;
+        ApplyControlIconName(control, iconName);
 
         validationLog = $"deserializing control access level of {controlName}";
         control.AccessLevel = DeserializeAccessLevel(controlElement);
@@ -395,7 +438,7 @@ public class Service_Avatars : IHostedService
             };
             Console.WriteLine($"AC | {controlName} - adding {parameter}");
 
-            control.Icon = GetControlImage(parameter);
+            ApplyControlIconName(control, parameter);
             controls.Add(control);
         }
 
@@ -487,6 +530,26 @@ public class Service_Avatars : IHostedService
         return parameter;
     }
 
+    public static string SanitizeControlIconName(string? iconName)
+    {
+        var source = string.IsNullOrWhiteSpace(iconName) ? "PowerButton" : iconName.Trim();
+        var invalidFileNameChars = Path.GetInvalidFileNameChars();
+        var sanitized = new string(source
+            .Where(character => !char.IsWhiteSpace(character)
+                && character != '/'
+                && character != '\\'
+                && !invalidFileNameChars.Contains(character))
+            .ToArray());
+
+        return string.IsNullOrWhiteSpace(sanitized) ? "PowerButton" : sanitized;
+    }
+
+    private void ApplyControlIconName(AvatarControl control, string? iconName)
+    {
+        control.IconName = SanitizeControlIconName(iconName);
+        control.Icon = GetControlImage(control.IconName);
+    }
+
     private string GetControlImage(string imageName)
     {
         if (!Directory.Exists("Images"))
@@ -498,18 +561,16 @@ public class Service_Avatars : IHostedService
             Directory.CreateDirectory("Images/Controls");
         }
 
-        string imageNoSpaces = imageName.Replace(" ", "");
+        string sanitizedImageName = SanitizeControlIconName(imageName);
 
-        if (File.Exists($"Images/Controls/{imageNoSpaces}.png"))
+        if (File.Exists($"Images/Controls/{sanitizedImageName}.png"))
         {
-            Console.WriteLine($"AC | Found image for {imageName}");
-            return $"/api/Images/Controls/{imageNoSpaces}.png";
+            Console.WriteLine($"AC | Found image for {sanitizedImageName}");
+            return $"/api/Images/Controls/{sanitizedImageName}.png";
         }
-        else
-        {
-            Console.WriteLine($"AC | No image found for {imageName}");
-            return "/images/PowerButton.png";
-        }
+
+        Console.WriteLine($"AC | No image found for {sanitizedImageName}");
+        return "/images/PowerButton.png";
     }
     #endregion
 
@@ -556,6 +617,7 @@ public class Service_Avatars : IHostedService
             {
                 Name = button.Name,
                 AccessLevel = button.AccessLevel,
+                IconName = button.IconName,
                 Icon = button.Icon,
                 SourceGlobalName = button.SourceGlobalName,
                 Parameter = CloneParameter(button.Parameter)
@@ -564,6 +626,7 @@ public class Service_Avatars : IHostedService
             {
                 Name = toggle.Name,
                 AccessLevel = toggle.AccessLevel,
+                IconName = toggle.IconName,
                 Icon = toggle.Icon,
                 SourceGlobalName = toggle.SourceGlobalName,
                 Parameter = CloneParameter(toggle.Parameter),
@@ -574,6 +637,7 @@ public class Service_Avatars : IHostedService
             {
                 Name = radial.Name,
                 AccessLevel = radial.AccessLevel,
+                IconName = radial.IconName,
                 Icon = radial.Icon,
                 SourceGlobalName = radial.SourceGlobalName,
                 Parameter = CloneParameter(radial.Parameter),
@@ -584,6 +648,7 @@ public class Service_Avatars : IHostedService
             {
                 Name = hsv.Name,
                 AccessLevel = hsv.AccessLevel,
+                IconName = hsv.IconName,
                 Icon = hsv.Icon,
                 SourceGlobalName = hsv.SourceGlobalName,
                 ParameterHue = CloneParameter(hsv.ParameterHue),
@@ -644,8 +709,7 @@ public class Service_Avatars : IHostedService
 
         if (!string.Equals(CurrentWornAvatarId, avatarID, StringComparison.OrdinalIgnoreCase))
         {
-            LastLoadedAvatarParameterFile = string.Empty;
-            LastLoadedAvatarParameterName = string.Empty;
+            ClearLoadedAvatarParameters("avatar switch");
         }
 
         CurrentWornAvatarId = avatarID;
@@ -693,6 +757,7 @@ public class Service_Avatars : IHostedService
         {
             ID = avatarID,
             Name = "No valid avatar selected",
+            IconName = "AvatarThumbDefault",
             Selectable = false,
             Available = false,
             Cost = 0,
@@ -701,6 +766,13 @@ public class Service_Avatars : IHostedService
             Parameters = new Dictionary<string, Parameter>(),
             IsInvalidPlaceholder = true
         };
+    }
+
+    private void ClearLoadedAvatarParameters(string reason)
+    {
+        LastLoadedAvatarParameterFile = string.Empty;
+        LastLoadedAvatarParameterName = string.Empty;
+        OSCService.ClearDiscoveredAvatarParameters(reason);
     }
 
     public Avatar AddCurrentWornAvatarToControls(string? displayName = null)
@@ -715,14 +787,16 @@ public class Service_Avatars : IHostedService
         }
 
         InvalidAvatarIds.Remove(avatarId);
+        var avatarDisplayName = ResolveAvatarDisplayName(displayName, avatarId);
         var avatar = new Avatar
         {
             ID = avatarId,
-            Name = ResolveAvatarDisplayName(displayName, avatarId),
-            Selectable = true,
-            Available = true,
+            Name = avatarDisplayName,
+            IconName = SanitizeAvatarIconName(avatarDisplayName),
+            Selectable = false,
+            Available = false,
             Cost = 0,
-            Thumbnail = "/images/AvatarThumbDefault.png",
+            Thumbnail = GetAvatarImage(SanitizeAvatarIconName(avatarDisplayName)),
             Controls = new List<AvatarControl>(),
             Parameters = new Dictionary<string, Parameter>(),
             RuntimeGenerated = true
@@ -780,6 +854,40 @@ public class Service_Avatars : IHostedService
 
         selectedAvatar = CreateNoValidAvatarPlaceholder(CurrentWornAvatarId);
         InvokeAvatarControlsUpdate();
+    }
+
+    public bool DeleteSelectedAvatarFromControls()
+    {
+        if (selectedAvatar.IsInvalidPlaceholder
+            || string.IsNullOrWhiteSpace(selectedAvatar.ID)
+            || string.Equals(selectedAvatar.ID, "Global", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(selectedAvatar.ID, "Undefined", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var avatarId = selectedAvatar.ID;
+        var removed = avatars.RemoveAll(avatar => string.Equals(avatar.ID, avatarId, StringComparison.OrdinalIgnoreCase)) > 0;
+        if (!removed)
+        {
+            return false;
+        }
+
+        InvalidAvatarIds.Remove(avatarId);
+        ClearLoadedAvatarParameters("avatar delete");
+        selectedAvatar = string.Equals(CurrentWornAvatarId, avatarId, StringComparison.OrdinalIgnoreCase)
+            ? CreateNoValidAvatarPlaceholder(avatarId)
+            : avatars.FirstOrDefault() ?? CreateNoValidAvatarPlaceholder(CurrentWornAvatarId);
+
+        if (string.Equals(lastSelectedAvatar.ID, avatarId, StringComparison.OrdinalIgnoreCase))
+        {
+            lastSelectedAvatar = selectedAvatar.IsInvalidPlaceholder ? new Avatar() : selectedAvatar;
+        }
+
+        SaveAvatarControlsJson();
+        LogAvatars($"Deleted avatar {ShortAvatarId(avatarId)} from controls", Severity.Warning);
+        InvokeAvatarControlsUpdate();
+        return true;
     }
 
 
@@ -1075,15 +1183,16 @@ public class Service_Avatars : IHostedService
     {
         var displayName = string.IsNullOrWhiteSpace(name) ? discoveredParameter.DisplayName : name.Trim();
         var valueOn = discoveredParameter.Type == ParameterType.Int ? integerOnValue : 1.0f;
-        return new ContTypeToggle
+        var control = new ContTypeToggle
         {
             Name = displayName,
             AccessLevel = Math.Clamp(accessLevel, 0, 10),
-            Icon = GetControlImage(displayName),
             Parameter = new Parameter(discoveredParameter.Address, discoveredParameter.Type, 0),
             ValueOff = 0,
             ValueOn = valueOn
         };
+        ApplyControlIconName(control, displayName);
+        return control;
     }
 
     private void AddControlToAvatar(Avatar avatar, AvatarControl control, bool saveAfterAdd, bool inheritGlobal = false)
@@ -1157,52 +1266,77 @@ public class Service_Avatars : IHostedService
 
     public void SetControlAccessLevel(AvatarControl control, int accessLevel)
     {
-        control.AccessLevel = Math.Clamp(accessLevel, 0, 10);
-        SaveAvatarControlsJson();
-        InvokeAvatarControlsUpdate();
+        var target = ResolveEditableGlobalTarget(control);
+        target.AccessLevel = Math.Clamp(accessLevel, 0, 10);
+        SaveAfterControlEdit(target, control);
     }
 
     public void RenameControl(AvatarControl control, string? name)
     {
         var cleanedName = string.IsNullOrWhiteSpace(name) ? "Unnamed Control" : name.Trim();
-        if (string.Equals(control.Name, cleanedName, StringComparison.Ordinal))
+        var target = ResolveEditableGlobalTarget(control);
+        if (string.Equals(target.Name, cleanedName, StringComparison.Ordinal))
         {
             return;
         }
 
-        var oldName = control.Name;
-        var isGlobalControl = GlobalControls.Contains(control);
+        var oldName = target.Name;
+        var isGlobalControl = GlobalControls.Contains(target);
+        var shouldTrackNameForIcon = string.IsNullOrWhiteSpace(target.IconName)
+            || string.Equals(target.IconName, SanitizeControlIconName(oldName), StringComparison.OrdinalIgnoreCase);
 
-        control.Name = cleanedName;
-        control.Icon = GetControlImage(cleanedName);
+        target.Name = cleanedName;
+        if (shouldTrackNameForIcon)
+        {
+            ApplyControlIconName(target, cleanedName);
+        }
 
         if (isGlobalControl)
         {
-            foreach (var avatarControl in avatars.SelectMany(avatar => avatar.Controls))
-            {
-                if (string.Equals(avatarControl.SourceGlobalName, oldName, StringComparison.OrdinalIgnoreCase))
-                {
-                    avatarControl.SourceGlobalName = cleanedName;
-                }
-            }
+            SyncInheritedGlobalControl(oldName, cleanedName);
+        }
+        else
+        {
+            SaveAvatarControlsJson();
+            InvokeAvatarControlsUpdate();
+        }
+    }
+
+    public void SetControlIconName(AvatarControl control, string? iconName)
+    {
+        var target = ResolveEditableGlobalTarget(control);
+        var sanitized = SanitizeControlIconName(iconName);
+        if (string.Equals(target.IconName, sanitized, StringComparison.Ordinal))
+        {
+            return;
         }
 
-        SaveAvatarControlsJson();
-        InvokeAvatarControlsUpdate();
+        ApplyControlIconName(target, sanitized);
+        SaveAfterControlEdit(target, control);
     }
 
     public void InvertToggleValues(ContTypeToggle control)
     {
-        (control.ValueOff, control.ValueOn) = (control.ValueOn, control.ValueOff);
-        SaveAvatarControlsJson();
-        InvokeAvatarControlsUpdate();
+        var target = ResolveEditableGlobalTarget(control);
+        if (target is not ContTypeToggle toggle)
+        {
+            return;
+        }
+
+        (toggle.ValueOff, toggle.ValueOn) = (toggle.ValueOn, toggle.ValueOff);
+        SaveAfterControlEdit(toggle, control);
     }
 
     public void SetToggleIntegerValue(ContTypeToggle control, int value)
     {
-        control.ValueOn = value;
-        SaveAvatarControlsJson();
-        InvokeAvatarControlsUpdate();
+        var target = ResolveEditableGlobalTarget(control);
+        if (target is not ContTypeToggle toggle)
+        {
+            return;
+        }
+
+        toggle.ValueOn = value;
+        SaveAfterControlEdit(toggle, control);
     }
 
     public void MoveSelectedControl(AvatarControl control, int direction)
@@ -1221,6 +1355,7 @@ public class Service_Avatars : IHostedService
 
         if (selectedAvatar.Controls.Remove(control))
         {
+            RebuildAvatarParameters(selectedAvatar);
             SaveAvatarControlsJson();
             InvokeAvatarControlsUpdate();
         }
@@ -1273,18 +1408,56 @@ public class Service_Avatars : IHostedService
         return GlobalControls.Any(global => AvatarHasSameIdentity(global, control));
     }
 
-    public void AddSelectedControlToGlobal(AvatarControl control)
+    public bool SelectedControlHasGlobalNameMatch(AvatarControl control)
     {
-        if (SelectedControlExistsInGlobal(control))
+        return FindGlobalControlByName(control.Name) != null;
+    }
+
+    public void AddOrSyncSelectedControlToGlobal(AvatarControl control)
+    {
+        if (control.IsInheritedGlobalControl || selectedAvatar.IsInvalidPlaceholder)
         {
             return;
         }
 
+        var existing = FindGlobalControlByName(control.Name);
+        var oldSourceName = existing?.Name;
         var globalCopy = CloneControl(control);
         globalCopy.SourceGlobalName = null;
-        GlobalControls.Add(globalCopy);
-        SaveAvatarControlsJson();
-        InvokeAvatarControlsUpdate();
+
+        if (existing == null)
+        {
+            GlobalControls.Add(globalCopy);
+        }
+        else
+        {
+            var index = GlobalControls.IndexOf(existing);
+            GlobalControls[index] = globalCopy;
+        }
+
+        var selectedIndex = selectedAvatar.Controls.IndexOf(control);
+        if (selectedIndex >= 0)
+        {
+            var inheritedClone = CloneControl(globalCopy);
+            inheritedClone.SourceGlobalName = globalCopy.Name;
+            selectedAvatar.Controls[selectedIndex] = inheritedClone;
+            RebuildAvatarParameters(selectedAvatar);
+        }
+
+        if (!string.IsNullOrWhiteSpace(oldSourceName))
+        {
+            SyncInheritedGlobalControl(oldSourceName, globalCopy.Name);
+        }
+        else
+        {
+            SaveAvatarControlsJson();
+            InvokeAvatarControlsUpdate();
+        }
+    }
+
+    public void AddSelectedControlToGlobal(AvatarControl control)
+    {
+        AddOrSyncSelectedControlToGlobal(control);
     }
 
     public void RemoveGlobalControl(AvatarControl control)
@@ -1297,12 +1470,83 @@ public class Service_Avatars : IHostedService
         foreach (var avatar in avatars)
         {
             avatar.Controls.RemoveAll(avatarControl => string.Equals(avatarControl.SourceGlobalName, control.Name, StringComparison.OrdinalIgnoreCase));
-            avatar.Parameters.Clear();
-            CreateAvatarParamList(avatar);
+            RebuildAvatarParameters(avatar);
         }
 
         SaveAvatarControlsJson();
         InvokeAvatarControlsUpdate();
+    }
+
+    private AvatarControl ResolveEditableGlobalTarget(AvatarControl control)
+    {
+        if (control.IsInheritedGlobalControl && !string.IsNullOrWhiteSpace(control.SourceGlobalName))
+        {
+            var globalControl = FindGlobalControlByName(control.SourceGlobalName);
+            if (globalControl != null)
+            {
+                return globalControl;
+            }
+        }
+
+        return control;
+    }
+
+    private AvatarControl? FindGlobalControlByName(string? name)
+    {
+        return string.IsNullOrWhiteSpace(name)
+            ? null
+            : GlobalControls.FirstOrDefault(control => string.Equals(control.Name, name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void SaveAfterControlEdit(AvatarControl target, AvatarControl original)
+    {
+        if (GlobalControls.Contains(target))
+        {
+            var oldSourceName = original.SourceGlobalName ?? target.Name;
+            SyncInheritedGlobalControl(oldSourceName, target.Name);
+        }
+        else
+        {
+            SaveAvatarControlsJson();
+            InvokeAvatarControlsUpdate();
+        }
+    }
+
+    private void SyncInheritedGlobalControl(string oldSourceName, string newSourceName)
+    {
+        var global = FindGlobalControlByName(newSourceName);
+        if (global == null)
+        {
+            SaveAvatarControlsJson();
+            InvokeAvatarControlsUpdate();
+            return;
+        }
+
+        foreach (var avatar in avatars)
+        {
+            for (var i = 0; i < avatar.Controls.Count; i++)
+            {
+                var avatarControl = avatar.Controls[i];
+                if (string.Equals(avatarControl.SourceGlobalName, oldSourceName, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(avatarControl.SourceGlobalName, newSourceName, StringComparison.OrdinalIgnoreCase))
+                {
+                    var clone = CloneControl(global);
+                    clone.SourceGlobalName = global.Name;
+                    avatar.Controls[i] = clone;
+                }
+            }
+
+            RebuildAvatarParameters(avatar);
+        }
+
+        SaveAvatarControlsJson();
+        InvokeAvatarControlsUpdate();
+    }
+
+    private void RebuildAvatarParameters(Avatar avatar)
+    {
+        avatar.Parameters.Clear();
+        CreateAvatarParamList(avatar);
     }
 
     private static bool AvatarHasSameIdentity(AvatarControl first, AvatarControl second)
@@ -1328,7 +1572,66 @@ public class Service_Avatars : IHostedService
 
     public void UpdateAvatarName(Avatar avatar, string? name)
     {
-        avatar.Name = string.IsNullOrWhiteSpace(name) ? "Unnamed Avatar" : name.Trim();
+        var oldSanitizedName = SanitizeAvatarIconName(avatar.Name);
+        var newName = string.IsNullOrWhiteSpace(name) ? "Unnamed Avatar" : name.Trim();
+        var shouldTrackNameForIcon = string.IsNullOrWhiteSpace(avatar.IconName)
+            || string.Equals(avatar.IconName, oldSanitizedName, StringComparison.OrdinalIgnoreCase);
+
+        avatar.Name = newName;
+        if (shouldTrackNameForIcon)
+        {
+            UpdateAvatarIconNameInMemory(avatar, newName);
+        }
+
+        SaveAvatarControls();
+    }
+
+    public void UpdateAvatarIconName(Avatar avatar, string? iconName)
+    {
+        UpdateAvatarIconNameInMemory(avatar, iconName);
+        SaveAvatarControls();
+    }
+
+    private void UpdateAvatarIconNameInMemory(Avatar avatar, string? iconName)
+    {
+        avatar.IconName = SanitizeAvatarIconName(iconName);
+        avatar.Thumbnail = GetAvatarImage(avatar.IconName);
+    }
+
+    public void MoveAvatar(Avatar avatar, int direction)
+    {
+        if (avatar.IsInvalidPlaceholder)
+        {
+            return;
+        }
+
+        var movableAvatars = avatars
+            .Where(item => !string.Equals(item.ID, "Global", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(item.ID, "Undefined", StringComparison.OrdinalIgnoreCase)
+                && !item.IsInvalidPlaceholder)
+            .ToList();
+        var currentMovableIndex = movableAvatars.IndexOf(avatar);
+        if (currentMovableIndex < 0)
+        {
+            return;
+        }
+
+        var targetMovableIndex = Math.Clamp(currentMovableIndex + direction, 0, movableAvatars.Count - 1);
+        if (targetMovableIndex == currentMovableIndex)
+        {
+            return;
+        }
+
+        var targetAvatar = movableAvatars[targetMovableIndex];
+        var sourceIndex = avatars.IndexOf(avatar);
+        var targetIndex = avatars.IndexOf(targetAvatar);
+        if (sourceIndex < 0 || targetIndex < 0)
+        {
+            return;
+        }
+
+        avatars.RemoveAt(sourceIndex);
+        avatars.Insert(targetIndex, avatar);
         SaveAvatarControls();
     }
 
@@ -1380,7 +1683,8 @@ public class Service_Avatars : IHostedService
         {
             avatar.ID,
             avatar.Name,
-            Thumbnail = Path.GetFileNameWithoutExtension(avatar.Thumbnail.Replace("/api/Images/Avatars/", string.Empty).Replace("images/", string.Empty)),
+            avatar.IconName,
+            Thumbnail = avatar.IconName,
             avatar.Selectable,
             avatar.Available,
             avatar.Cost,
@@ -1402,6 +1706,7 @@ public class Service_Avatars : IHostedService
             ContTypeButton button => new
             {
                 button.Name,
+                button.IconName,
                 button.AccessLevel,
                 Type = "Button",
                 Parameter = SerializeParameter(button.Parameter)
@@ -1409,6 +1714,7 @@ public class Service_Avatars : IHostedService
             ContTypeToggle toggle => new
             {
                 toggle.Name,
+                toggle.IconName,
                 toggle.AccessLevel,
                 Type = "Toggle",
                 Parameter = SerializeParameter(toggle.Parameter),
@@ -1418,6 +1724,7 @@ public class Service_Avatars : IHostedService
             ContTypeRadial radial => new
             {
                 radial.Name,
+                radial.IconName,
                 radial.AccessLevel,
                 Type = "Radial",
                 Parameter = SerializeParameter(radial.Parameter),
@@ -1427,6 +1734,7 @@ public class Service_Avatars : IHostedService
             ContTypeHSV hsv => new
             {
                 hsv.Name,
+                hsv.IconName,
                 hsv.AccessLevel,
                 Type = "HSV",
                 ParameterHue = SerializeParameter(hsv.ParameterHue),
@@ -1464,23 +1772,31 @@ public class Service_Avatars : IHostedService
         LogAvatars($"Sent visitor code {AccessCodes.VisitorCodeDisplay}", Severity.Info);
     }
 
-    public void SetParameterValue(Parameter param) //used by AvatarControls. Upddates the param and sends an OSC message out with it
+    public void SetParameterValue(Parameter param, bool invokeUpdate = true) //used by AvatarControls. Updates the param and sends an OSC message out with it
     {
         if (selectedAvatar.Parameters.ContainsKey(param.Address))
         {
-			selectedAvatar.Parameters[param.Address].Value = param.Value;
+				selectedAvatar.Parameters[param.Address].Value = param.Value;
         }
         OSCService.sendOSCParameter(param);
 
-        InvokeAvatarControlsUpdate();
+        if (invokeUpdate)
+        {
+            InvokeAvatarControlsUpdate();
+        }
     }
 
     public void SwitchAvatar(Avatar avatar) //Sends an OSC paramter to switch the avatar. Used by the UI
     {
+        var previousAvatarId = CurrentWornAvatarId;
         OSCService.sendOSCMessage("/avatar/change", avatar.ID);
         LogAvatars($"Switching Avatar to {avatar.Name}", Severity.Info);
         selectedAvatar = avatar;
         CurrentWornAvatarId = avatar.ID;
+        if (!string.Equals(previousAvatarId, avatar.ID, StringComparison.OrdinalIgnoreCase))
+        {
+            ClearLoadedAvatarParameters("avatar switch");
+        }
         lastSelectedAvatar = selectedAvatar;
         SendVisitorCodeToAvatar();
         InvokeAvatarControlsUpdate();

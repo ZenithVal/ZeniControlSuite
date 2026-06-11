@@ -153,6 +153,16 @@ public partial class AvatarSelect : IDisposable
         AvatarsService.UpdateAvatarName(avatar, name);
     }
 
+    private void UpdateAvatarIconName(Avatar avatar, string iconName)
+    {
+        AvatarsService.UpdateAvatarIconName(avatar, iconName);
+    }
+
+    private void MoveAvatar(Avatar avatar, int direction)
+    {
+        AvatarsService.MoveAvatar(avatar, direction);
+    }
+
     private void UpdateAvatarCost(Avatar avatar, double cost)
     {
         AvatarsService.UpdateAvatarCost(avatar, cost);

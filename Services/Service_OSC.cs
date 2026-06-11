@@ -149,6 +149,7 @@ public class Service_OSC : IHostedService, IDisposable
 				int tcpPort = VRC.OSCQuery.Extensions.GetAvailableTcpPort();
 
                 listeningPort = udpPort;
+                sendingPort = tcpPort;
 			}
 
             var receiver = new OSCReceiver(2048);
@@ -543,6 +544,22 @@ public class Service_OSC : IHostedService, IDisposable
         }
 
         Log($"Loaded {_discoveredAvatarParameters.Count} avatar parameter(s) from {source}.", Severity.Info);
+    }
+
+    public void ClearDiscoveredAvatarParameters(string reason = "avatar switch")
+    {
+        lock (_discoveredParametersLock)
+        {
+            if (_discoveredAvatarParameters.Count == 0)
+            {
+                return;
+            }
+
+            _discoveredAvatarParameters.Clear();
+            LastAvatarParameterDiscovery = DateTimeOffset.MinValue;
+        }
+
+        Log($"Cleared loaded avatar parameters after {reason}.", Severity.Info);
     }
 
     private void RememberDiscoveredAvatarParameter(string address, object? value, string source)

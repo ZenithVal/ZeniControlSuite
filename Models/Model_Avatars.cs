@@ -7,6 +7,7 @@ public class Avatar
     public bool Selectable { get; set; }
     public bool Available { get; set; }
     public double Cost { get; set; }
+    public string IconName { get; set; } = "AvatarThumbDefault";
     public string Thumbnail { get; set; } = "/images/AvatarThumbDefault.png";
     public List<AvatarControl> Controls { get; set; } = new();
     public Dictionary<string, Parameter> Parameters { get; set; } = new();
@@ -26,6 +27,7 @@ public abstract class AvatarControl
     public string Name { get; set; } = string.Empty;
     public abstract ControlType Type { get; }
     public int AccessLevel { get; set; }
+    public string IconName { get; set; } = "PowerButton";
     public string Icon { get; set; } = "/images/PowerButton.png";
     public string? SourceGlobalName { get; set; }
     public bool IsInheritedGlobalControl => !string.IsNullOrWhiteSpace(SourceGlobalName);

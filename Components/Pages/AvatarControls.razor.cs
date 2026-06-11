@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
+using System.Globalization;
 using MudBlazor;
 using ZeniControlSuite.Authentication;
 using ZeniControlSuite.Models;
@@ -16,6 +18,7 @@ public partial class AvatarControls : IDisposable
     [Inject] private ISnackbar Snackbar { get; set; } = default!;
     [Inject] private Service_Avatars AvatarsService { get; set; } = default!;
     [Inject] private Service_OSC OscService { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
     private string user = "Undefined";
     private bool isAdmin;
@@ -25,6 +28,9 @@ public partial class AvatarControls : IDisposable
     private int newToggleIntegerValue = 1;
     private bool loadingParameters;
     private bool editMode;
+    private bool confirmDeleteAvatar;
+    private DotNetObjectReference<AvatarControls>? jsObjectReference;
+    private bool avatarControlsScriptWarningLogged;
 
     private readonly string pageName = "Avatar Controls";
 
@@ -38,6 +44,30 @@ public partial class AvatarControls : IDisposable
         LogService.AddLog(pageName, user, "PageLoad", Severity.Normal);
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        jsObjectReference ??= DotNetObjectReference.Create(this);
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("zcsAvatarControls.bind", jsObjectReference);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch (JSException ex)
+        {
+            if (!avatarControlsScriptWarningLogged)
+            {
+                avatarControlsScriptWarningLogged = true;
+                LogService.AddLog(pageName, user, $"Avatar controls JS unavailable: {ex.Message}", Severity.Warning);
+            }
+        }
+    }
+
     private void OnAvatarsUpdate()
     {
         InvokeAsync(StateHasChanged);
@@ -46,11 +76,13 @@ public partial class AvatarControls : IDisposable
     public void Dispose()
     {
         AvatarsService.OnAvatarsUpdate -= OnAvatarsUpdate;
+        jsObjectReference?.Dispose();
     }
 
     private void ToggleEditMode()
     {
         editMode = !editMode;
+        confirmDeleteAvatar = false;
     }
 
     private void SetCurrentAccessLevel(int value)
@@ -158,6 +190,68 @@ public partial class AvatarControls : IDisposable
         }
     }
 
+    [JSInvokable]
+    public Task SetRadialControlValue(string address, double value)
+    {
+        if (!AvatarsService.SelectedAvatarIsValid)
+        {
+            return Task.CompletedTask;
+        }
+
+        var control = AvatarsService.selectedAvatar.Controls
+            .OfType<ContTypeRadial>()
+            .FirstOrDefault(radial => string.Equals(radial.Parameter.Address, address, StringComparison.OrdinalIgnoreCase));
+
+        if (control == null || !CanUseControl(control))
+        {
+            return Task.CompletedTask;
+        }
+
+        var clampedValue = Math.Clamp((float)value, control.ValueMin, control.ValueMax);
+        control.Parameter.Value = clampedValue;
+        AvatarsService.SetParameterValue(control.Parameter, invokeUpdate: false);
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public Task SetHSVControlValue(string hueAddress, double hue, double saturation, double value)
+    {
+        if (!AvatarsService.SelectedAvatarIsValid)
+        {
+            return Task.CompletedTask;
+        }
+
+        var control = AvatarsService.selectedAvatar.Controls
+            .OfType<ContTypeHSV>()
+            .FirstOrDefault(hsv => string.Equals(hsv.ParameterHue.Address, hueAddress, StringComparison.OrdinalIgnoreCase));
+
+        if (control == null || !CanUseControl(control))
+        {
+            return Task.CompletedTask;
+        }
+
+        var h = Math.Clamp((float)hue, 0f, 1f);
+        var s = Math.Clamp((float)saturation, 0f, 1f);
+        var v = Math.Clamp((float)value, 0f, 1f);
+
+        control.ParameterHue.Value = h;
+        control.ParameterSaturation.Value = s;
+        if (control.InvertedBrightness)
+        {
+            control.InvertedBrightnessValue = v;
+            control.ParameterBrightness.Value = Math.Abs(1f - v);
+        }
+        else
+        {
+            control.ParameterBrightness.Value = v;
+        }
+
+        AvatarsService.SetParameterValue(control.ParameterHue, invokeUpdate: false);
+        AvatarsService.SetParameterValue(control.ParameterSaturation, invokeUpdate: false);
+        AvatarsService.SetParameterValue(control.ParameterBrightness, invokeUpdate: false);
+        return Task.CompletedTask;
+    }
+
     private void LoadAvatarParameters()
     {
         loadingParameters = true;
@@ -200,6 +294,33 @@ public partial class AvatarControls : IDisposable
         Snackbar.Add("Avatar removed from invalid list.", Severity.Info);
     }
 
+    private void DeleteSelectedAvatar()
+    {
+        if (!confirmDeleteAvatar)
+        {
+            confirmDeleteAvatar = true;
+            Snackbar.Add("Press Confirm Delete to remove this avatar from controls.", Severity.Warning);
+            return;
+        }
+
+        var deletedName = AvatarsService.selectedAvatar.Name;
+        if (AvatarsService.DeleteSelectedAvatarFromControls())
+        {
+            Snackbar.Add($"Deleted {deletedName} from avatar controls.", Severity.Warning);
+        }
+        else
+        {
+            Snackbar.Add("Avatar could not be deleted.", Severity.Error);
+        }
+
+        confirmDeleteAvatar = false;
+    }
+
+    private void CancelDeleteSelectedAvatar()
+    {
+        confirmDeleteAvatar = false;
+    }
+
     private void AddMatchedGlobals()
     {
         var added = AvatarsService.AddMatchedGlobalControlsToSelected();
@@ -234,6 +355,11 @@ public partial class AvatarControls : IDisposable
         AvatarsService.RenameControl(control, name);
     }
 
+    private void SetControlIconName(AvatarControl control, string iconName)
+    {
+        AvatarsService.SetControlIconName(control, iconName);
+    }
+
     private void InvertToggleValues(ContTypeToggle control)
     {
         AvatarsService.InvertToggleValues(control);
@@ -260,10 +386,21 @@ public partial class AvatarControls : IDisposable
         AvatarsService.MoveGlobalControl(control, direction);
     }
 
+    private void AddOrSyncControlToGlobal(AvatarControl control)
+    {
+        var syncExisting = AvatarsService.SelectedControlHasGlobalNameMatch(control);
+        AvatarsService.AddOrSyncSelectedControlToGlobal(control);
+        Snackbar.Add(syncExisting ? $"Synced {control.Name} to global controls and linked it." : $"Added {control.Name} to global controls and linked it.", Severity.Success);
+    }
+
     private void AddControlToGlobal(AvatarControl control)
     {
-        AvatarsService.AddSelectedControlToGlobal(control);
-        Snackbar.Add($"Added {control.Name} to global controls.", Severity.Success);
+        AddOrSyncControlToGlobal(control);
+    }
+
+    private void SetControlAccessLevel(AvatarControl control, int accessLevel)
+    {
+        AvatarsService.SetControlAccessLevel(control, accessLevel);
     }
 
     private void BreakGlobalControl(AvatarControl control)
@@ -318,6 +455,16 @@ public partial class AvatarControls : IDisposable
                 || string.Equals(hsv.ParameterBrightness.Address, address, StringComparison.OrdinalIgnoreCase),
             _ => false
         };
+    }
+
+    private string Invariant(float value)
+    {
+        return value.ToString("0.####", CultureInfo.InvariantCulture);
+    }
+
+    private string BoolAttr(bool value)
+    {
+        return value ? "true" : "false";
     }
 
     private float RoundFloat(float value)
