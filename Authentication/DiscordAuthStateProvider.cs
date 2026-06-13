@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -5,6 +6,8 @@ namespace ZeniControlSuite.Authentication;
 
 public class DiscordAuthStateProvider : AuthenticationStateProvider
 {
+    private static readonly ConcurrentDictionary<string, byte> LoggedAuthenticatedUsers = new();
+
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public DiscordAuthStateProvider(IHttpContextAccessor httpContextAccessor)
@@ -64,7 +67,7 @@ public class DiscordAuthStateProvider : AuthenticationStateProvider
             catch { }
         }
 
-        if (Whitelist.usersAccepted.ContainsKey(userID))
+        if (Whitelist.usersAccepted.ContainsKey(userID) && LoggedAuthenticatedUsers.TryAdd(userID, 0))
         {
             Console.WriteLine($"||| AUTH |||| User {Whitelist.usersAccepted[userID].DisplayName} authenticated");
         }

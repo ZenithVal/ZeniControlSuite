@@ -30,11 +30,26 @@ public class AccountController : ControllerBase
     [AllowAnonymous]
     public IActionResult Login(string returnUrl = "/")
     {
+        return LocalRedirect($"/Login?discordError=visitorCodeRequired&returnUrl={Uri.EscapeDataString(returnUrl)}");
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [IgnoreAntiforgeryToken]
+    public IActionResult DiscordLogin([FromForm] string visitorCode, [FromForm] string returnUrl = "/")
+    {
         if (!DiscordAuthAvailability.Enabled)
         {
             return LocalRedirect($"/Login?discord=disabled&returnUrl={Uri.EscapeDataString(returnUrl)}");
         }
 
+        if (!_accessCodes.VerifyVisitorCode(visitorCode))
+        {
+            _logs.AddLog("Authentication", "Discord", "Discord login blocked: invalid visitor code", MudBlazor.Severity.Warning, MudBlazor.Variant.Outlined);
+            return LocalRedirect($"/Login?discordError=invalidVisitorCode&returnUrl={Uri.EscapeDataString(returnUrl)}");
+        }
+
+        _logs.AddLog("Authentication", "Discord", "Discord login started after visitor code check", MudBlazor.Severity.Info, MudBlazor.Variant.Outlined);
         return Challenge(new AuthenticationProperties { RedirectUri = LoginDestination(returnUrl) }, "Discord");
     }
 
@@ -67,10 +82,11 @@ public class AccountController : ControllerBase
             return LocalRedirect($"/Login?visitorError=1&returnUrl={Uri.EscapeDataString(returnUrl)}");
         }
 
-        var principal = SuiteClaims.CreateVisitorCodePrincipal();
+        var visitorNumber = SuiteClaims.NextVisitorNumber();
+        var principal = SuiteClaims.CreateVisitorCodePrincipal(visitorNumber);
         await SignIn(principal);
 
-        _logs.AddLog("Authentication", principal.FindFirstValue(ClaimTypes.Name) ?? "Visitor", "Visitor login succeeded", MudBlazor.Severity.Info, MudBlazor.Variant.Outlined);
+        _logs.AddLog("Authentication", principal.FindFirstValue(ClaimTypes.Name) ?? $"Visitor {visitorNumber}", "Visitor login succeeded", MudBlazor.Severity.Info, MudBlazor.Variant.Outlined);
         return LocalRedirect(LoginDestination(returnUrl));
     }
 

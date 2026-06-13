@@ -96,8 +96,15 @@ var authenticationBuilder = builder.Services.AddAuthentication(opt =>
             return;
         }
 
-        if (SuiteClaims.IsLocalSuiteUser(user))
+        if (SuiteClaims.HasLocalSuiteIdentity(user))
         {
+            if (SuiteClaims.IsLocalSuiteUser(user))
+            {
+                return;
+            }
+
+            context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync();
             return;
         }
 

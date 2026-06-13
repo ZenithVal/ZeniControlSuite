@@ -14,32 +14,43 @@
     <form method="post" action="/api/account/VisitorCodeLogin">
         <input type="hidden" name="returnUrl" value="@ReturnUrl" />
         <label class="mud-input-label mud-input-label-animated mud-input-label-outlined">Visitor Code</label>
-        <input name="visitorCode" type="password" maxlength="3" inputmode="numeric" pattern="[0-9]{3}" class="mud-input-slot mud-input-root mud-input-root-outlined" style="width:100%; padding:16px; border:1px solid rgba(255,255,255,.24); border-radius:4px; background:transparent; color:inherit;" />
+        <input name="visitorCode" type="text" maxlength="3" inputmode="numeric" pattern="[0-9]{3}" autocomplete="off" autocorrect="off" spellcheck="false" class="mud-input-slot mud-input-root mud-input-root-outlined" style="width:100%; padding:16px; border:1px solid rgba(255,255,255,.24); border-radius:4px; background:transparent; color:inherit;" />
         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Info" Class="mt-4" FullWidth="true">Visitor Login</MudButton>
     </form>
 
-    <MudDivider Class="my-4" />
 
-    <MudText Typo="Typo.h6" Class="mb-3">Admin Login</MudText>
+    <details class="mt-4" open="@ShouldOpenAdminSection" style="border:1px solid rgba(255,255,255,.16); border-radius:8px; padding:0.75rem;">
+        <summary style="cursor:pointer; font-weight:600; user-select:none;">Admin / Discord Login</summary>
 
-    @if (AdminError == "1")
-    {
-        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">Invalid admin password.</MudAlert>
-    }
-    @if (Discord == "disabled")
-    {
-        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">Discord login unavailable.</MudAlert>
-    }
+        <div class="mt-4">
+            @if (AdminError == "1")
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">Invalid admin password.</MudAlert>
+            }
+            @if (Discord == "disabled")
+            {
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">Discord login unavailable.</MudAlert>
+            }
+            @if (!string.IsNullOrWhiteSpace(DiscordError))
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">Discord login requires the current visitor code.</MudAlert>
+            }
 
-    <form method="post" action="/api/account/AdminPasswordLogin">
-        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
-        <label class="mud-input-label mud-input-label-animated mud-input-label-outlined">Password</label>
-        <input name="password" type="password" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="mud-input-slot mud-input-root mud-input-root-outlined" style="width:100%; padding:16px; border:1px solid rgba(255,255,255,.24); border-radius:4px; background:transparent; color:inherit;" />
-        <div class="d-flex gap-2 mt-4">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Warning" Style="flex: 1;">Login</MudButton>
-            <MudButton Href="/api/account/login" Variant="Variant.Outlined" Color="Color.Secondary" Style="flex: 1;">Use Discord</MudButton>
+            <form method="post" action="/api/account/AdminPasswordLogin" class="mb-4">
+                <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+                <label class="mud-input-label mud-input-label-animated mud-input-label-outlined">Password</label>
+                <input name="password" type="text" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" autocomplete="off" autocorrect="off" spellcheck="false" class="mud-input-slot mud-input-root mud-input-root-outlined" style="width:100%; padding:16px; border:1px solid rgba(255,255,255,.24); border-radius:4px; background:transparent; color:inherit;" />
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Warning" Class="mt-4" FullWidth="true">Login</MudButton>
+            </form>
+
+            <form method="post" action="/api/account/DiscordLogin">
+                <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+                <label class="mud-input-label mud-input-label-animated mud-input-label-outlined">Visitor Code for Discord</label>
+                <input name="visitorCode" type="text" maxlength="3" inputmode="numeric" pattern="[0-9]{3}" autocomplete="off" autocorrect="off" spellcheck="false" class="mud-input-slot mud-input-root mud-input-root-outlined" style="width:100%; padding:16px; border:1px solid rgba(255,255,255,.24); border-radius:4px; background:transparent; color:inherit;" />
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Outlined" Color="Color.Secondary" Class="mt-4" FullWidth="true">Use Discord</MudButton>
+            </form>
         </div>
-    </form>
+    </details>
 </MudPaper>
 
 @code {
@@ -58,5 +69,13 @@
     [SupplyParameterFromQuery(Name = "discord")]
     public string? Discord { get; set; }
 
+    [SupplyParameterFromQuery(Name = "discordError")]
+    public string? DiscordError { get; set; }
+
     private string ReturnUrl => string.IsNullOrWhiteSpace(ReturnUrlQuery) ? "/" : ReturnUrlQuery;
+
+    private bool ShouldOpenAdminSection =>
+        AdminError == "1" ||
+        Discord == "disabled" ||
+        !string.IsNullOrWhiteSpace(DiscordError);
 }

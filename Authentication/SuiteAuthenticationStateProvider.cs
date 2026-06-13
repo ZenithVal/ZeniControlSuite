@@ -35,9 +35,11 @@ public sealed class SuiteAuthenticationStateProvider : RevalidatingServerAuthent
             return new ClaimsPrincipal(new ClaimsIdentity());
         }
 
-        if (SuiteClaims.IsLocalSuiteUser(user))
+        if (SuiteClaims.HasLocalSuiteIdentity(user))
         {
-            return user;
+            return SuiteClaims.IsLocalSuiteUser(user)
+                ? user
+                : new ClaimsPrincipal(new ClaimsIdentity());
         }
 
         var userID = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
