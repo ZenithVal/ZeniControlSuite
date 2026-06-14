@@ -68,6 +68,9 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Avatars>()
 builder.Services.AddSingleton<Service_Intiface>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_Intiface>());
 
+builder.Services.AddSingleton<Service_OpenShock>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<Service_OpenShock>());
+
 builder.Services.AddScoped<AuthenticationStateProvider, SuiteAuthenticationStateProvider>();
 
 var authenticationBuilder = builder.Services.AddAuthentication(opt =>

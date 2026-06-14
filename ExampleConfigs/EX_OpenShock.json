@@ -1,0 +1,41 @@
+{
+  "Enabled": false,
+  "ApiBaseUrl": "https://api.openshock.app",
+  "ApiToken": "",
+  "UserAgent": "ZeniControlSuite/1.0",
+  "Shockers": [
+    {
+      "Enabled": false,
+      "Name": "Zeni A",
+      "Id": ""
+    }
+  ],
+  "Manual": {
+    "Intensity": 25,
+    "DurationSeconds": 1,
+    "MinIntensity": 1,
+    "MaxIntensity": 100,
+    "MinDurationSeconds": 0.5,
+    "MaxDurationSeconds": 10,
+    "AutomatedWarningEnabled": false,
+    "WarningIntensity": 25,
+    "WarningDurationSeconds": 0.5,
+    "WarningDelayMinSeconds": 0.5,
+    "WarningDelayMaxSeconds": 2
+  },
+  "OscStatus": {
+    "ActiveAddress": "ShockOSC/Any_Active",
+    "CooldownAddress": "ShockOsc/Any_Cooldown"
+  },
+  "OscTriggers": [
+    {
+      "Enabled": true,
+      "Address": "ShockOsc/_All_IShock",
+      "MinIntensity": 50,
+      "MaxIntensity": 80,
+      "MinDurationSeconds": 0.5,
+      "MaxDurationSeconds": 1.5,
+      "CooldownSeconds": 5
+    }
+  ]
+}

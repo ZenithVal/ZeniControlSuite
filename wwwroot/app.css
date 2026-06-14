@@ -212,3 +212,50 @@ h1:focus {
 .zcs-control-disabled {
     opacity: 0.48;
 }
+
+
+.zcs-shocker-card {
+    max-width: 560px;
+    background: rgba(18, 18, 20, 0.78);
+}
+
+.zcs-shocker-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgb(244, 67, 54);
+    box-shadow: 0 0 10px rgba(244, 67, 54, 0.35);
+}
+
+.zcs-shocker-status-dot.online {
+    background: rgb(76, 175, 80);
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.45);
+}
+
+.zcs-shocker-status-dot.offline {
+    background: rgb(244, 67, 54);
+}
+
+.zcs-shocker-radial-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(170px, 1fr));
+    gap: 1rem;
+    align-items: center;
+}
+
+.zcs-shocker-radial {
+    min-height: 190px;
+}
+
+.zcs-shocker-action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9rem;
+}
+
+@media (max-width: 620px) {
+    .zcs-shocker-radial-row {
+        grid-template-columns: 1fr;
+    }
+}

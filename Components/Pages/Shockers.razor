@@ -1,0 +1,233 @@
+@page "/Shockers"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Globalization
+@using ZeniControlSuite.Authentication
+@using ZeniControlSuite.Models
+@attribute [Authorize(Roles = "Admin,Visitor")]
+
+<PageTitle>Shockers</PageTitle>
+
+<AuthorizeView Context="authState">
+    <Authorized>
+        @{ var isAdminUser = authState.User.IsInRole("Admin") || authState.User.IsInRole("LocalHost"); }
+
+        @if (!isAdminUser && !OpenShock.Config.Enabled)
+        {
+        }
+        else
+        {
+            <MudGrid Spacing="3">
+                <MudItem xs="12" lg="@(isAdminUser ? 8 : 12)">
+                    <div class="d-flex align-center justify-space-between flex-wrap gap-3 mb-3">
+                        <div class="d-flex align-center gap-2">
+                            <MudText Typo="Typo.h4">Shockers</MudText>
+                            <span class="zcs-shocker-status-dot @(OpenShock.HubOnline ? "online" : "offline")"></span>
+                            <MudText Typo="Typo.caption">@OpenShock.LastStatus</MudText>
+                        </div>
+                        @if (isAdminUser)
+                        {
+                            <MudButton Variant="@(editMode ? Variant.Filled : Variant.Outlined)" Color="Color.Info" Style="text-transform:none" OnClick="ToggleEditMode">
+                                @(editMode ? "Exit Edit Mode" : "Edit Mode")
+                            </MudButton>
+                        }
+                    </div>
+
+                    <MudPaper Class="zcs-shocker-card pa-4" Outlined="true">
+                        <div class="d-flex justify-space-between align-center mb-3">
+                            <div>
+                                <MudText Typo="Typo.h6">@PrimaryShockerName</MudText>
+                                <div class="d-flex align-center gap-2">
+                                    <span class="zcs-shocker-status-dot @(OpenShock.HubOnline ? "online" : "offline")"></span>
+                                    <MudText Typo="Typo.caption">OpenShock</MudText>
+                                </div>
+                            </div>
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@(OpenShock.CommandRunning ? Color.Success : Color.Default)">@(OpenShock.CommandRunning ? "LIVE" : "IDLE")</MudChip>
+                        </div>
+
+                        <div class="zcs-shocker-radial-row">
+                            <div class="zcs-radial-control zcs-shocker-radial"
+                                 data-zcs-radial="true"
+                                 data-address="openshock:intensity"
+                                 data-value="@FormatFloat(OpenShock.Config.Manual.Intensity)"
+                                 data-min="@FormatFloat(OpenShock.Config.Manual.MinIntensity)"
+                                 data-max="@FormatFloat(OpenShock.Config.Manual.MaxIntensity)"
+                                 data-disabled="@(CanUseManualControls ? "false" : "true")">
+                                <canvas class="zcs-radial-canvas" width="190" height="170"></canvas>
+                                <div class="zcs-radial-readout">
+                                    <span class="zcs-radial-number"></span>
+                                    <span class="zcs-radial-label">Intensity</span>
+                                </div>
+                            </div>
+
+                            <div class="zcs-radial-control zcs-shocker-radial"
+                                 data-zcs-radial="true"
+                                 data-address="openshock:duration"
+                                 data-value="@FormatFloat(OpenShock.Config.Manual.DurationSeconds)"
+                                 data-min="@FormatFloat(OpenShock.Config.Manual.MinDurationSeconds)"
+                                 data-max="@FormatFloat(OpenShock.Config.Manual.MaxDurationSeconds)"
+                                 data-disabled="@(CanUseManualControls ? "false" : "true")">
+                                <canvas class="zcs-radial-canvas" width="190" height="170"></canvas>
+                                <div class="zcs-radial-readout">
+                                    <span class="zcs-radial-number"></span>
+                                    <span class="zcs-radial-label">Duration</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="zcs-shocker-action-row mt-2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Warning" Disabled="@(!CanUseManualControls)" OnClick="SendWarningAsync">Warning</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Error" Disabled="@(!CanUseManualControls)" OnClick="SendShockAsync">Shock</MudButton>
+                        </div>
+
+                        <MudPaper Class="pa-3 mt-3" Outlined="true" Style="background: transparent;">
+                            <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+                                <div>
+                                    <MudText Typo="Typo.subtitle1">Automated Warning</MudText>
+                                    <MudText Typo="Typo.caption">Vibrate first, wait a random delay, then shock.</MudText>
+                                </div>
+                                <MudSwitch @bind-Value="OpenShock.Config.Manual.AutomatedWarningEnabled" Color="Color.Warning" />
+                            </div>
+
+                            @if (OpenShock.Config.Manual.AutomatedWarningEnabled)
+                            {
+                                <MudGrid Spacing="2" Class="mt-2">
+                                    <MudItem xs="12" md="6">
+                                        <MudNumericField T="float" @bind-Value="OpenShock.Config.Manual.WarningDelayMinSeconds" Label="Min Warning Time" Min="@(0f)" Step="@(0.1f)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                    </MudItem>
+                                    <MudItem xs="12" md="6">
+                                        <MudNumericField T="float" @bind-Value="OpenShock.Config.Manual.WarningDelayMaxSeconds" Label="Max Warning Time" Min="@(0f)" Step="@(0.1f)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                    </MudItem>
+                                </MudGrid>
+                            }
+                        </MudPaper>
+                    </MudPaper>
+
+                    @if (isAdminUser && editMode)
+                    {
+                        <MudPaper Class="pa-4 mt-3" Outlined="true">
+                            <MudText Typo="Typo.h6">OpenShock Settings</MudText>
+                            <MudDivider Class="my-3" />
+
+                            <MudExpansionPanels MultiExpansion="true">
+                                <MudExpansionPanel Text="Connection" Expanded="true">
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" md="4">
+                                            <MudSwitch @bind-Value="OpenShock.Config.Enabled" Label="Enabled" Color="Color.Success" />
+                                            <MudButton Variant="Variant.Outlined" Color="Color.Info" Style="text-transform:none" OnClick="CheckHubAsync">Check Hub</MudButton>
+                                        </MudItem>
+                                        <MudItem xs="12" md="8">
+                                            <MudTextField @bind-Value="OpenShock.Config.ApiBaseUrl" Label="API Base URL" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                            <MudTextField @bind-Value="OpenShock.Config.ApiToken" Label="API Token" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                            <MudTextField @bind-Value="OpenShock.Config.UserAgent" Label="User Agent" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudExpansionPanel>
+
+                                <MudExpansionPanel Text="Manual Controls" Expanded="true">
+                                    <MudGrid Spacing="2">
+                                        <MudItem xs="12" md="3">
+                                            <MudNumericField T="float" @bind-Value="OpenShock.Config.Manual.MinIntensity" Label="Min Intensity" Min="@(1f)" Max="@(100f)" Step="@(1f)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudNumericField T="float" @bind-Value="OpenShock.Config.Manual.MaxIntensity" Label="Max Intensity" Min="@(1f)" Max="@(100f)" Step="@(1f)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudNumericField T="float" @bind-Value="OpenShock.Config.Manual.MinDurationSeconds" Label="Min Duration" Min="@(0.1f)" Step="@(0.1f)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudNumericField T="float" @bind-Value="OpenShock.Config.Manual.MaxDurationSeconds" Label="Max Duration" Min="@(0.1f)" Step="@(0.1f)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudNumericField T="float" @bind-Value="OpenShock.Config.Manual.WarningIntensity" Label="Warning Intensity" Min="@(1f)" Max="@(100f)" Step="@(1f)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="3">
+                                            <MudNumericField T="float" @bind-Value="OpenShock.Config.Manual.WarningDurationSeconds" Label="Warning Duration" Min="@(0.1f)" Step="@(0.1f)" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudExpansionPanel>
+
+                                <MudExpansionPanel Text="Shockers" Expanded="false">
+                                    <MudTable Items="@OpenShock.Config.Shockers" Dense="true" Hover="true">
+                                        <HeaderContent>
+                                            <MudTh>Enabled</MudTh>
+                                            <MudTh>Name</MudTh>
+                                            <MudTh>Shocker ID</MudTh>
+                                            <MudTh></MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd><MudSwitch @bind-Value="context.Enabled" Color="Color.Success" /></MudTd>
+                                            <MudTd><MudTextField @bind-Value="context.Name" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudTd>
+                                            <MudTd><MudTextField @bind-Value="context.Id" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudTd>
+                                            <MudTd><MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => RemoveShocker(context))">Remove</MudButton></MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                    <MudButton Class="mt-2" Variant="Variant.Outlined" Color="Color.Info" OnClick="AddShocker">Add Shocker</MudButton>
+                                </MudExpansionPanel>
+
+                                <MudExpansionPanel Text="OSC Shock Controls" Expanded="false">
+                                    <MudText Typo="Typo.subtitle2">Status Parameters</MudText>
+                                    <MudGrid Spacing="2" Class="mb-3">
+                                        <MudItem xs="12" md="6">
+                                            <MudTextField @bind-Value="OpenShock.Config.OscStatus.ActiveAddress" Label="Active State Address" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudTextField @bind-Value="OpenShock.Config.OscStatus.CooldownAddress" Label="Cooldown State Address" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                                        </MudItem>
+                                    </MudGrid>
+
+                                    <MudTable Items="@OpenShock.Config.OscTriggers" Dense="true" Hover="true">
+                                        <HeaderContent>
+                                            <MudTh>Enabled</MudTh>
+                                            <MudTh>Address</MudTh>
+                                            <MudTh>Shock %</MudTh>
+                                            <MudTh>Time</MudTh>
+                                            <MudTh>Cooldown</MudTh>
+                                            <MudTh></MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd><MudSwitch @bind-Value="context.Enabled" Color="Color.Success" /></MudTd>
+                                            <MudTd><MudTextField @bind-Value="context.Address" Variant="Variant.Outlined" Margin="Margin.Dense" /></MudTd>
+                                            <MudTd>
+                                                <MudNumericField T="float" @bind-Value="context.MinIntensity" Label="Min" Min="@(1f)" Max="@(100f)" Step="@(1f)" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:100px" />
+                                                <MudNumericField T="float" @bind-Value="context.MaxIntensity" Label="Max" Min="@(1f)" Max="@(100f)" Step="@(1f)" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:100px" />
+                                            </MudTd>
+                                            <MudTd>
+                                                <MudNumericField T="float" @bind-Value="context.MinDurationSeconds" Label="Min" Min="@(0.1f)" Step="@(0.1f)" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:100px" />
+                                                <MudNumericField T="float" @bind-Value="context.MaxDurationSeconds" Label="Max" Min="@(0.1f)" Step="@(0.1f)" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:100px" />
+                                            </MudTd>
+                                            <MudTd><MudNumericField T="float" @bind-Value="context.CooldownSeconds" Min="@(0f)" Step="@(0.5f)" Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width:110px" /></MudTd>
+                                            <MudTd><MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => RemoveOscTrigger(context))">Remove</MudButton></MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                    <MudButton Class="mt-2" Variant="Variant.Outlined" Color="Color.Info" OnClick="AddOscTrigger">Add OSC Trigger</MudButton>
+                                </MudExpansionPanel>
+                            </MudExpansionPanels>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveConfig">Save OpenShock Config</MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="ReloadConfig">Reload</MudButton>
+                            </div>
+                        </MudPaper>
+                    }
+                </MudItem>
+
+                @if (isAdminUser)
+                {
+                    <MudItem xs="12" lg="4">
+                        <MudText Typo="Typo.h6">OpenShock Events</MudText>
+                        <MudDivider Class="my-2" />
+                        <MudPaper Outlined="true" Class="pa-2" Style="max-height: 780px; overflow-y: auto; background: transparent;">
+                            @foreach (var log in OpenShock.Events)
+                            {
+                                <MudAlert Dense="true" Severity="@log.Severity" Variant="Variant.Outlined" Class="mb-1">
+                                    <span>@log.Time.ToLocalTime().ToString("HH:mm:ss")</span> — @log.Message
+                                </MudAlert>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </Authorized>
+</AuthorizeView>

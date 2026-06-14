@@ -13,6 +13,7 @@ public sealed class Service_PageAccess
         new("GamesPoints", "Games & Points", "/Games&Points", true),
         new("Bindings", "Binding Unlocks", "/Bindings", true),
         new("Devices", "Device Controls", "/Devices", true),
+        new("Shockers", "Shockers", "/Shockers", true),
     };
 
     private readonly object _stateLock = new();

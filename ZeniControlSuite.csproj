@@ -27,6 +27,7 @@
     <Content Remove="Configs\DiscordUsers.json" />
     <Content Remove="Configs\Example_AvatarControls.json" />
     <Content Remove="Configs\OSC.json" />
+    <Content Remove="Configs\OpenShock.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -79,6 +80,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Configs\Intiface.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Configs\OpenShock.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="wwwroot\images\Bindings.png">
